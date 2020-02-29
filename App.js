@@ -1,3 +1,5 @@
+// -*- coding: utf-8-unix -*-
+// 全体のトップ画面
 import React, { Component } from 'react';
 import { createAppContainer } from 'react-navigation';
 import { createDrawerNavigator, DrawerActions } from 'react-navigation-drawer';
@@ -12,32 +14,38 @@ import Page2Screen from './screens/Page2Screen';
 import Single1 from './screens/Single1';
 import Single2 from './screens/Single2';
 
-// setting main nav
-const MainStack = createStackNavigator(
+// tab nav setting
+//const TabNavigator = createBottomTabNavigator(
+const TabNavigator = createMaterialBottomTabNavigator(
     {
-        Page1: {
-            screen: Page1Screen,
-            navigationOptions: ({ navigation }) => ({
-                headerLeft: (
-                        <Icon name="bars"
-                    size={24}
-                    onPress={() => navigation.toggleLeftDrawer()}
-                    style={{ paddingLeft: 20 }}
-                        />
-                ),
-            })
-        },
-        Page1Detail: Page1DetailScreen,
+        Page1: { screen: createStackNavigator(
+            {
+                Home: {
+                    screen: Page1Screen,
+                    navigationOptions: {
+                        title: 'ホーム',
+                        headerLeft: (
+                                    <Icon name="bars"
+                                size={24}
+//                                onPress={() => navigation.toggleLeftDrawer()}
+                                style={{ paddingLeft: 20 }}
+                                    />
+                        )
+                    },
+                }
+            },
+        ),},
+        Page2: Page2Screen
     },
     {
         initialRouteName: 'Page1'
     }
-)
+);
 
 // 左Drawer
 const LeftDrawer1 = createDrawerNavigator(
     {
-        Home: MainStack,
+        Home: TabNavigator,
         Drafts1: Single1,
         Drafts2: Single2,
     },
@@ -57,21 +65,19 @@ const LeftDrawer1 = createDrawerNavigator(
     }
 );
 
-// tab nav setting
-//const TabNavigator = createBottomTabNavigator(
-const TabNavigator = createMaterialBottomTabNavigator(
+// setting main nav
+const MainStack = createStackNavigator(
     {
-        Page1: {
-            screen: LeftDrawer1
-        },
-        Page2: Page2Screen
+        Page1: LeftDrawer1,
+        Page1Detail: Page1DetailScreen,
     },
     {
-        initialRouteName: 'Page1'
+//        headerMode : screen,
+        initialRouteName: 'Page1',
     }
-);
+)
 
-const AppContainer = createAppContainer(TabNavigator)
+const AppContainer = createAppContainer(LeftDrawer1)
 
 export default class App extends Component {
 
