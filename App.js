@@ -1,18 +1,56 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { Component } from 'react';
+import { createAppContainer } from 'react-navigation';
+import { createDrawerNavigator, DrawerActions } from 'react-navigation-drawer';
+import { createStackNavigator } from 'react-navigation-stack';
+import { createBottomTabNavigator } from 'react-navigation-tabs';
 
-//import screens
+import Page1Screen from './screens/Page1Screen';
+import Page1DetailScreen from './screens/Page1DetailScreen';
+import Page2Screen from './screens/Page2Screen';
 import Single1 from './screens/Single1';
-import Single2 from './screens/Single2';
-import Stack1 from './screens/Stack1';
-import Stack2 from './screens/Stack2';
-import Tab1 from './screens/Tab1';
-import Tab2 from './screens/Tab2';
 
-export default class App extends React.Component {
-    render() {
-        return (
-            <Single1/>
-        );
+// setting main nav
+const MainStack = createStackNavigator(
+  {
+    Page1: Page1Screen,
+    Page1Detail: Page1DetailScreen,
+  },
+  {
+    initialRouteName: 'Page1'
+  }
+)
+
+// 左Drawer
+const LeftDrawer1 = createDrawerNavigator(
+    {
+        LEFT: MainStack,
+    },
+    {
+        contentComponent: Single1,
+        drawerPosition: 'left',
     }
+);
+
+// tab nav setting
+const TabNavigator = createBottomTabNavigator(
+  {
+    Page1: {
+      screen: LeftDrawer1
+    },
+    Page2: Page2Screen
+  },
+  {
+    initialRouteName: 'Page1'
+  }
+);
+
+const AppContainer = createAppContainer(TabNavigator)
+
+export default class App extends Component {
+
+  render() {
+    return (
+      <AppContainer />
+    )
+  }
 }
