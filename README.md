@@ -13,6 +13,25 @@ npm i @egjs/hammerjs
 npm i react-navigation-material-bottom-tabs
 npm i react-native-paper
 
+npm ls react-native
+npm ls expo
+
+npm i -g exp
+npm i -g react-native-scripts
+
+exp build:android
+
+---
+npm start
+
+---
+expo export --dev --public-url <your-url-here>
+python --version
+ If Python version returned above is 2.X,
+ try to use python3 instead
+python -m http.server
+
+expo export --public-url http://127.0.0.1:19000
 
 ----------------------------------------
                     navigationOptions: {
@@ -41,3 +60,12 @@ npm i react-native-paper
      "package": "com.yourcompany.yourappname"
    }
   }
+
+----------------------------------------
+https://exp.host/@kuramitsu/expo_sample
+https://expo.io/turtle-status
+https://expo.io/builds/019411b9-092b-4f9e-8c4c-7422f764fca2
+
+----------------------------------------
+
+https://www.robincussol.com/build-standalone-expo-apk-ipa-with-turtle-cli/
