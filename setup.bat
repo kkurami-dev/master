@@ -1,10 +1,10 @@
-@(echo '-*- mode: powershell  coding: shift_jis-dos; -*- Time-stamp: "2020-03-03 02:05:12 kuramitu" > NUL
+@(echo '-*- mode: powershell  coding: shift_jis-dos; -*- Time-stamp: "2020-03-03 02:25:15 kuramitu" > NUL
 echo off)
 
 :: 永続設定は環境変数のGUIから手動で設定すこと
 set HTTP_PROXY=
 set HTTPS_PROXY=
-set ???
+set AAA
 
 :: 参考サイト <http://min117.hatenablog.com/entry/2018/05/03/120949>
 :: Windows10 バッチファイル内でPowerShellコマンドを管理者権限で実行する
@@ -25,22 +25,11 @@ cd /d I:\Android\ReactNativeSample
 where node
 refreshenv
 
-expo install react-navigation
-expo install react-navigation-stack
-expo install react-navigation-tabs
-expo install react-native-gesture-handler
-expo install react-native-reanimated
-expo install react-navigation-material-bottom-tabs
-expo install react-native-paper
+npm i
 
-npm i react-native-safe-area-context
-npm i react-native-screens
-npm i react-navigation-drawer
-npm i react-native-vector-icons
-npm i @egjs/hammerjs
+:: ローカルでAPK作成
+:: https://www.robincussol.com/build-standalone-expo-apk-ipa-with-turtle-cli/
 
-::npm ls react-native
-::npm ls expo
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 exit /b %errorlevel%
 
@@ -59,6 +48,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 # Windowsでもコマンドラインで開発環境構築(Chocolatey)
 # <https://qiita.com/rkunihiro/items/4eab4d3e90697f064809>
 choco install nvm -y
+nvm list available
 nvm install 10.14.2
 nvm on
 
@@ -68,7 +58,9 @@ choco install python2 -y
 #choco install jdk8 -y
 
 refreshenv
+npm i --global windows-build-tools
 npm i -g react-native-cli
 npm i -g react-native-scripts
 npm i -g expo-cli
 npm i -g exp
+npm i -g turtle-cli
