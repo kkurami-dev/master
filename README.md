@@ -68,4 +68,5 @@ https://expo.io/builds/019411b9-092b-4f9e-8c4c-7422f764fca2
 
 ----------------------------------------
 
+APK を作成する
 https://www.robincussol.com/build-standalone-expo-apk-ipa-with-turtle-cli/
