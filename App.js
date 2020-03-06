@@ -1,15 +1,16 @@
 // -*- coding: utf-8-unix -*-
 // 全体のトップ画面
-import React, { Component } from 'react';
+import React, { Component, useCallback } from 'react';
 import { createAppContainer } from 'react-navigation';
 import { createDrawerNavigator, DrawerActions } from 'react-navigation-drawer';
 import { createStackNavigator } from 'react-navigation-stack';
 import { createMaterialTopTabNavigator } from 'react-navigation-tabs';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import Page1Screen from './screens/Page1Screen';
 import Page1DetailScreen from './screens/Page1DetailScreen';
+import Page1DetailScreen2 from './screens/Page1DetailScreen2';
 import Page2Screen from './screens/Page2Screen';
 import Single1 from './screens/Single1';
 import Single2 from './screens/Single2';
@@ -18,12 +19,12 @@ import Single2 from './screens/Single2';
 // 左Drawer
 const LeftDrawer1 = createDrawerNavigator(
     {
-        Home: Page1Screen,
-        PageOne: Single1,
-        PageTwo: Single2,
+        DrawerHome: Page1Screen,
+        DrawerPageOne: Single1,
+        DrawerPageTwo: Single2,
     },
     {
-        initialRouteName: 'Home',
+        initialRouteName: 'DrawerHome',
         contentOptions: {
             activeTintColor: '#e91e63',
         },
@@ -41,7 +42,7 @@ const LeftDrawer1 = createDrawerNavigator(
 // setting main nav
 const MainStack = createStackNavigator(
     {
-        Page1: {
+        Page1Home: {
             screen: LeftDrawer1,
             navigationOptions: ({ navigation }) => ({
                 title: 'ホーム',
@@ -55,6 +56,7 @@ const MainStack = createStackNavigator(
             }),
         },
         Page1Detail: Page1DetailScreen,
+        Page1Detail2: Page1DetailScreen2,
     },
     {
         navigationOptions: ( navigation ) => {
@@ -63,7 +65,7 @@ const MainStack = createStackNavigator(
 
             console.log("MainStack no idx:" + index + " name:" + routeName);
         },
-        initialRouteName: 'Page1',
+        initialRouteName: 'Page1Home',
         getCustomActionCreators: (route, stateKey) => {
             if ( stateKey === null ){
                 return;
@@ -80,8 +82,8 @@ const MainStack = createStackNavigator(
 // tab nav setting
 const TabNavigator = createMaterialTopTabNavigator(
     {
-        Page1: MainStack,
-        Page2: { screen: Page2Screen,
+        TabPage1: MainStack,
+        TabPage2: { screen: Page2Screen,
                  navigationOptions: {
                      title: 'All CHALLENGES',
                      header: null,
@@ -90,7 +92,7 @@ const TabNavigator = createMaterialTopTabNavigator(
     },
     {
         tabBarPosition: 'bottom',
-        initialRouteName: 'Page1',
+        initialRouteName: 'TabPage1',
         getCustomActionCreators: (route, stateKey) => {
             console.log("TabNavigator key:" + stateKey);
         },
@@ -118,8 +120,23 @@ MainStack.navigationOptions = ({ navigation }) => {
     return navigationOptions;
 };
 
+function Profile({ userId }) {
+  const [user, setUser] = React.useState(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const unsubscribe = API.subscribe(userId, user => setUser(user));
+
+      return () => unsubscribe();
+    }, [userId])
+  );
+
+  return <ProfileContent user={user} />;
+}
+
 const AppContainer = createAppContainer(TabNavigator)
 export default class App extends Component {
+
 
     render() {
         const { navigation } = this.props;

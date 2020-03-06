@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
-import {
-  Text, View
-} from 'react-native';
+import { createStackNavigator } from 'react-navigation-stack';
 
-export default class Page2Screen extends Component {
-  render() {
-    return (
-      <View>
-        <Text>Page2</Text>
-      </View>
-    )
-  }
-}
+import Page2Screen1 from './Page2Screen1';
+import Page2Screen2 from './Page2Screen2';
+
+
+export default createStackNavigator(
+    {
+        Page1: Page2Screen1,
+        Page2: Page2Screen2,
+        
+    }
+)
