@@ -70,3 +70,30 @@ https://expo.io/builds/019411b9-092b-4f9e-8c4c-7422f764fca2
 
 APK を作成する
 https://www.robincussol.com/build-standalone-expo-apk-ipa-with-turtle-cli/
+
+- コンソール１
+1)
+$ sudo update-alternatives --config java
+$ npm start
+
+- コンソール２
+2)
+$ python http_server.py
+4)
+$ cd dist
+$ python ../http_server.py
+
+- コンソール３
+3)
+$ expo export --public-url http://127.0.0.1:8000
+5)
+$ sudo turtle setup:android --sdk-version 36.0.0
+$ keytool -genkeypair -v -keystore keystore.jks -alias keyalias -keyalg RSA -keysize 2048 -validity 9125
+$ EXPO_ANDROID_KEYSTORE_PASSWORD="keystorepassword" \
+  EXPO_ANDROID_KEY_PASSWORD="keypassword" \
+  turtle build:android \
+    --type apk \
+    --keystore-path ./should-be-private/keystore.jks \
+    --keystore-alias "keyalias" \
+    --public-url http://127.0.0.1:8000/android-index.json
+ 
