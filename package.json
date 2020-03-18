@@ -10,16 +10,23 @@
   "dependencies": {
     "@egjs/hammerjs": "^2.0.17",
     "@react-native-community/masked-view": "^0.1.6",
+    "async-storage": "^0.1.0",
     "expo": "~36.0.0",
+    "i": "^0.3.6",
     "native-base": "^2.13.8",
+    "npm": "^6.14.4",
     "react": "~16.9.0",
     "react-dom": "~16.9.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-36.0.0.tar.gz",
+    "react-native-elements": "^1.2.7",
     "react-native-gesture-handler": "~1.5.0",
+    "react-native-input-spinner": "^1.2.10",
+    "react-native-navigation-bar-color": "^2.0.1",
     "react-native-paper": "^3.6.0",
     "react-native-reanimated": "~1.4.0",
     "react-native-safe-area-context": "^0.7.3",
     "react-native-screens": "^2.2.0",
+    "react-native-storage": "^1.0.1",
     "react-native-tab-view": "^2.11.0",
     "react-native-vector-icons": "^6.6.0",
     "react-native-web": "~0.11.7",
@@ -27,7 +34,8 @@
     "react-navigation-drawer": "^2.4.2",
     "react-navigation-material-bottom-tabs": "^2.2.2",
     "react-navigation-stack": "^2.2.2",
-    "react-navigation-tabs": "^2.8.2"
+    "react-navigation-tabs": "^2.8.2",
+    "watchman": "^1.0.0"
   },
   "devDependencies": {
     "babel-preset-expo": "~8.0.0",

@@ -1,4 +1,9 @@
 
+call exp build:android -t apk
+
+pause
+exit
+
 rd /s /q dist
 
 $ sudo apt update

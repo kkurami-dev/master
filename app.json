@@ -23,8 +23,11 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-   "android": {
-       "package": "com.kkurami.ReactNativeSample",
-   }
+    "android": {
+      "package": "com.kkurami.ReactNativeSample",
+    },
+    "androidNavigationBar": {
+      "visible": false,
+    }
   }
 }

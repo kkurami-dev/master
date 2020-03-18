@@ -1,130 +1,132 @@
 // -*- coding: utf-8-unix -*-
 // 全体のトップ画面
-import React, { Component, useCallback } from 'react';
-import { createAppContainer } from 'react-navigation';
-import { createDrawerNavigator, DrawerActions } from 'react-navigation-drawer';
-import { createStackNavigator } from 'react-navigation-stack';
+import Storage from 'react-native-storage';
+import React, { Component, useCallback, useEffect, AsyncStorage } from 'react';
+import { Text, View, Button, TouchableOpacity} from 'react-native';
+import { createAppContainer, DeviceEventEmitter, StackActions } from 'react-navigation';
 import { createMaterialTopTabNavigator } from 'react-navigation-tabs';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CommonActions  } from '@react-navigation/native';
+import { hideNavigationBar } from 'react-native-navigation-bar-color';
 
-import Page1Screen from './screens/Page1Screen';
-import Page1DetailScreen from './screens/Page1DetailScreen';
-import Page1DetailScreen2 from './screens/Page1DetailScreen2';
-import Page2Screen from './screens/Page2Screen';
-import Single1 from './screens/Single1';
-import Single2 from './screens/Single2';
+////////////////////////////////////////
+//import styles from './screens/MyStyles';
 
-////////////////////////////////////////////////////////////////////////////////
-// 左Drawer
-const LeftDrawer1 = createDrawerNavigator(
-    {
-        DrawerHome: Page1Screen,
-        DrawerPageOne: Single1,
-        DrawerPageTwo: Single2,
-    },
-    {
-        initialRouteName: 'DrawerHome',
-        contentOptions: {
-            activeTintColor: '#e91e63',
-        },
-        getCustomActionCreators: (route, stateKey) => {
-            console.log("LeftDrawer1 cac key:" + stateKey);
-        },
-        navigationOptions: ( navigation ) => {
-            console.log("LeftDrawer1 nO ");
-        },
-        drawerWidth: 200,
-    }
-);
+import Page1Screen_Main from './screens/Page1Screen_Main';
+import Page2Screen_Main from './screens/Page2Screen_Main';
 
-////////////////////////////////////////////////////////////////////////////////
-// setting main nav
-const MainStack = createStackNavigator(
-    {
-        Page1Home: {
-            screen: LeftDrawer1,
-            navigationOptions: ({ navigation }) => ({
-                title: 'ホーム',
-                headerLeft: (
-                        <Icon name="bars"
-                    size={24}
-                    onPress={() => navigation.toggleDrawer()}
-                    style={{ paddingLeft: 20 }}
-                        />
-                )
-            }),
-        },
-        Page1Detail: Page1DetailScreen,
-        Page1Detail2: Page1DetailScreen2,
-    },
-    {
-        navigationOptions: ( navigation ) => {
-            const { index } = navigation.state;
-            const { routeName } = navigation.state.routes[index];
-
-            console.log("MainStack no idx:" + index + " name:" + routeName);
-        },
-        initialRouteName: 'Page1Home',
-        getCustomActionCreators: (route, stateKey) => {
-            if ( stateKey === null ){
-                return;
-            }
-
-            console.log("MainStack cac route.key" + route.key + " stateKey:" + stateKey);
-            return {
-            };
-        },
-    }
-);
+const state = {
+  nawpage: "",
+  
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // tab nav setting
+function TabScreen({navigation, e}){
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress', e => {
+      // Prevent default behavior
+      e.preventDefault();
+
+      alert('Default behavior prevented');
+      // Do something manually
+      // ...
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+  
+  return (<Page1Screen_Main />);
+}
+
 const TabNavigator = createMaterialTopTabNavigator(
-    {
-        TabPage1: MainStack,
-        TabPage2: { screen: Page2Screen,
-                 navigationOptions: {
-                     title: 'All CHALLENGES',
-                     header: null,
-                 },
-               },
+  {
+    TabPage1: Page1Screen_Main,
+    TabPage2: Page2Screen_Main,
+    //TabPage3: (navigation, e) => TabScreen,
+  },
+  {
+    initialRouteName: 'TabPage1',
+    removeClippedSubviews: true,
+    tabBarPosition: 'bottom',
+    getCustomActionCreators: (navigation, route, stateKey, props) => {
+      //const { index } = navigation.state;
+      console.log("0101 getCustomActionCreators key:" + stateKey + " param:" + props + " route:" + route);
+      hideNavigationBar();
+      // let { index } = navigation.state;
+      // let { routeName } = navigation.state.routes[index];
+      // return TabHide({ index, routeName });
     },
-    {
-        tabBarPosition: 'bottom',
-        initialRouteName: 'TabPage1',
-        getCustomActionCreators: (route, stateKey) => {
-            console.log("TabNavigator key:" + stateKey);
-        },
-    }
+    style: { backgroundColor: 'powderblue' },
+    defaultNavigationOptions: {
+      tabBarOnPress: ({ navigation, defaultHandler }) => {
+        console.log("App.js TabNavigator  tabBarOnPress");
+        // to navigate to the top of stack whenever tab changes
+        navigation.dispatch(StackActions.popToTop());
+        defaultHandler();
+      },
+    },
+    tabBarOptions:{
+      activeTintColor: '#ffffff',
+      inactiveTintColor: '#777777',
+      tabStyle: {
+        borderTopWidth: 2,
+        borderTopColor: '#5ab4bd',
+        borderWidth:1,
+        borderColor:'#ccc'
+      },
+    },
+  }
 );
 
+
 ////////////////////////////////////////////////////////////////////////////////
-MainStack.navigationOptions = ({ navigation }) => {
-    const { index } = navigation.state;
-    const { routeName } = navigation.state.routes[index];
-    let navigationOptions = {};
+//const resetAction = NavigationActions.reset({
+//          index: 0,
+//          actions: [NavigationActions.navigate({routeName: 'List'})],
+//          key: null,
+//});
+//navigation.dispatch(resetAction);
 
-    console.log("no idx:" + index + " name:" + routeName);
-    if( routeName === Page1Screen ){
-        header : null;
-    }
-    if( index === 0 ){
-        console.log("tab true");
-        navigationOptions.tabBarVisible = true;
-    } else {
-        console.log("tab false");
-        navigationOptions.tabBarVisible = false;
-    }
+function TabHide({ index, routeName }){
+  let navigationOptions = {};
 
-    return navigationOptions;
+  //console.log("TabHide no idx:" + index + " name:" + routeName);
+  if( routeName === Page1Screen_Main ){
+    header : null;
+  }
+  if( index === 0 ){
+    //console.log("TabHide tab true");
+    navigationOptions.tabBarVisible = true;
+  } else {
+    //console.log("TabHide() tab false");
+    navigationOptions.tabBarVisible = false;
+  }
+
+  return navigationOptions;
+}
+
+Page1Screen_Main.navigationOptions = ({ navigation }) => {
+  const { index } = navigation.state;
+  const { routeName } = navigation.state.routes[index];
+  return TabHide({ index, routeName });
 };
+Page2Screen_Main.navigationOptions = ({ navigation }) => {
+  const { index } = navigation.state;
+  const { routeName } = navigation.state.routes[index];
+  return TabHide({ index, routeName });
+};
+
+TabNavigator.navigationOptions = ({ navigation }) => {
+  console.log("App.js TabNavigator.navigationOptions ");
+  console.log(navigation);
+}
 
 function Profile({ userId }) {
   const [user, setUser] = React.useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
+      console.log("Profile() React.useCallback ");
       const unsubscribe = API.subscribe(userId, user => setUser(user));
 
       return () => unsubscribe();
@@ -134,14 +136,50 @@ function Profile({ userId }) {
   return <ProfileContent user={user} />;
 }
 
-const AppContainer = createAppContainer(TabNavigator)
+//const AppContainer = createAppContainer(TabScreen);
+const AppContainer = createAppContainer(TabNavigator);
+AppContainer.navigationOptions = ({ navigation }) => {
+  console.log("App.js AppContainer.navigationOptions ----------------------------------------");
+  console.log(this);
+}
+AppContainer.onStateChange = ({ newState }) => {
+  console.log("App.js AppContainer.onStateChange ----------------------------------------");
+  console.log(this);
+}
+
 export default class App extends Component {
+  state = {
+    data1: '999',
+    text: 'テスト',
+  };
+
+  onMyStateChange = ({ newState }) => {
+    console.log("App.js onStateChange ----------------------------------------");
+    console.log(this);
+  }
+
+  componentWillUnmount(){
+    console.log("App.js app componentWillUnmount ");
+  }
+  componentDidMount(props, navigation){
+    console.log("App.js componentDidMount ----------------------------------------");
+    console.log(navigation);
+    console.log(props);
+    console.log(this);
+  }
+
+  updateParentState(_text) {
+    this.setState({text: _text})
+  }
+  
+  render() {
+    console.log("App.js render ----------------------------------------");
+    console.log(this);
+    const { navigation } = this.props;
 
 
-    render() {
-        const { navigation } = this.props;
-        return (
-                <AppContainer />
-        )
-    }
+    return (
+      <AppContainer />
+    )
+  }
 };

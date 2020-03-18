@@ -5,6 +5,8 @@ import {
 
 export default class Page1Screen extends Component {
   render() {
+    console.log("Page2Screen1.js render ----------------------------------------");
+    console.log(this);
     return (
       <View>
         <Text>Page2Screen1</Text>
