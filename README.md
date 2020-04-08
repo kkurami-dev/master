@@ -1,5 +1,7 @@
-// -*- coding: utf-8-unix -*-
+-*- coding: utf-8-unix -*-
 
+# 環境設定
+```
 expo start --tunnel
 
 expo install react-navigation
@@ -29,18 +31,8 @@ npm i -g exp
 npm i -g react-native-scripts
 
 exp build:android
+```
 
----
-npm start
-
----
-expo export --dev --public-url <your-url-here>
-python --version
- If Python version returned above is 2.X,
- try to use python3 instead
-python -m http.server
-
-expo export --public-url http://127.0.0.1:19000
 
 ----------------------------------------
 
@@ -49,9 +41,9 @@ expo export --public-url http://127.0.0.1:19000
 ----------------------------------------
 # 画面
 
-01.
-02. Page1DetailScreen.js
-03. Page1DetailScreen2.js
+01. App.js : 最初に読み込まれるファイル
+01. Page1DetailScreen.js
+01. Page1DetailScreen2.js
 
 
 
@@ -90,40 +82,33 @@ https://expo.io/builds/019411b9-092b-4f9e-8c4c-7422f764fca2
 
 ----------------------------------------
 
-APK を作成する
-https://www.robincussol.com/build-standalone-expo-apk-ipa-with-turtle-cli/
+# ローカルPCで APK を作成する（できなかった）
+[手順](https://www.robincussol.com/build-standalone-expo-apk-ipa-with-turtle-cli/)
 
-- コンソール１
-1)
-$ sudo update-alternatives --config java
-$ sudo npm start --unsafe-perm --verbose
-
-- コンソール２
-2)
-$ python http_server.py
-4)
-$ cd dist
-$ python ../http_server.py
-
-- コンソール３
-3)
-$ expo export --dev --public-url http://127.0.0.1:8000
-5)
-$ sudo turtle setup:android --sdk-version 36.0.0
-$ keytool -genkeypair -v -keystore keystore.jks -alias keyalias -keyalg RSA -keysize 2048 -validity 9125
-$ EXPO_ANDROID_KEYSTORE_PASSWORD="keystorepassword" \
-  EXPO_ANDROID_KEY_PASSWORD="keypassword" \
-  turtle build:android \
-    --type apk \
-    --keystore-path ./should-be-private/keystore.jks \
-    --keystore-alias "keyalias" \
-    --public-url http://127.0.0.1:8000/dist/android-index.json
+1. (コンソール１)コンパイル  
+        $ update-alternatives --config java
+        $ npm start --unsafe-perm --verbose
+    
+1. (コンソール２)コンパイルの push
+        $ expo export --dev --public-url http://127.0.0.1:8000
+    
+1. (コンソール３)ビルド提供WEBサーバ立ち上げ
+        $ cd dist
+        $ python ../http_server.py
+    
+1. (コンソール２) APK の作成
+        $ sudo turtle setup:android --sdk-version 36.0.0
+        $ keytool -genkeypair -v -keystore keystore.jks -alias keyalias -keyalg RSA -keysize 2048 -validity 9125
+        $ EXPO_ANDROID_KEYSTORE_PASSWORD="keystorepassword" \
+           EXPO_ANDROID_KEY_PASSWORD="keypassword" \
+           turtle build:android \
+             --type apk \
+             --keystore-path ./should-be-private/keystore.jks \
+             --keystore-alias "keyalias" \
+             --public-url http://127.0.0.1:8000/dist/android-index.json
  
-----------------------------------------
-react-native bundle --platform android --dev false --entry-file index.android.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/
-
-
-----------------------------------------
+# エラーとその対応
+---
 Some of your project's dependencies are not compatible with currently installed expo package version
 :
  - react-native-screens - expected version range: 2.0.0-alpha.12 - actual version installed: ^2.2.0
@@ -135,11 +120,11 @@ To install the correct versions of these packages, please run: expo install [pac
 Error: Problem validating fields in app.json. See https://docs.expo.io/versions/v36.0.0/workflow/configuration/
  • should NOT have additional property 'performance'.
 
-----------------------------------------
+---
 Warning: Page1ScreenDetail: getSnapshotBeforeUpdate() should be used with componentDidUpdate(). This component defines getSnapshotBeforeUpdate() only.
 
 
---------------------------------------------------------------------------------
+---
 const LeftDrawer1 = createDrawerNavigator(
   {
     DrawerHome: Page1Screen,
@@ -158,7 +143,7 @@ CustomSidebarMenu.js
 
 ----------------------------------------
 # 画像に回転するようなアニメーションを行う
-```
+``` nodejs
 // 必要となるモジュール
 import {
   StyleSheet, Animated, View, Easing,
@@ -218,8 +203,9 @@ const styles = StyleSheet.create({
   },
 });
 ```
-----------------------------------------
-# 
+
+# ボタンを押して、文字列反映
+```
 import Child from './Child';
 
 export default class Parent extends Component {
@@ -242,62 +228,58 @@ export default class Parent extends Component {
     );
   }
 }
+```
 
-----------------------------------------
-# 
+# Android のBACKキーを無効化する方法
 
---- 1
-ERROR in ./web-build/register-service-worker.js
-Module build failed (from C:/ProgramData/nvm/v10.14.2/node_modules/expo-cli/node_modules/babel-loader/lib/index.js):
-Error: ENOENT: no such file or directory, open 'i:\Android\ReactNativeSample\web-build\register-service-worker.js'
- @ multi ./web-build/register-service-worker.js ./node_modules/expo/AppEntry.js app[0]
-i ｢wdm｣: Failed to compile.
+1. DidMount で設定を行う場合
+StatusBar が有効なバージョンで動くかも
 
-C:\Users\kazu\AppData\Roaming\npm-cache\_logs\2020-03-27T22_22_53_238Z-debug.log
+        import {StatusBar} from "react-native";
+          
+        componentDidMount() {
+            StatusBar.setHidden(true, "fade");
+        }
 
---- 2
-import {StatusBar} from "react-native";
+1. java とかで定義する場合
+  getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
-componentDidMount() {
-    StatusBar.setHidden(true, "fade");
-}
---- 3
-getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+1. 画面のフルスクリーンモードにする場合
+  [allow for all Android FullScreen options](https://github.com/expo/expo/pull/7049)
 
---- 4
-(allow for all Android FullScreen options)[https://github.com/expo/expo/pull/7049]
+1. app.json に設定を記載( React Native 38 からな行けるかも )
+  [[android][navbar] allow for all Android FullScreen options](https://github.com/expo/expo/pull/7049)
+  app.json
 
---- 5
-([android][navbar] allow for all Android FullScreen options)[https://github.com/expo/expo/pull/7049]
-app.json
+        "androidNavigationBar": {
+          "visible": "immersive",
+          "barStyle": "light-content",
+          "backgroundColor": "#3689b1"
+        }
+        }
+        }
 
-    "androidNavigationBar": {
-      "visible": "immersive",
-      "barStyle": "light-content",
-      "backgroundColor": "#3689b1"
-    }
-  }
-}
+1. Navigation Bar 部品なら
+[Navigation Bar](https://ionicframework.com/docs/native/navigation-bar)
 
---- 6
-(Navigation Bar)[https://ionicframework.com/docs/native/navigation-bar]
+    import { NavigationBar } from '@ionic-native/navigation-bar/ngx';
+    constructor(private navigationBar: NavigationBar) { }
+    ...
+    let autoHide: boolean = true;
+    this.navigationBar.setUp(autoHide);
 
-import { NavigationBar } from '@ionic-native/navigation-bar/ngx';
-constructor(private navigationBar: NavigationBar) { }
-...
-let autoHide: boolean = true;
-this.navigationBar.setUp(autoHide);
-
---- 7
-(react-native-navigation-bar-color)[https://www.npmjs.com/package/react-native-navigation-bar-color]
+1. 追加モジュールを入れてみる
+[react-native-navigation-bar-color](https://www.npmjs.com/package/react-native-navigation-bar-color)
   import { hideNavigationBar } from 'react-native-navigation-bar-color';
  ...
   hide = () => {
       hideNavigationBar();
   };
---- 8
+  
+1. 
 
-iOS
+# 端末のBACKキーを無効化する場合
+## iOS
 
 navigationOptions: {
   gesturesEnabled: false,
