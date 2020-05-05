@@ -1,6 +1,7 @@
 {
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
+    "precommit": "pre-commit",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -41,5 +42,10 @@
     "babel-preset-expo": "~8.0.0",
     "@babel/core": "^7.0.0"
   },
-  "private": true
+  "private": true,
+  "husky": {
+    "hooks": {
+      "pre-commit": "precommit"
+    }
+  }  
 }

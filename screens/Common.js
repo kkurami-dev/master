@@ -26,6 +26,9 @@ var storage = new Storage({
     }
 })
 
+/*****************************************
+ * 内部ストレージにデータを保存する
+ *****************************************/
 function StorageSave() {
   storage.save({
     key: 'sample',
@@ -37,6 +40,9 @@ function StorageSave() {
   });
 }
 
+/*****************************************
+ * 内部ストレージにデータを保存する
+ *****************************************/
 function StorageLoad() {
   storage.load({
     key: 'sample',
@@ -58,6 +64,9 @@ function StorageLoad() {
   });
 }
 
+/*****************************************
+ * アプリ全体で利用するスタイルの定義を行う
+ *****************************************/
 const mystyle = StyleSheet.create({
   container: {
     flex: 1,
@@ -95,4 +104,4 @@ const mystyle = StyleSheet.create({
 });
 
 
-export  { mystyle, }
+export  { mystyle, storage, StorageLoad, StorageSave };
