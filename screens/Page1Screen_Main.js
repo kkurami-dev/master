@@ -106,8 +106,8 @@ const MainStack =  createStackNavigator(
     Page1Spinner,
   },
   {
-    //initialRouteName: 'Page1Home',
-    initialRouteName: 'Page1Spinner',
+    initialRouteName: 'Page1Home',
+    //initialRouteName: 'Page1Spinner',
     
     unmountInactiveRoutes: true,
     
