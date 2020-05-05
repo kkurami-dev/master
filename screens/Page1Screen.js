@@ -1,5 +1,5 @@
 // -*- coding: utf-8-unix -*-
-const VERSION='Time-stamp: "2020-05-05 17:34:12 kuramitu"';
+const VERSION='Time-stamp: "2020-05-05 17:49:22 kuramitu"';
 
 import Storage from 'react-native-storage';
 import React, { Component, useCallback, useEffect, useState, AsyncStorage } from 'react';
@@ -170,8 +170,12 @@ export default class Page1Screen extends Component {
             }}
           />
         </View>
-        <Text>{VERSION}</Text>
-        { ConfigJson.debug ? (<Text>{ ConfigJson.version }</Text> ) : null }
+        {
+          /* デバッグが有効な場合はバージョンが表示される */
+          ConfigJson.debug
+            ? (<Text>{VERSION} / { ConfigJson.version }</Text>)
+            : null
+        }
       </View>
     )
   }
