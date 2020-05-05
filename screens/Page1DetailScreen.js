@@ -4,7 +4,6 @@ import {
   View,
   Button
 } from 'react-native';
-import Config from 'react-native-config';
 
 export default class Page1Screen extends Component {
   componentDidMount() {
@@ -29,7 +28,6 @@ export default class Page1Screen extends Component {
             this.props.navigation.navigate('Page1Detail2')
           }}
         />
-        { Config.DEBGU ? (<Text>{ Config.VERSION }</Text> ) : null }
       </View>
     )
   }

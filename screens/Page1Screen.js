@@ -1,5 +1,5 @@
 // -*- coding: utf-8-unix -*-
-const VERSION='Time-stamp: "2020-04-04 10:17:56 kuramitu"';
+const VERSION='Time-stamp: "2020-05-05 17:34:12 kuramitu"';
 
 import Storage from 'react-native-storage';
 import React, { Component, useCallback, useEffect, useState, AsyncStorage } from 'react';
@@ -7,6 +7,7 @@ import {
   Text, Button, TouchableOpacity,
   Animated, View, Easing,
 } from 'react-native';
+const ConfigJson = require('../env.json');
 
 import { mystyle } from './Common';
 import CustomSidebarMenu from './CustomSidebarMenu';
@@ -170,6 +171,7 @@ export default class Page1Screen extends Component {
           />
         </View>
         <Text>{VERSION}</Text>
+        { ConfigJson.debug ? (<Text>{ ConfigJson.version }</Text> ) : null }
       </View>
     )
   }

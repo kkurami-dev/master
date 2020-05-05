@@ -8,10 +8,9 @@
 
 # git rev : sample( v0.1.0-1-g4c048192 )
 rev=`git describe --tags`
-echo "# commit version: $rev "
-echo $rev > ./version.txt
-git add ./version.txt
-sed -i -e "s/VERSION=.*/VERSION=$rev/g" .env
+echo "# auto add version: $rev "
+
+sed -i -e "s/\"VERSION\" :.*/\"VERSION\" : \"$rev\"/g" ./env.json
 git add ./.env
 
 exit

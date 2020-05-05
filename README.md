@@ -324,3 +324,6 @@ navigationOptions: {
   gesturesEnabled: false,
 },
 
+# Android でデバッグ
+1. adb start-server
+1. adb devices
