@@ -26,8 +26,10 @@ $ npm version
 ```
 
 # バージョン情報の自動挿入と表示
-コミットするたびに .env の VERSION が自動で書き換わる
-v0.1.0-1-g4c048192 -> v0.1.0-6-g7ce81a1c
+- コミットするたびに .env の VERSION が自動で書き換わる
+- v0.1.0-1-g4c048192 -> v0.1.0-6-g7ce81a1c
+- 事前に v?.?.? のタグが入っている必要が有る
+  (git describe --tags で必要)
 
 ## git のコマンドでクローンしたディレクトリで１回だけ実行する
       $ git config --local core.hooksPath .githooks
