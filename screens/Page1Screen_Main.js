@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { createStackNavigator } from 'react-navigation-stack';
 import { createDrawerNavigator, DrawerActions, useIsDrawerOpen  } from 'react-navigation-drawer';
 import { hideNavigationBar } from 'react-native-navigation-bar-color';
+import Config from 'react-native-config';
 
 import CustomSidebarMenu from './CustomSidebarMenu';
 

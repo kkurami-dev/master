@@ -1,16 +1,18 @@
 #!/bin/sh
+# -*- coding: utf-8-unix -*-
 #
-# An example hook script to verify what is about to be committed.
-# Called by "git commit" with no arguments.  The hook should
-# exit with non-zero status after issuing an appropriate message if
-# it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-commit".
+# チームで共通のGit hookを使う (https://www.farend.co.jp/blog/2020/04/git-hook/)
+# <クローンしたときに１回だけ行う設定>
+#   $ git config --local core.hooksPath .githooks
+#   $ chmod -R +x .githooks/
 
 # git rev : sample( v0.1.0-1-g4c048192 )
 rev=`git describe --tags`
 echo "# commit version: $rev "
 echo $rev > ./version.txt
 git add ./version.txt
+sed -i -e "s/VERSION=.*/VERSION=$rev/g" .env
+git add ./.env
 
 exit
+
