@@ -6,12 +6,25 @@
 #   $ git config --local core.hooksPath .githooks
 #   $ chmod -R +x .githooks/
 
+VER_ENV=./env.json
+
+if [ ! -f $VER_ENV ]; then
+    _def_txt=$( cat << EOF
+{
+  "debug": true,
+  "version": "v0.0.0-0-gfffffffff"
+}
+EOF
+            )
+    echo "$_def_txt" > $VER_ENV
+fi
+
 # git rev : sample( v0.1.0-1-g4c048192 )
 rev=`git describe --tags`
 echo "# auto add version: $rev "
-
-sed -i -e "s/\"version\":.*/\"version\":\"$rev\"/g" ./env.json
-git add ./env.json
+sed -i -e "s/\"version\":.*/\"version\":\"$rev\"/g" $VER_ENV
 
 exit
+
+
 
