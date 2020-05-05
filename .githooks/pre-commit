@@ -11,7 +11,7 @@ rev=`git describe --tags`
 echo "# auto add version: $rev "
 
 sed -i -e "s/\"version\" :.*/\"version\" : \"$rev\"/g" ./env.json
-git add ./.env
+git add ./env.json
 
 exit
 
