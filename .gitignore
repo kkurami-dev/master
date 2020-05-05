@@ -1,3 +1,7 @@
+# -*- coding: utf-8-unix -*-
+.githooks/*
+!/.githooks/pre-commit
+
 node_modules/**/*
 .expo/*
 npm-debug.*
