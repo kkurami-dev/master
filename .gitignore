@@ -1,6 +1,7 @@
 # -*- coding: utf-8-unix -*-
 .githooks/*
 !/.githooks/pre-commit
+env.json
 
 node_modules/**/*
 .expo/*
