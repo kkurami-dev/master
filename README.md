@@ -1,21 +1,21 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-13 06:20:20 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-13 06:45:30 kuramitu"
 --------------------------------------------------------------------------------
 
 # Hyperledger Fabric
 ## チュートリアル
-  [Hyperledger Fabric入門 第1回 基本的な構成 – IBM Developer](https://developer.ibm.com/jp/technologies/blockchain/tutorials/cl-hyperledger-fabric-basic-1/)
-  [Hyperledger Fabric 入門, 第 2 回 Peer/チャネル/Endorsement Policy の解説](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-2/index.html)
-  [Hyperledger Fabric入門 第3回 コンセンサス/Ordering Service/Kafka/Zookeeper](https://developer.ibm.com/jp/tutorials/cl-hyperledger-fabric-basic-3/)
-  [Hyperledger Fabric 入門, 第 4 回 Membership Service Provider](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-4/index.html)
-  [Hyperledger Fabric 入門, 第 5 回 チェーンコードの書き方](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-5/index.html)
-  [Hyperledger Fabric 入門, 第 6 回 Hyperledger Fabric v1.4 のプログラミングモデル](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-6/index.html)
-  [Fabcar](https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html)
-  [Docs](https://hyperledger-fabric.readthedocs.io/en/release-2.0/#)
-  [ドキュメント » 主要な概念 » ブロックチェーンネットワーク](https://hyperledger-fabric.readthedocs.io/en/latest/network/network.html)
-  [OCHaCafe #4 Hyperledger Fabric アプリケーション設計入門ガイド](https://speakerdeck.com/gakumura/ochacafe-number-4-hyperledger-fabric)
-  [Hyperledger Fabricでアプリケーション設計するのに参考にした情報](https://qiita.com/kai_kou/items/8314e8e18c3d679947c0)
+  - [Hyperledger Fabric入門 第1回 基本的な構成 – IBM Developer](https://developer.ibm.com/jp/technologies/blockchain/tutorials/cl-hyperledger-fabric-basic-1/)
+  - [Hyperledger Fabric 入門, 第 2 回 Peer/チャネル/Endorsement Policy の解説](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-2/index.html)
+  - [Hyperledger Fabric入門 第3回 コンセンサス/Ordering Service/Kafka/Zookeeper](https://developer.ibm.com/jp/tutorials/cl-hyperledger-fabric-basic-3/)
+  - [Hyperledger Fabric 入門, 第 4 回 Membership Service Provider](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-4/index.html)
+  - [Hyperledger Fabric 入門, 第 5 回 チェーンコードの書き方](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-5/index.html)
+  - [Hyperledger Fabric 入門, 第 6 回 Hyperledger Fabric v1.4 のプログラミングモデル](https://www.ibm.com/developerworks/jp/cloud/library/cl-hyperledger-fabric-basic-6/index.html)
+  - [Fabcar](https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html)
+  - [Docs](https://hyperledger-fabric.readthedocs.io/en/release-2.0/#)
+  - [ドキュメント » 主要な概念 » ブロックチェーンネットワーク](https://hyperledger-fabric.readthedocs.io/en/latest/network/network.html)
+  - [OCHaCafe #4 Hyperledger Fabric アプリケーション設計入門ガイド](https://speakerdeck.com/gakumura/ochacafe-number-4-hyperledger-fabric)
+  -  [Hyperledger Fabricでアプリケーション設計するのに参考にした情報](https://qiita.com/kai_kou/items/8314e8e18c3d679947c0)
 
-## NECPF では下記の v2.0.0 を利用します
+## 今回は下記の v2.0.0 を利用します
   - 公式な GitHub かソースとサンプルはを取得して解析を行う。
     サンプルのベースは Fabcar です。
   [ソースコード](https://github.com/hyperledger/fabric)
@@ -213,3 +213,4 @@ ec2_vpc_peerモジュールを使い、接続するVPCをそれぞれ指定し�
 ## コンパイル環境の整備
 > sudo apt update
 > sudo apt -y install g++ make
+
