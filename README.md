@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-13 06:45:30 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-13 06:59:22 kuramitu"
 --------------------------------------------------------------------------------
 
 # Hyperledger Fabric
@@ -18,8 +18,8 @@
 ## 今回は下記の v2.0.0 を利用します
   - 公式な GitHub かソースとサンプルはを取得して解析を行う。
     サンプルのベースは Fabcar です。
-  [ソースコード](https://github.com/hyperledger/fabric)
-  [サンプル](https://github.com/hyperledger/fabric-samples)
+    - [ソースコード](https://github.com/hyperledger/fabric)
+    - [サンプル](https://github.com/hyperledger/fabric-samples)
 
   - Git のクライアントは Git Extensions がオススメ
 
