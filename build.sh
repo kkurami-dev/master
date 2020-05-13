@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# -*- coding: utf-8-unix -*-
 set -vxue
 
 # https://blog.sarabande.jp/post/82087204080
@@ -16,8 +16,11 @@ gcc -Wall -o bin/tcp_client ./src/tcp_client.c
 gcc -Wall -o bin/udp_server ./src/udp_server.c
 gcc -Wall -o bin/udp_client ./src/upd_client.c
 
+# DTLS でメッセージ送信
 # https://github.com/nplab/DTLS-Examples
-
+cd src
+make udp
+cd ..
 
 # https://ozuma.hatenablog.jp/entry/20130511/1368284304
 if [ ! -f bin/server.key ]; then
