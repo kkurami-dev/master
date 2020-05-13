@@ -10,11 +10,13 @@ gcc -Wall -o bin/ssl_client -I ~/tools/include -L ~/tools/lib  ./src/ssl_client.
 # https://qiita.com/tajima_taso/items/13b5662aca1f68fc6e8e
 gcc -Wall -o bin/tcp_server ./src/tcp_server.c
 gcc -Wall -o bin/tcp_client ./src/tcp_client.c
-# tcp_server 1443
-# tcp_client 127.0.0.1 1443
 
 # [ C言語 ] UDP / IP でパケットの送受信を行う
 # http://hensa40.cutegirl.jp/archives/780
+gcc -Wall -o bin/udp_server ./src/udp_server.c
+gcc -Wall -o bin/udp_client ./src/upd_client.c
+
+# https://github.com/nplab/DTLS-Examples
 
 
 # https://ozuma.hatenablog.jp/entry/20130511/1368284304
@@ -23,6 +25,7 @@ if [ ! -f bin/server.key ]; then
     openssl genrsa 2048 > server.key
     openssl req -new -key server.key > server.csr
     openssl x509 -days 3650 -req -signkey server.key < server.csr > server.crt
+    cd ..
 fi
 
 exit
