@@ -54,9 +54,7 @@ packages/
 *.apk
 /package-lock.json
 
-/available/tcp/example_test
-/linux_home/OpenSSL/openssl-3.0.0-alpha1
-/linux_home/tools
+openssl-3.0.0-alpha1
 */#*
 */.*
 *.tar.gz
