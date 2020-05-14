@@ -2,6 +2,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+#include "common_data.h"
  
 int main(int argc, char** argv)
 {
@@ -43,7 +45,7 @@ int main(int argc, char** argv)
       }
       
       // 受信データの出力
-      printf("%s\n", buf);
+      rcvprint( buf );
     }
  
     // ソケットのクローズ

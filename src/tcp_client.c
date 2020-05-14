@@ -32,9 +32,14 @@ int main(int argc, char* argv[]) {
   servSockAddr.sin_port = htons(servPort);
   printf("connect to %s\n", inet_ntoa(servSockAddr.sin_addr));
 
-  for(int i = 0; i < 10; i++){
-    int size = get_data(i, " tcp", sendBuffer);
-    
+  int i = 0;
+  while(1){
+    int size = get_data(i++, " tcp", sendBuffer);
+    /* 計測終了 */
+    if( 0 == size ){
+      break;
+    }
+
     /* 接続 */
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ){
       perror("socket() failed.");
@@ -63,13 +68,7 @@ int main(int argc, char* argv[]) {
       perror("recv() failed. ");
       exit(EXIT_FAILURE);
     }
-    
-    /* 計測終了 */
-    if( 0 == size ){
-      close(sock);
-      break;
-    }
-    
+
     endprint();
   }
 

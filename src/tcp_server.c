@@ -6,8 +6,8 @@
 #include <unistd.h> //close()
 
 #define QUEUELIMIT 5
-#define MSGSIZE 1024
-#define BUFSIZE (MSGSIZE + 1)
+
+#include "common_data.h"
 
 int main(int argc, char* argv[]) {
 
@@ -57,24 +57,23 @@ int main(int argc, char* argv[]) {
       perror("accept() failed.");
       exit(EXIT_FAILURE);
     }
-    //printf("connected from %s.\n", inet_ntoa(clitSockAddr.sin_addr));
 
     while(1) {
       if ((recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0)) < 0) {
         perror("recv() failed.");
         exit(EXIT_FAILURE);
       } else if(recvMsgSize == 0){
-        //fprintf(stderr, "connection closed by foreign host.\n");
         break;
       }
 
-      if((sendMsgSize = send(clitSock, recvBuffer, recvMsgSize, 0)) < 0){
+      if((sendMsgSize = send(clitSock, "ack", 4, 0)) < 0){
         perror("send() failed.");
         exit(EXIT_FAILURE);
       } else if(sendMsgSize == 0){
-        //fprintf(stderr, "connection closed by foreign host.\n");
         break;
       }
+      
+      rcvprint( recvBuffer );
     }
 
     close(clitSock);
