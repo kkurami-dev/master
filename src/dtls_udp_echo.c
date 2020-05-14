@@ -576,6 +576,7 @@ void start_server(int port, char *local_address) {
 		printf("\nERROR: invalid private key!");
 
 	/* Client has to authenticate */
+  printf("Client has to authenticate\n");
 	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, dtls_verify_callback);
 
 	SSL_CTX_set_read_ahead(ctx, 1);
@@ -587,6 +588,7 @@ void start_server(int port, char *local_address) {
 		perror("socket");
 		exit(-1);
 	}
+  printf("server socket ok\n");
 
 	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
 #if defined(SO_REUSEPORT) && !defined(__linux__)
@@ -605,6 +607,7 @@ void start_server(int port, char *local_address) {
 			exit(EXIT_FAILURE);
 		}
 	}
+  printf("wait start\n");
 	while (1) {
 		memset(&client_addr, 0, sizeof(struct sockaddr_storage));
 
@@ -628,6 +631,7 @@ void start_server(int port, char *local_address) {
 		memcpy(&info->client_addr, &client_addr, sizeof(struct sockaddr_storage));
 		info->ssl = ssl;
 
+    printf("thread start\n");
 		if (pthread_create( &tid, NULL, connection_handle, info) != 0) {
 			perror("pthread_create");
 			exit(-1);
@@ -964,7 +968,7 @@ int main(int argc, char **argv)
 
 	if (argc == 1) {
     printf("start_client\n");
-		start_client(HOST_IP, local_addr, port, length, messagenumber);
+		start_client(*argv, local_addr, port, length, messagenumber);
   } else {
     printf("start_server\n");
 		start_server(port, local_addr);
