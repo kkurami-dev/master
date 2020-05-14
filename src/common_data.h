@@ -1,13 +1,9 @@
+/* -*- coding: utf-8-unix -*- */
 #include <sys/time.h>
 
-struct timeval {
-    time_t tv_sec;            /* Seconds.  */
-    suseconds_t tv_usec;      /* Microseconds.  */
-};
-int gettimeofday(struct timeval *tv, struct timezone *tz);
+#define MSGSIZE 2048
+#define BUFSIZE (MSGSIZE + 1)
 
-struct tp_data {
-  int size;
-  char *data;
-  char start_time[128]:
-};
+#define RE_TRY  100
+
+#include "common_data.c"

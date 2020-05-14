@@ -1,3 +1,4 @@
+/* -*- coding: utf-8-unix -*- */
 #include <stdio.h> //printf(), fprintf(), perror()
 #include <sys/socket.h> //socket(), bind(), accept(), listen()
 #include <arpa/inet.h> // struct sockaddr_in, struct sockaddr, inet_ntoa(), inet_aton()
@@ -5,8 +6,7 @@
 #include <string.h> //memset(), strcmp()
 #include <unistd.h> //close()
 
-#define MSGSIZE 1024
-#define BUFSIZE (MSGSIZE + 1)
+#include "common_data.h"
 
 int main(int argc, char* argv[]) {
 
@@ -18,15 +18,9 @@ int main(int argc, char* argv[]) {
   char host[] = "127.0.0.1";
   char port[] = "1443";
 
-  /* if (argc != 3) { */
-  /*     fprintf(stderr, "argument count mismatch error.\n"); */
-  /*     exit(EXIT_FAILURE); */
-  /* } */
-
+  /* 接続情報の作成 */
   memset(&servSockAddr, 0, sizeof(servSockAddr));
-
   servSockAddr.sin_family = AF_INET;
-
   if (inet_aton(host, &servSockAddr.sin_addr) == 0) {
     fprintf(stderr, "Invalid IP Address.\n");
     exit(EXIT_FAILURE);
@@ -38,14 +32,9 @@ int main(int argc, char* argv[]) {
   servSockAddr.sin_port = htons(servPort);
   printf("connect to %s\n", inet_ntoa(servSockAddr.sin_addr));
 
-  sprintf(
-          sendBuffer,
-          "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n",
-          port,
-          host
-          );
-
-  for(int i = 0; i < 100; i++){
+  for(int i = 0; i < 10; i++){
+    int size = get_data(i, " tcp", sendBuffer);
+    
     /* 接続 */
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ){
       perror("socket() failed.");
@@ -57,7 +46,7 @@ int main(int argc, char* argv[]) {
     }
 
     /* 送信 */
-    if (send(sock, sendBuffer, strlen(sendBuffer), 0) <= 0) {
+    if (0 != size && send(sock, sendBuffer, size, 0) <= 0) {
       perror("send() failed.");
       exit(EXIT_FAILURE);
     }
@@ -74,7 +63,14 @@ int main(int argc, char* argv[]) {
       perror("recv() failed. ");
       exit(EXIT_FAILURE);
     }
-    //printf("server return: %s\n", recvBuffer);
+    
+    /* 計測終了 */
+    if( 0 == size ){
+      close(sock);
+      break;
+    }
+    
+    endprint();
   }
 
   return EXIT_SUCCESS;

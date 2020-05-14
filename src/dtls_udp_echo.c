@@ -30,12 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifdef WIN32
-#include <winsock2.h>
-#include <Ws2tcpip.h>
-#define in_port_t u_short
-#define ssize_t int
-#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -46,7 +40,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#endif
 
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
@@ -64,58 +57,36 @@ unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized=0;
 
 char Usage[] =
-"Usage: dtls_udp_echo [options] [address]\n"
-"Options:\n"
-"        -l      message length (Default: 100 Bytes)\n"
-"        -L      local address\n"
-"        -p      port (Default: 23232)\n"
-"        -n      number of messages to send (Default: 5)\n"
-"        -v      verbose\n"
-"        -V      very verbose\n";
+  "Usage: dtls_udp_echo [options] [address]\n"
+  "Options:\n"
+  "        -l      message length (Default: 100 Bytes)\n"
+  "        -L      local address\n"
+  "        -p      port (Default: 23232)\n"
+  "        -n      number of messages to send (Default: 5)\n"
+  "        -v      verbose\n"
+  "        -V      very verbose\n";
 
-#if WIN32
-static HANDLE* mutex_buf = NULL;
-#else
 static pthread_mutex_t* mutex_buf = NULL;
-#endif
 
 static void locking_function(int mode, int n, const char *file, int line) {
 	if (mode & CRYPTO_LOCK)
-#ifdef WIN32
-		WaitForSingleObject(mutex_buf[n], INFINITE);
-	else
-		ReleaseMutex(mutex_buf[n]);
-#else
 		pthread_mutex_lock(&mutex_buf[n]);
 	else
 		pthread_mutex_unlock(&mutex_buf[n]);
-#endif
 }
 
 static unsigned long id_function(void) {
-#ifdef WIN32
-	return (unsigned long) GetCurrentThreadId();
-#else
 	return (unsigned long) pthread_self();
-#endif
 }
 
 int THREAD_setup() {
 	int i;
 
-#ifdef WIN32
-	mutex_buf = (HANDLE*) malloc(CRYPTO_num_locks() * sizeof(HANDLE));
-#else
 	mutex_buf = (pthread_mutex_t*) malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
-#endif
 	if (!mutex_buf)
 		return 0;
 	for (i = 0; i < CRYPTO_num_locks(); i++)
-#ifdef WIN32
-		mutex_buf[i] = CreateMutex(NULL, FALSE, NULL);
-#else
 		pthread_mutex_init(&mutex_buf[i], NULL);
-#endif
 	CRYPTO_set_id_callback(id_function);
 	CRYPTO_set_locking_callback(locking_function);
 	return 1;
@@ -130,11 +101,7 @@ int THREAD_cleanup() {
 	CRYPTO_set_id_callback(NULL);
 	CRYPTO_set_locking_callback(NULL);
 	for (i = 0; i < CRYPTO_num_locks(); i++)
-#ifdef WIN32
-	CloseHandle(mutex_buf[i]);
-#else
-	pthread_mutex_destroy(&mutex_buf[i]);
-#endif
+    pthread_mutex_destroy(&mutex_buf[i]);
 	free(mutex_buf);
 	mutex_buf = NULL;
 	return 1;
@@ -142,64 +109,64 @@ int THREAD_cleanup() {
 
 int handle_socket_error() {
 	switch (errno) {
-		case EINTR:
-			/* Interrupted system call.
-			 * Just ignore.
-			 */
-			printf("Interrupted system call!\n");
-			return 1;
-		case EBADF:
-			/* Invalid socket.
-			 * Must close connection.
-			 */
-			printf("Invalid socket!\n");
-			return 0;
-			break;
+  case EINTR:
+    /* Interrupted system call.
+     * Just ignore.
+     */
+    printf("Interrupted system call!\n");
+    return 1;
+  case EBADF:
+    /* Invalid socket.
+     * Must close connection.
+     */
+    printf("Invalid socket!\n");
+    return 0;
+    break;
 #ifdef EHOSTDOWN
-		case EHOSTDOWN:
-			/* Host is down.
-			 * Just ignore, might be an attacker
-			 * sending fake ICMP messages.
-			 */
-			printf("Host is down!\n");
-			return 1;
+  case EHOSTDOWN:
+    /* Host is down.
+     * Just ignore, might be an attacker
+     * sending fake ICMP messages.
+     */
+    printf("Host is down!\n");
+    return 1;
 #endif
 #ifdef ECONNRESET
-		case ECONNRESET:
-			/* Connection reset by peer.
-			 * Just ignore, might be an attacker
-			 * sending fake ICMP messages.
-			 */
-			printf("Connection reset by peer!\n");
-			return 1;
+  case ECONNRESET:
+    /* Connection reset by peer.
+     * Just ignore, might be an attacker
+     * sending fake ICMP messages.
+     */
+    printf("Connection reset by peer!\n");
+    return 1;
 #endif
-		case ENOMEM:
-			/* Out of memory.
-			 * Must close connection.
-			 */
-			printf("Out of memory!\n");
-			return 0;
-			break;
-		case EACCES:
-			/* Permission denied.
-			 * Just ignore, we might be blocked
-			 * by some firewall policy. Try again
-			 * and hope for the best.
-			 */
-			printf("Permission denied!\n");
-			return 1;
-			break;
-		default:
-			/* Something unexpected happened */
-			printf("Unexpected error! (errno = %d)\n", errno);
-			return 0;
-			break;
+  case ENOMEM:
+    /* Out of memory.
+     * Must close connection.
+     */
+    printf("Out of memory!\n");
+    return 0;
+    break;
+  case EACCES:
+    /* Permission denied.
+     * Just ignore, we might be blocked
+     * by some firewall policy. Try again
+     * and hope for the best.
+     */
+    printf("Permission denied!\n");
+    return 1;
+    break;
+  default:
+    /* Something unexpected happened */
+    printf("Unexpected error! (errno = %d)\n", errno);
+    return 0;
+    break;
 	}
 	return 0;
 }
 
 int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
-	{
+{
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length = 0, resultlength;
 	union {
@@ -211,12 +178,12 @@ int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 	/* Initialize a random secret */
 	if (!cookie_initialized)
 		{
-		if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH))
-			{
-			printf("error setting random cookie secret\n");
-			return 0;
-			}
-		cookie_initialized = 1;
+      if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH))
+        {
+          printf("error setting random cookie secret\n");
+          return 0;
+        }
+      cookie_initialized = 1;
 		}
 
 	/* Read peer information */
@@ -225,50 +192,50 @@ int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 	/* Create buffer with peer's address and port */
 	length = 0;
 	switch (peer.ss.ss_family) {
-		case AF_INET:
-			length += sizeof(struct in_addr);
-			break;
-		case AF_INET6:
-			length += sizeof(struct in6_addr);
-			break;
-		default:
-			OPENSSL_assert(0);
-			break;
+  case AF_INET:
+    length += sizeof(struct in_addr);
+    break;
+  case AF_INET6:
+    length += sizeof(struct in6_addr);
+    break;
+  default:
+    OPENSSL_assert(0);
+    break;
 	}
 	length += sizeof(in_port_t);
 	buffer = (unsigned char*) OPENSSL_malloc(length);
 
 	if (buffer == NULL)
 		{
-		printf("out of memory\n");
-		return 0;
+      printf("out of memory\n");
+      return 0;
 		}
 
 	switch (peer.ss.ss_family) {
-		case AF_INET:
-			memcpy(buffer,
+  case AF_INET:
+    memcpy(buffer,
 				   &peer.s4.sin_port,
 				   sizeof(in_port_t));
-			memcpy(buffer + sizeof(peer.s4.sin_port),
+    memcpy(buffer + sizeof(peer.s4.sin_port),
 				   &peer.s4.sin_addr,
 				   sizeof(struct in_addr));
-			break;
-		case AF_INET6:
-			memcpy(buffer,
+    break;
+  case AF_INET6:
+    memcpy(buffer,
 				   &peer.s6.sin6_port,
 				   sizeof(in_port_t));
-			memcpy(buffer + sizeof(in_port_t),
+    memcpy(buffer + sizeof(in_port_t),
 				   &peer.s6.sin6_addr,
 				   sizeof(struct in6_addr));
-			break;
-		default:
-			OPENSSL_assert(0);
-			break;
+    break;
+  default:
+    OPENSSL_assert(0);
+    break;
 	}
 
 	/* Calculate HMAC of buffer using the secret */
 	HMAC(EVP_sha1(), (const void*) cookie_secret, COOKIE_SECRET_LENGTH,
-		 (const unsigned char*) buffer, length, result, &resultlength);
+       (const unsigned char*) buffer, length, result, &resultlength);
 	OPENSSL_free(buffer);
 
 	memcpy(cookie, result, resultlength);
@@ -278,7 +245,7 @@ int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 }
 
 int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len)
-	{
+{
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length = 0, resultlength;
 	union {
@@ -297,57 +264,57 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 	/* Create buffer with peer's address and port */
 	length = 0;
 	switch (peer.ss.ss_family) {
-		case AF_INET:
-			length += sizeof(struct in_addr);
-			break;
-		case AF_INET6:
-			length += sizeof(struct in6_addr);
-			break;
-		default:
-			OPENSSL_assert(0);
-			break;
+  case AF_INET:
+    length += sizeof(struct in_addr);
+    break;
+  case AF_INET6:
+    length += sizeof(struct in6_addr);
+    break;
+  default:
+    OPENSSL_assert(0);
+    break;
 	}
 	length += sizeof(in_port_t);
 	buffer = (unsigned char*) OPENSSL_malloc(length);
 
 	if (buffer == NULL)
 		{
-		printf("out of memory\n");
-		return 0;
+      printf("out of memory\n");
+      return 0;
 		}
 
 	switch (peer.ss.ss_family) {
-		case AF_INET:
-			memcpy(buffer,
+  case AF_INET:
+    memcpy(buffer,
 				   &peer.s4.sin_port,
 				   sizeof(in_port_t));
-			memcpy(buffer + sizeof(in_port_t),
+    memcpy(buffer + sizeof(in_port_t),
 				   &peer.s4.sin_addr,
 				   sizeof(struct in_addr));
-			break;
-		case AF_INET6:
-			memcpy(buffer,
+    break;
+  case AF_INET6:
+    memcpy(buffer,
 				   &peer.s6.sin6_port,
 				   sizeof(in_port_t));
-			memcpy(buffer + sizeof(in_port_t),
+    memcpy(buffer + sizeof(in_port_t),
 				   &peer.s6.sin6_addr,
 				   sizeof(struct in6_addr));
-			break;
-		default:
-			OPENSSL_assert(0);
-			break;
+    break;
+  default:
+    OPENSSL_assert(0);
+    break;
 	}
 
 	/* Calculate HMAC of buffer using the secret */
 	HMAC(EVP_sha1(), (const void*) cookie_secret, COOKIE_SECRET_LENGTH,
-		 (const unsigned char*) buffer, length, result, &resultlength);
+       (const unsigned char*) buffer, length, result, &resultlength);
 	OPENSSL_free(buffer);
 
 	if (cookie_len == resultlength && memcmp(result, cookie, resultlength) == 0)
 		return 1;
 
 	return 0;
-	}
+}
 
 struct pass_info {
 	union {
@@ -366,11 +333,7 @@ int dtls_verify_callback (int ok, X509_STORE_CTX *ctx) {
 	return 1;
 }
 
-#ifdef WIN32
-DWORD WINAPI connection_handle(LPVOID *info) {
-#else
 void* connection_handle(void *info) {
-#endif
 	ssize_t len;
 	char buf[BUFFER_SIZE];
 	char addrbuf[INET6_ADDRSTRLEN];
@@ -392,39 +355,35 @@ void* connection_handle(void *info) {
 		goto cleanup;
 	}
 
-#ifdef WIN32
-	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*) &on, (socklen_t) sizeof(on));
-#else
 	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
 #if defined(SO_REUSEPORT) && !defined(__linux__)
 	setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (const void*) &on, (socklen_t) sizeof(on));
 #endif
-#endif
 	switch (pinfo->client_addr.ss.ss_family) {
-		case AF_INET:
-			if (bind(fd, (const struct sockaddr *) &pinfo->server_addr, sizeof(struct sockaddr_in))) {
-				perror("bind");
-				goto cleanup;
-			}
-			if (connect(fd, (struct sockaddr *) &pinfo->client_addr, sizeof(struct sockaddr_in))) {
-				perror("connect");
-				goto cleanup;
-			}
-			break;
-		case AF_INET6:
-			setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&off, sizeof(off));
-			if (bind(fd, (const struct sockaddr *) &pinfo->server_addr, sizeof(struct sockaddr_in6))) {
-				perror("bind");
-				goto cleanup;
-			}
-			if (connect(fd, (struct sockaddr *) &pinfo->client_addr, sizeof(struct sockaddr_in6))) {
-				perror("connect");
-				goto cleanup;
-			}
-			break;
-		default:
-			OPENSSL_assert(0);
-			break;
+  case AF_INET:
+    if (bind(fd, (const struct sockaddr *) &pinfo->server_addr, sizeof(struct sockaddr_in))) {
+      perror("bind");
+      goto cleanup;
+    }
+    if (connect(fd, (struct sockaddr *) &pinfo->client_addr, sizeof(struct sockaddr_in))) {
+      perror("connect");
+      goto cleanup;
+    }
+    break;
+  case AF_INET6:
+    setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&off, sizeof(off));
+    if (bind(fd, (const struct sockaddr *) &pinfo->server_addr, sizeof(struct sockaddr_in6))) {
+      perror("bind");
+      goto cleanup;
+    }
+    if (connect(fd, (struct sockaddr *) &pinfo->client_addr, sizeof(struct sockaddr_in6))) {
+      perror("connect");
+      goto cleanup;
+    }
+    break;
+  default:
+    OPENSSL_assert(0);
+    break;
 	}
 
 	/* Set new fd and set BIO to connected */
@@ -448,21 +407,21 @@ void* connection_handle(void *info) {
 	if (verbose) {
 		if (pinfo->client_addr.ss.ss_family == AF_INET) {
 			printf ("\nThread %lx: accepted connection from %s:%d\n",
-					id_function(),
-					inet_ntop(AF_INET, &pinfo->client_addr.s4.sin_addr, addrbuf, INET6_ADDRSTRLEN),
-					ntohs(pinfo->client_addr.s4.sin_port));
+              id_function(),
+              inet_ntop(AF_INET, &pinfo->client_addr.s4.sin_addr, addrbuf, INET6_ADDRSTRLEN),
+              ntohs(pinfo->client_addr.s4.sin_port));
 		} else {
 			printf ("\nThread %lx: accepted connection from %s:%d\n",
-					id_function(),
-					inet_ntop(AF_INET6, &pinfo->client_addr.s6.sin6_addr, addrbuf, INET6_ADDRSTRLEN),
-					ntohs(pinfo->client_addr.s6.sin6_port));
+              id_function(),
+              inet_ntop(AF_INET6, &pinfo->client_addr.s6.sin6_addr, addrbuf, INET6_ADDRSTRLEN),
+              ntohs(pinfo->client_addr.s6.sin6_port));
 		}
 	}
 
 	if (veryverbose && SSL_get_peer_certificate(ssl)) {
 		printf ("------------------------------------------------------------\n");
 		X509_NAME_print_ex_fp(stdout, X509_get_subject_name(SSL_get_peer_certificate(ssl)),
-							  1, XN_FLAG_MULTILINE);
+                          1, XN_FLAG_MULTILINE);
 		printf("\n\n Cipher: %s", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
 		printf ("\n------------------------------------------------------------\n\n");
 	}
@@ -474,37 +433,37 @@ void* connection_handle(void *info) {
 			len = SSL_read(ssl, buf, sizeof(buf));
 
 			switch (SSL_get_error(ssl, len)) {
-				case SSL_ERROR_NONE:
-					if (verbose) {
-						printf("Thread %lx: read %d bytes\n", id_function(), (int) len);
-					}
-					reading = 0;
-					break;
-				case SSL_ERROR_WANT_READ:
-					/* Handle socket timeouts */
-					if (BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)) {
-						num_timeouts++;
-						reading = 0;
-					}
-					/* Just try again */
-					break;
-				case SSL_ERROR_ZERO_RETURN:
-					reading = 0;
-					break;
-				case SSL_ERROR_SYSCALL:
-					printf("Socket read error: ");
-					if (!handle_socket_error()) goto cleanup;
-					reading = 0;
-					break;
-				case SSL_ERROR_SSL:
-					printf("SSL read error: ");
-					printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
-					goto cleanup;
-					break;
-				default:
-					printf("Unexpected error while reading!\n");
-					goto cleanup;
-					break;
+      case SSL_ERROR_NONE:
+        if (verbose) {
+          printf("Thread %lx: read %d bytes\n", id_function(), (int) len);
+        }
+        reading = 0;
+        break;
+      case SSL_ERROR_WANT_READ:
+        /* Handle socket timeouts */
+        if (BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)) {
+          num_timeouts++;
+          reading = 0;
+        }
+        /* Just try again */
+        break;
+      case SSL_ERROR_ZERO_RETURN:
+        reading = 0;
+        break;
+      case SSL_ERROR_SYSCALL:
+        printf("Socket read error: ");
+        if (!handle_socket_error()) goto cleanup;
+        reading = 0;
+        break;
+      case SSL_ERROR_SSL:
+        printf("SSL read error: ");
+        printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
+        goto cleanup;
+        break;
+      default:
+        printf("Unexpected error while reading!\n");
+        goto cleanup;
+        break;
 			}
 		}
 
@@ -512,54 +471,46 @@ void* connection_handle(void *info) {
 			len = SSL_write(ssl, buf, len);
 
 			switch (SSL_get_error(ssl, len)) {
-				case SSL_ERROR_NONE:
-					if (verbose) {
-						printf("Thread %lx: wrote %d bytes\n", id_function(), (int) len);
-					}
-					break;
-				case SSL_ERROR_WANT_WRITE:
-					/* Can't write because of a renegotiation, so
-					 * we actually have to retry sending this message...
-					 */
-					break;
-				case SSL_ERROR_WANT_READ:
-					/* continue with reading */
-					break;
-				case SSL_ERROR_SYSCALL:
-					printf("Socket write error: ");
-					if (!handle_socket_error()) goto cleanup;
-					//reading = 0;
-					break;
-				case SSL_ERROR_SSL:
-					printf("SSL write error: ");
-					printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
-					goto cleanup;
-					break;
-				default:
-					printf("Unexpected error while writing!\n");
-					goto cleanup;
-					break;
+      case SSL_ERROR_NONE:
+        if (verbose) {
+          printf("Thread %lx: wrote %d bytes\n", id_function(), (int) len);
+        }
+        break;
+      case SSL_ERROR_WANT_WRITE:
+        /* Can't write because of a renegotiation, so
+         * we actually have to retry sending this message...
+         */
+        break;
+      case SSL_ERROR_WANT_READ:
+        /* continue with reading */
+        break;
+      case SSL_ERROR_SYSCALL:
+        printf("Socket write error: ");
+        if (!handle_socket_error()) goto cleanup;
+        //reading = 0;
+        break;
+      case SSL_ERROR_SSL:
+        printf("SSL write error: ");
+        printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
+        goto cleanup;
+        break;
+      default:
+        printf("Unexpected error while writing!\n");
+        goto cleanup;
+        break;
 			}
 		}
 	}
 
 	SSL_shutdown(ssl);
 
-cleanup:
-#ifdef WIN32
-	closesocket(fd);
-#else
+ cleanup:
 	close(fd);
-#endif
 	free(info);
 	SSL_free(ssl);
 	if (verbose)
 		printf("Thread %lx: done, connection closed.\n", id_function());
-#if WIN32
-	ExitThread(0);
-#else
 	pthread_exit( (void *) NULL );
-#endif
 }
 
 
@@ -570,12 +521,7 @@ void start_server(int port, char *local_address) {
 		struct sockaddr_in s4;
 		struct sockaddr_in6 s6;
 	} server_addr, client_addr;
-#if WIN32
-	WSADATA wsaData;
-	DWORD tid;
-#else
 	pthread_t tid;
-#endif
 	SSL_CTX *ctx;
 	SSL *ssl;
 	BIO *bio;
@@ -635,23 +581,15 @@ void start_server(int port, char *local_address) {
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
-#ifdef WIN32
-	WSAStartup(MAKEWORD(2, 2), &wsaData);
-#endif
-
 	fd = socket(server_addr.ss.ss_family, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		perror("socket");
 		exit(-1);
 	}
 
-#ifdef WIN32
-	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*) &on, (socklen_t) sizeof(on));
-#else
 	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
 #if defined(SO_REUSEPORT) && !defined(__linux__)
 	setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (const void*) &on, (socklen_t) sizeof(on));
-#endif
 #endif
 
 	if (server_addr.ss.ss_family == AF_INET) {
@@ -689,22 +627,13 @@ void start_server(int port, char *local_address) {
 		memcpy(&info->client_addr, &client_addr, sizeof(struct sockaddr_storage));
 		info->ssl = ssl;
 
-#ifdef WIN32
-		if (CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) connection_handle, info, 0, &tid) == NULL) {
-			exit(-1);
-		}
-#else
 		if (pthread_create( &tid, NULL, connection_handle, info) != 0) {
 			perror("pthread_create");
 			exit(-1);
 		}
-#endif
 	}
 
 	THREAD_cleanup();
-#ifdef WIN32
-	WSACleanup();
-#endif
 }
 
 void start_client(char *remote_address, char *local_address, int port, int length, int messagenumber) {
@@ -722,9 +651,6 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 	BIO *bio;
 	int reading = 0;
 	struct timeval timeout;
-#if WIN32
-	WSADATA wsaData;
-#endif
 
 	memset((void *) &remote_addr, 0, sizeof(struct sockaddr_storage));
 	memset((void *) &local_addr, 0, sizeof(struct sockaddr_storage));
@@ -744,10 +670,6 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 	} else {
 		return;
 	}
-
-#ifdef WIN32
-	WSAStartup(MAKEWORD(2, 2), &wsaData);
-#endif
 
 	fd = socket(remote_addr.ss.ss_family, SOCK_DGRAM, 0);
 	if (fd < 0) {
@@ -822,33 +744,33 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 	retval = SSL_connect(ssl);
 	if (retval <= 0) {
 		switch (SSL_get_error(ssl, retval)) {
-			case SSL_ERROR_ZERO_RETURN:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_ZERO_RETURN\n");
-				break;
-			case SSL_ERROR_WANT_READ:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_READ\n");
-				break;
-			case SSL_ERROR_WANT_WRITE:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_WRITE\n");
-				break;
-			case SSL_ERROR_WANT_CONNECT:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_CONNECT\n");
-				break;
-			case SSL_ERROR_WANT_ACCEPT:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_ACCEPT\n");
-				break;
-			case SSL_ERROR_WANT_X509_LOOKUP:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_X509_LOOKUP\n");
-				break;
-			case SSL_ERROR_SYSCALL:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_SYSCALL\n");
-				break;
-			case SSL_ERROR_SSL:
-				fprintf(stderr, "SSL_connect failed with SSL_ERROR_SSL\n");
-				break;
-			default:
-				fprintf(stderr, "SSL_connect failed with unknown error\n");
-				break;
+    case SSL_ERROR_ZERO_RETURN:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_ZERO_RETURN\n");
+      break;
+    case SSL_ERROR_WANT_READ:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_READ\n");
+      break;
+    case SSL_ERROR_WANT_WRITE:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_WRITE\n");
+      break;
+    case SSL_ERROR_WANT_CONNECT:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_CONNECT\n");
+      break;
+    case SSL_ERROR_WANT_ACCEPT:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_ACCEPT\n");
+      break;
+    case SSL_ERROR_WANT_X509_LOOKUP:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_WANT_X509_LOOKUP\n");
+      break;
+    case SSL_ERROR_SYSCALL:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_SYSCALL\n");
+      break;
+    case SSL_ERROR_SSL:
+      fprintf(stderr, "SSL_connect failed with SSL_ERROR_SSL\n");
+      break;
+    default:
+      fprintf(stderr, "SSL_connect failed with unknown error\n");
+      break;
 		}
 		exit(EXIT_FAILURE);
 	}
@@ -861,53 +783,52 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 	if (verbose) {
 		if (remote_addr.ss.ss_family == AF_INET) {
 			printf ("\nConnected to %s\n",
-					 inet_ntop(AF_INET, &remote_addr.s4.sin_addr, addrbuf, INET6_ADDRSTRLEN));
+              inet_ntop(AF_INET, &remote_addr.s4.sin_addr, addrbuf, INET6_ADDRSTRLEN));
 		} else {
 			printf ("\nConnected to %s\n",
-					 inet_ntop(AF_INET6, &remote_addr.s6.sin6_addr, addrbuf, INET6_ADDRSTRLEN));
+              inet_ntop(AF_INET6, &remote_addr.s6.sin6_addr, addrbuf, INET6_ADDRSTRLEN));
 		}
 	}
 
 	if (veryverbose && SSL_get_peer_certificate(ssl)) {
 		printf ("------------------------------------------------------------\n");
 		X509_NAME_print_ex_fp(stdout, X509_get_subject_name(SSL_get_peer_certificate(ssl)),
-							  1, XN_FLAG_MULTILINE);
+                          1, XN_FLAG_MULTILINE);
 		printf("\n\n Cipher: %s", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
 		printf ("\n------------------------------------------------------------\n\n");
 	}
 
 	while (!(SSL_get_shutdown(ssl) & SSL_RECEIVED_SHUTDOWN)) {
-
 		if (messagenumber > 0) {
 			len = SSL_write(ssl, buf, length);
 
 			switch (SSL_get_error(ssl, len)) {
-				case SSL_ERROR_NONE:
-					if (verbose) {
-						printf("wrote %d bytes\n", (int) len);
-					}
-					messagenumber--;
-					break;
-				case SSL_ERROR_WANT_WRITE:
-					/* Just try again later */
-					break;
-				case SSL_ERROR_WANT_READ:
-					/* continue with reading */
-					break;
-				case SSL_ERROR_SYSCALL:
-					printf("Socket write error: ");
-					if (!handle_socket_error()) exit(1);
-					//reading = 0;
-					break;
-				case SSL_ERROR_SSL:
-					printf("SSL write error: ");
-					printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
-					exit(1);
-					break;
-				default:
-					printf("Unexpected error while writing!\n");
-					exit(1);
-					break;
+      case SSL_ERROR_NONE:
+        if (verbose) {
+          printf("wrote %d bytes\n", (int) len);
+        }
+        messagenumber--;
+        break;
+      case SSL_ERROR_WANT_WRITE:
+        /* Just try again later */
+        break;
+      case SSL_ERROR_WANT_READ:
+        /* continue with reading */
+        break;
+      case SSL_ERROR_SYSCALL:
+        printf("Socket write error: ");
+        if (!handle_socket_error()) exit(1);
+        //reading = 0;
+        break;
+      case SSL_ERROR_SSL:
+        printf("SSL write error: ");
+        printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
+        exit(1);
+        break;
+      default:
+        printf("Unexpected error while writing!\n");
+        exit(1);
+        break;
 			}
 
 #if 0
@@ -926,51 +847,43 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 			len = SSL_read(ssl, buf, sizeof(buf));
 
 			switch (SSL_get_error(ssl, len)) {
-				case SSL_ERROR_NONE:
-					if (verbose) {
-						printf("read %d bytes\n", (int) len);
-					}
-					reading = 0;
-					break;
-				case SSL_ERROR_WANT_READ:
-					/* Stop reading on socket timeout, otherwise try again */
-					if (BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)) {
-						printf("Timeout! No response received.\n");
-						reading = 0;
-					}
-					break;
-				case SSL_ERROR_ZERO_RETURN:
-					reading = 0;
-					break;
-				case SSL_ERROR_SYSCALL:
-					printf("Socket read error: ");
-					if (!handle_socket_error()) exit(1);
-					reading = 0;
-					break;
-				case SSL_ERROR_SSL:
-					printf("SSL read error: ");
-					printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
-					exit(1);
-					break;
-				default:
-					printf("Unexpected error while reading!\n");
-					exit(1);
-					break;
+      case SSL_ERROR_NONE:
+        if (verbose) {
+          printf("read %d bytes\n", (int) len);
+        }
+        reading = 0;
+        break;
+      case SSL_ERROR_WANT_READ:
+        /* Stop reading on socket timeout, otherwise try again */
+        if (BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)) {
+          printf("Timeout! No response received.\n");
+          reading = 0;
+        }
+        break;
+      case SSL_ERROR_ZERO_RETURN:
+        reading = 0;
+        break;
+      case SSL_ERROR_SYSCALL:
+        printf("Socket read error: ");
+        if (!handle_socket_error()) exit(1);
+        reading = 0;
+        break;
+      case SSL_ERROR_SSL:
+        printf("SSL read error: ");
+        printf("%s (%d)\n", ERR_error_string(ERR_get_error(), buf), SSL_get_error(ssl, len));
+        exit(1);
+        break;
+      default:
+        printf("Unexpected error while reading!\n");
+        exit(1);
+        break;
 			}
 		}
 	}
-
-#ifdef WIN32
-	closesocket(fd);
-#else
 	close(fd);
-#endif
+  
 	if (verbose)
 		printf("Connection closed.\n");
-
-#ifdef WIN32
-	WSACleanup();
-#endif
 }
 
 
@@ -1048,7 +961,7 @@ int main(int argc, char **argv)
 
 	return 0;
 
-cmd_err:
+ cmd_err:
 	fprintf(stderr, "%s\n", Usage);
 	return 1;
 }
