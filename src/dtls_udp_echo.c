@@ -47,6 +47,7 @@
 #include <openssl/rand.h>
 #include <openssl/opensslv.h>
 
+#include "common_data.h"
 
 #define BUFFER_SIZE          (1<<16)
 #define COOKIE_SECRET_LENGTH 16
@@ -668,6 +669,7 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 #endif
 		remote_addr.s6.sin6_port = htons(port);
 	} else {
+    perror("no remote_address");
 		return;
 	}
 
@@ -691,6 +693,7 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 #endif
 			local_addr.s6.sin6_port = htons(0);
 		} else {
+      perror("no local_address");
 			return;
 		}
 		OPENSSL_assert(remote_addr.ss.ss_family == local_addr.ss.ss_family);
@@ -707,6 +710,7 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 		}
 	}
 
+  printf("1\n");
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
 	ctx = SSL_CTX_new(DTLS_client_method());
@@ -721,13 +725,16 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 	if (!SSL_CTX_check_private_key (ctx))
 		printf("\nERROR: invalid private key!");
 
+  printf("2\n");
 	SSL_CTX_set_verify_depth (ctx, 2);
 	SSL_CTX_set_read_ahead(ctx, 1);
 
 	ssl = SSL_new(ctx);
 
 	/* Create BIO, connect and set to already connected */
+  printf("3\n");
 	bio = BIO_new_dgram(fd, BIO_CLOSE);
+  printf("3 a\n");
 	if (remote_addr.ss.ss_family == AF_INET) {
 		if (connect(fd, (struct sockaddr *) &remote_addr, sizeof(struct sockaddr_in))) {
 			perror("connect");
@@ -738,10 +745,11 @@ void start_client(char *remote_address, char *local_address, int port, int lengt
 		}
 	}
 	BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &remote_addr.ss);
-
+  printf("3 b\n");
 	SSL_set_bio(ssl, bio, bio);
-
+  printf("3 c\n");
 	retval = SSL_connect(ssl);
+  printf("4\n");
 	if (retval <= 0) {
 		switch (SSL_get_error(ssl, retval)) {
     case SSL_ERROR_ZERO_RETURN:
@@ -954,10 +962,13 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	if (argc == 1)
-		start_client(*argv, local_addr, port, length, messagenumber);
-	else
+	if (argc == 1) {
+    printf("start_client\n");
+		start_client(HOST_IP, local_addr, port, length, messagenumber);
+  } else {
+    printf("start_server\n");
 		start_server(port, local_addr);
+  }
 
 	return 0;
 
