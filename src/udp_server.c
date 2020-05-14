@@ -32,20 +32,23 @@ int main(int argc, char** argv)
  
     // 受信バッファの初期化
     memset(buf, 0, sizeof(buf));
- 
-    // 受信 パケットが到着するまでブロック
-    // from_addr には、送信元アドレスが格納される
-    if(recvfrom(sd, buf, sizeof(buf), 0,
-                (struct sockaddr *)&from_addr, &sin_size) < 0) {
+
+    while(1){
+      // 受信 パケットが到着するまでブロック
+      // from_addr には、送信元アドレスが格納される
+      if(recvfrom(sd, buf, sizeof(buf), 0,
+                  (struct sockaddr *)&from_addr, &sin_size) < 0) {
         perror("recvfrom");
         return -1;
+      }
+      
+      // 受信データの出力
+      printf("%s\n", buf);
     }
  
     // ソケットのクローズ
     close(sd);
  
-    // 受信データの出力
-    printf("%s\n", buf);
  
     return 0;
 }

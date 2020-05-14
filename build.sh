@@ -14,12 +14,12 @@ gcc -Wall -o bin/tcp_client ./src/tcp_client.c
 # [ C言語 ] UDP / IP でパケットの送受信を行う
 # http://hensa40.cutegirl.jp/archives/780
 gcc -Wall -o bin/udp_server ./src/udp_server.c
-gcc -Wall -o bin/udp_client ./src/upd_client.c
+gcc -Wall -o bin/udp_client ./src/udp_client.c
 
 # DTLS でメッセージ送信
 # https://github.com/nplab/DTLS-Examples
 cd src
-make udp
+#make udp
 cd ..
 
 # https://ozuma.hatenablog.jp/entry/20130511/1368284304

@@ -31,23 +31,11 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Invalid IP Address.\n");
     exit(EXIT_FAILURE);
   }
-
   if ((servPort = (unsigned short) atoi(port)) == 0) {
     fprintf(stderr, "invalid port number.\n");
     exit(EXIT_FAILURE);
   }
   servSockAddr.sin_port = htons(servPort);
-
-  if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ){
-    perror("socket() failed.");
-    exit(EXIT_FAILURE);
-  }
-
-  if (connect(sock, (struct sockaddr*) &servSockAddr, sizeof(servSockAddr)) < 0) {
-    perror("connect() failed.");
-    exit(EXIT_FAILURE);
-  }
-
   printf("connect to %s\n", inet_ntoa(servSockAddr.sin_addr));
 
   sprintf(
@@ -56,35 +44,38 @@ int main(int argc, char* argv[]) {
           port,
           host
           );
-  if (send(sock, sendBuffer, strlen(sendBuffer), 0) <= 0) {
-    perror("send() failed.");
-    exit(EXIT_FAILURE);
-  }
 
-  int byteRcvd  = 0;
-  int byteIndex = 0;
-  while (byteIndex < MSGSIZE) {
-    byteRcvd = recv(sock, &recvBuffer[byteIndex], 1, 0);
+  for(int i = 0; i < 100; i++){
+    /* 接続 */
+    if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ){
+      perror("socket() failed.");
+      exit(EXIT_FAILURE);
+    }
+    if (connect(sock, (struct sockaddr*) &servSockAddr, sizeof(servSockAddr)) < 0) {
+      perror("connect() failed.");
+      exit(EXIT_FAILURE);
+    }
+
+    /* 送信 */
+    if (send(sock, sendBuffer, strlen(sendBuffer), 0) <= 0) {
+      perror("send() failed.");
+      exit(EXIT_FAILURE);
+    }
+
+    /* 受信 */
+    int byteRcvd  = 0;
+    byteRcvd = recv(sock, recvBuffer, BUFSIZE, 0);
     if (byteRcvd > 0) {
-      if (recvBuffer[byteIndex] == '\n'){
-        recvBuffer[byteIndex] = '\0';
-        if (strcmp(recvBuffer, "quit") == 0) {
-          close(sock);
-          return EXIT_SUCCESS;
-        } else {
-          break;
-        }
-      }
-      byteIndex += byteRcvd;
+      close(sock);
     } else if(byteRcvd == 0){
       perror("ERR_EMPTY_RESPONSE");
       exit(EXIT_FAILURE);
     } else {
-      perror("recv() failed.");
+      perror("recv() failed. ");
       exit(EXIT_FAILURE);
     }
+    //printf("server return: %s\n", recvBuffer);
   }
-  printf("server return: %s\n", recvBuffer);
 
   return EXIT_SUCCESS;
 }
