@@ -9,6 +9,8 @@
 
 #define MSGSIZE 2048
 #define BUFSIZE (MSGSIZE + 1)
+#define HOST    "localhost"
+#define HOST_IP "127.0.0.1"
 
 #define RE_TRY  2
 

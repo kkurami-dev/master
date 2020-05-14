@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
   unsigned short servPort; //server port number
   char recvBuffer[BUFSIZE];//receive temporary buffer
   char sendBuffer[BUFSIZE]; // send temporary buffer
-  char host[] = "127.0.0.1";
+  char host[] = HOST_IP;
   char port[] = "1443";
 
   /* 接続情報の作成 */

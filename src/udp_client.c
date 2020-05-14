@@ -14,7 +14,7 @@ int main(int argc, char** argv)
     // 受信プログラムと異なるあて先を設定しても UDP の場合はエラーにはならない
     addr.sin_family = AF_INET;
     addr.sin_port = htons(22222);
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_addr.s_addr = inet_addr( HOST_IP );
 
     int i = 0;
     while(1){

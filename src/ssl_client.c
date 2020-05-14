@@ -8,6 +8,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "common_data.h"
+
 int main(void)
 {
   int mysocket;
@@ -18,11 +20,11 @@ int main(void)
 
   char msg[100];
 
-  char *host = "localhost";
+  char *host = HOST;
   char *path = "/";
   int port = 8765;
 
-  int buf_size = 256;
+  int buf_size = BUFSIZE;
   char buf[buf_size];
   int read_size;
 
@@ -31,9 +33,12 @@ int main(void)
   server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   server.sin_port = htons(port);
 
-  for(int i = 0; i < 100; i++){
-    printf("%5d\n", i);
-    sprintf(msg, "GET %s HTTP/1.0 Host: %s ", path, host);
+  int i = 0;
+  while(1){
+    int size = get_data(i++, " ssl", msg );
+    if ( 0 == size ){
+      break;
+    }
 
     mysocket = socket(AF_INET, SOCK_STREAM, 0); 
     connect(mysocket, (struct sockaddr*) &server, sizeof(server));
@@ -46,10 +51,9 @@ int main(void)
     SSL_set_fd(ssl, mysocket);
     SSL_connect(ssl);
 
-    SSL_write(ssl, msg, strlen(msg));
+    SSL_write(ssl, msg, size);
     do {
       read_size = SSL_read(ssl, buf, buf_size);
-      //printf("%s", buf);
     } while (read_size > 0);
 
     SSL_shutdown(ssl); 
@@ -59,6 +63,8 @@ int main(void)
     ERR_free_strings();
 
     close(mysocket);
+
+    endprint();
   }
 
   return EXIT_SUCCESS;

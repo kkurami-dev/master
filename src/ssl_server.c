@@ -9,6 +9,8 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
+#include "common_data.h"
+
 int main(void)
 {
   SSL_CTX *ctx;
@@ -22,11 +24,8 @@ int main(void)
   struct sockaddr_in addr;
   socklen_t size = sizeof(struct sockaddr_in);
 
-  char buf[1024];
-
-  char body[] = "hello world";
-  char header[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 11\r\nConnection: Close\r\n";
-  char msg[1024];
+  char buf[BUFSIZE];
+  char msg[MSGSIZE];
 
   SSL_load_error_strings();
   SSL_library_init();
@@ -46,24 +45,21 @@ int main(void)
   listen(server, 10);
 
   while(1) {
-
     client = accept(server, (struct sockaddr*)&addr, &size);
-
-    //printf("Connection: %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port) );
-
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, client);
 
     if (SSL_accept(ssl) > 0) {
       SSL_read(ssl, buf, sizeof(buf));
-      //printf("%s\n", buf);
-      snprintf(msg, sizeof(msg), "%s\r\n%s", header, body);
+      snprintf(msg, sizeof(msg), "ack");
       SSL_write(ssl, msg, strlen(msg));
     }
 
     sd = SSL_get_fd(ssl);
     SSL_free(ssl);
     close(sd);
+
+    rcvprint( buf );
   }
 
   close(server);
