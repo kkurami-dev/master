@@ -49,18 +49,14 @@ int main(void)
 
     client = accept(server, (struct sockaddr*)&addr, &size);
 
-    printf(
-      "Connection: %s:%d\n",
-      inet_ntoa(addr.sin_addr),
-      ntohs(addr.sin_port)
-    );
+    //printf("Connection: %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port) );
 
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, client);
 
     if (SSL_accept(ssl) > 0) {
       SSL_read(ssl, buf, sizeof(buf));
-      printf("%s\n", buf);
+      //printf("%s\n", buf);
       snprintf(msg, sizeof(msg), "%s\r\n%s", header, body);
       SSL_write(ssl, msg, strlen(msg));
     }
