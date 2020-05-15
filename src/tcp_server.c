@@ -73,7 +73,8 @@ int main(int argc, char* argv[]) {
         break;
       }
       
-      rcvprint( recvBuffer );
+      int ret = rcvprint( recvBuffer );
+      if( ret == 0 ) break;
     }
 
     close(clitSock);

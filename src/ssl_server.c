@@ -59,7 +59,8 @@ int main(void)
     SSL_free(ssl);
     close(sd);
 
-    rcvprint( buf );
+    int ret = rcvprint( buf );
+    if( ret == 0 ) break;
   }
 
   close(server);

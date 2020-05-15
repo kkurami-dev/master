@@ -3,11 +3,9 @@
 
 #define DATA_NUM 5
 
-int get_data( int count, char *type, char *msg )
-{
-  const int senddata_size[] =
-    {
-     /* 送信データ  */
+const int senddata_size[] =
+  {
+   /* 送信データ  */
    100,
    200,
    300,
@@ -15,6 +13,8 @@ int get_data( int count, char *type, char *msg )
    500,
    0
   };
+int get_data( int count, char *type, char *msg )
+{
   struct timeval tv;
 
   /* 送信ダー他の決定  */
@@ -37,19 +37,28 @@ int get_data( int count, char *type, char *msg )
   /* 送信文字列の設定 */
   /* https://www.mm2d.net/main/prog/c/time-04.html  */
   gettimeofday(&tv, NULL);
-  sprintf(msg, "%4d,%s,%4d,%ld.%06lu", no, type, size, tv.tv_sec, tv.tv_usec);
-  printf("%28s", msg);
+  sprintf(msg, "%4d,%4s, %d,%ld.%06lu", no, type, size, tv.tv_sec, tv.tv_usec);
+  printf("%29s", msg);
 
   return size;
 }
 
-void rcvprint( char *msg ){
+int rcvprint( char *msg ){
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  
-  printf("%28s,%ld.%06lu\n", msg, tv.tv_sec, tv.tv_usec);
+  printf("%29s,%ld.%06lu\n", msg, tv.tv_sec, tv.tv_usec);
+
+  int no = 0;
+  char type[128];
+  int size = 0;
+  sscanf( msg, "%4d,%4s, %d", &no, type, &size);
+  printf(":%d %s %d:", no, type, size);
+  if((RE_TRY - 1) == no && senddata_size[DATA_NUM - 1] == size ){
+    return 0;
+  }
   
   usleep( 20000 );
+  return 1;
 }
 
 void endprint( void ){

@@ -45,7 +45,8 @@ int main(int argc, char** argv)
       }
       
       // 受信データの出力
-      rcvprint( buf );
+      int ret = rcvprint( buf );
+      if( ret == 0 ) break;
     }
  
     // ソケットのクローズ

@@ -31,7 +31,7 @@ int main(void)
   SSL_library_init();
   OpenSSL_add_all_algorithms();
 
-  ctx = SSL_CTX_new(SSLv23_server_method());
+  ctx = SSL_CTX_new(DTLS_server_method());
   SSL_CTX_use_certificate_file(ctx, crt_file, SSL_FILETYPE_PEM);
   SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM);
 
@@ -59,7 +59,8 @@ int main(void)
     SSL_free(ssl);
     close(sd);
 
-    rcvprint( buf );
+    int ret = rcvprint( buf );
+    if( ret == 0 ) break;
   }
 
   close(server);
