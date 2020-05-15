@@ -569,7 +569,7 @@ cleanup:
 }
 
 
-void start_server(int port, char *local_address) {
+void start_server(int port, const char *local_address) {
 	int fd;
 	union {
 		struct sockaddr_storage ss;
@@ -716,7 +716,7 @@ printf("thread start\n");
 #endif
 }
 
-void start_client(char *remote_address, char *local_address, int port, int length, int messagenumber) {
+void start_client(const char *remote_address, const char *local_address, int port, int length, int messagenumber) {
 	int fd, retval;
 	union {
 		struct sockaddr_storage ss;
@@ -995,49 +995,8 @@ int main(int argc, char **argv)
 	int port = 23232;
 	int length = 100;
 	int messagenumber = 5;
-	char local_addr[INET6_ADDRSTRLEN+1];
-
-	memset(local_addr, 0, INET6_ADDRSTRLEN+1);
-
-	argc--;
-	argv++;
-
-	while (argc >= 1) {
-		if	(strcmp(*argv, "-l") == 0) {
-			if (--argc < 1) goto cmd_err;
-			length = atoi(*++argv);
-			if (length > BUFFER_SIZE)
-				length = BUFFER_SIZE;
-		}
-		else if	(strcmp(*argv, "-L") == 0) {
-			if (--argc < 1) goto cmd_err;
-			strncpy(local_addr, *++argv, INET6_ADDRSTRLEN);
-		}
-		else if	(strcmp(*argv, "-n") == 0) {
-			if (--argc < 1) goto cmd_err;
-			messagenumber = atoi(*++argv);
-		}
-		else if	(strcmp(*argv, "-p") == 0) {
-			if (--argc < 1) goto cmd_err;
-			port = atoi(*++argv);
-		}
-		else if	(strcmp(*argv, "-v") == 0) {
-			verbose = 1;
-		}
-		else if	(strcmp(*argv, "-V") == 0) {
-			verbose = 1;
-			veryverbose = 1;
-		}
-		else if	(((*argv)[0]) == '-') {
-			goto cmd_err;
-		}
-		else break;
-
-		argc--;
-		argv++;
-	}
-
-	if (argc > 1) goto cmd_err;
+	const char local_addr[INET6_ADDRSTRLEN+1] = "192.168.0.13";
+  const char remote_address[] = "192.168.0.13";
 
 	if (OpenSSL_version_num() != OPENSSL_VERSION_NUMBER) {
 		printf("Warning: OpenSSL version mismatch!\n");
@@ -1059,14 +1018,10 @@ int main(int argc, char **argv)
 
 	if (argc == 1){
     printf("start_client\n");
-		start_client(*argv, local_addr, port, length, messagenumber);
+		start_client(remote_address, local_addr, port, length, messagenumber);
   } else {
     printf("start_server\n");
 		start_server(port, local_addr);
   }
 	return 0;
-
-cmd_err:
-	fprintf(stderr, "%s\n", Usage);
-	return 1;
 }
