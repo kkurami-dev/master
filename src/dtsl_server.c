@@ -8,6 +8,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/rand.h>
+#include <openssl/dtls1.h>
 
 #include "common_data.h"
 
@@ -17,7 +19,7 @@ int main(void)
   SSL *ssl;
 
   int server, client, sd;
-  int port = 8765;
+  int port = 32323;
   char crt_file[] = "server.crt";
   char key_file[] = "server.key";
 
@@ -25,13 +27,12 @@ int main(void)
   socklen_t size = sizeof(struct sockaddr_in);
 
   char buf[BUFSIZE];
-  char msg[MSGSIZE];
 
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
 
-  ctx = SSL_CTX_new(DTLS_server_method());
+  ctx = SSL_CTX_new(DTLSv1_2_server_method());
   SSL_CTX_use_certificate_file(ctx, crt_file, SSL_FILETYPE_PEM);
   SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM);
 
@@ -51,8 +52,6 @@ int main(void)
 
     if (SSL_accept(ssl) > 0) {
       SSL_read(ssl, buf, sizeof(buf));
-      snprintf(msg, sizeof(msg), "ack");
-      SSL_write(ssl, msg, strlen(msg));
     }
 
     sd = SSL_get_fd(ssl);

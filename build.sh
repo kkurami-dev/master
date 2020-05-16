@@ -18,12 +18,12 @@ gcc -Wall -o bin/udp_client ./src/udp_client.c
 
 # DTLS でメッセージ送信
 # https://github.com/nplab/DTLS-Examples
-cd src
-make dtls_udp_echo
-cd ..
+#cd src
+#make dtls_udp_echo
+#cd ..
 # を参考に自作
-#gcc -Wall -o bin/dtsl_server -I ~/tools/include -L ~/tools/lib  ./src/dtsl_server.c -lssl -lcrypto 2>&1
-#gcc -Wall -o bin/dtsl_client -I ~/tools/include -L ~/tools/lib  ./src/dtsl_client.c -lssl -lcrypto 2>&1
+gcc -Wall -o bin/dtsl_server -I ~/tools/include -L ~/tools/lib  ./src/dtsl_server.c -lssl -lcrypto 2>&1
+gcc -Wall -o bin/dtsl_client -I ~/tools/include -L ~/tools/lib  ./src/dtsl_client.c -lssl -lcrypto 2>&1
 
 
 # https://ozuma.hatenablog.jp/entry/20130511/1368284304

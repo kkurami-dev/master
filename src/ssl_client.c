@@ -56,7 +56,7 @@ int main(void)
 
     SSL_write(ssl, msg, size);
     do {
-      read_size = SSL_read(ssl, buf, buf_size);
+      read_size = SSL_read(ssl, buf, BUFSIZE);
     } while (read_size > 0);
 
     SSL_shutdown(ssl); 

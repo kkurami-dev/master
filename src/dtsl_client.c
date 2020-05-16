@@ -7,6 +7,9 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/crypto.h>
+#include <openssl/rand.h>
+#include <openssl/dtls1.h>
 
 #include "common_data.h"
 
@@ -17,14 +20,8 @@ int main(void)
 
   SSL *ssl;
   SSL_CTX *ctx;
-
   char msg[100];
-
-  int port = 8765;
-
-  int buf_size = BUFSIZE;
-  char buf[buf_size];
-  int read_size;
+  int port = 32323;
 
   memset(&server, 0, sizeof(server));
   server.sin_family = AF_INET;
@@ -34,7 +31,7 @@ int main(void)
 
   int i = 0;
   while(1){
-    int size = get_data(i++, " ssl", msg );
+    int size = get_data(i++, "dtls", msg );
     if ( 0 == size ){
       break;
     }
@@ -45,17 +42,14 @@ int main(void)
     SSL_load_error_strings();
     SSL_library_init();
 
-    ctx = SSL_CTX_new(SSLv23_client_method());
+    ctx = SSL_CTX_new(DTLSv1_2_client_method());
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, mysocket);
     SSL_connect(ssl);
 
     SSL_write(ssl, msg, size);
-    do {
-      read_size = SSL_read(ssl, buf, buf_size);
-    } while (read_size > 0);
 
-    SSL_shutdown(ssl); 
+    SSL_shutdown(ssl);
 
     SSL_free(ssl); 
     SSL_CTX_free(ctx);
