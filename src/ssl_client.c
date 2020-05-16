@@ -48,7 +48,11 @@ int main(void)
     ctx = SSL_CTX_new(SSLv23_client_method());
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, mysocket);
-    SSL_connect(ssl);
+    int retval = SSL_connect(ssl);
+    if ( retval <= 0 ){
+      fprintf(stderr, "SSL_connect failed with %d\n", retval);
+      exit(EXIT_FAILURE);
+    }
 
     SSL_write(ssl, msg, size);
     do {

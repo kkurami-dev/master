@@ -3,7 +3,7 @@
 
 #define DATA_NUM 5
 
-const int senddata_size[] =
+const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
    100,
@@ -24,7 +24,7 @@ int get_data( int count, char *type, char *msg )
 
   /* 1つの送信データ送信完了 */
   if ( 0 != count && 0 == no ){
-    printf("-\n");
+    printf("-,%s\n", type);
     usleep( 500000 );
   }
   /* 全ての計測用データ送信完了 */
@@ -51,8 +51,8 @@ int rcvprint( char *msg ){
   int no = 0;
   char type[128];
   int size = 0;
-  sscanf( msg, "%4d,%4s, %d", &no, type, &size);
-  printf(":%d %s %d:", no, type, size);
+  sscanf( msg, "%4d,%s%d", &no, type, &size);
+  //printf(":%d %s %d:", no, type, size);
   if((RE_TRY - 1) == no && senddata_size[DATA_NUM - 1] == size ){
     return 0;
   }
