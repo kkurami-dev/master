@@ -25,7 +25,11 @@ int main(void)
 
   memset(&server, 0, sizeof(server));
   server.sin_family = AF_INET;
-  server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  if (inet_aton(HOST_IP, &server.sin_addr) == 0) {
+    fprintf(stderr, "Invalid IP Address.\n");
+    exit(EXIT_FAILURE);
+  }
+  //server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   server.sin_port = htons(port);
   //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
 
