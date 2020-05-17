@@ -51,7 +51,7 @@ int main(void)
     SSL_set_fd(ssl, client);
 
     if (SSL_accept(ssl) > 0) {
-      SSL_read(ssl, buf, sizeof(buf));
+      SSL_read(ssl, buf, BUFSIZE);
     }
 
     sd = SSL_get_fd(ssl);
@@ -60,6 +60,8 @@ int main(void)
 
     int ret = rcvprint( buf );
     if( ret == 0 ) break;
+    fprintf(stderr, "%s\n", buf);
+    memset(buf, 0x00, BUFSIZE);
   }
 
   close(server);

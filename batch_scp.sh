@@ -44,8 +44,10 @@ for ((i = 0; i < ${#array[@]}; i++)) {
             scp -p -C -i ${list[0]} $FROM2 ${list[1]}:$TO
             scp -p -C -i ${list[0]} $FROM3 ${list[1]}:$TO/bin
             scp -p -C -i ${list[0]} $FROM4 ${list[1]}:$TO/bin
-        else 
-            scp -p -C -r -i ${list[0]} ${list[1]}:$FROM1 $TO/log
+        else
+            OUTDIR=${TO}/log_$i
+            [ ! -d ${OUTDIR} ]; mkdir ${OUTDIR}
+            scp -p -C -r -i ${list[0]} ${list[1]}:$FROM1/* ${OUTDIR}
         fi
     }
 popd

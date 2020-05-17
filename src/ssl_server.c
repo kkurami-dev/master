@@ -61,6 +61,7 @@ int main(void)
 
     int ret = rcvprint( buf );
     if( ret == 0 ) break;
+    fprintf(stderr, "%s\n", buf);
   }
 
   close(server);
