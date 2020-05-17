@@ -26,6 +26,7 @@ gcc ${DEBUG_OPTE} -o bin/udp_client ${INC} ./src/udp_client.c ${LIB}
 #cd src
 #make dtls_udp_echo
 #cd ..
+# https://gist.github.com/Jxck/b211a12423622fe304d2370b1f1d30d5
 # を参考に自作
 gcc ${DEBUG_OPTE} -o bin/dtls_server ${INC}  ./src/dtls_server.c ${LIB} 2>&1
 gcc ${DEBUG_OPTE} -o bin/dtls_client ${INC}  ./src/dtls_client.c ${LIB} 2>&1
