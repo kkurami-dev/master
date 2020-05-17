@@ -20,6 +20,12 @@
 #define S_KEY  "server-key.pem"
 #define C_CERT "client-cert.pem"
 #define C_KEY  "client-key.pem"
+#define CA_PEM "ca.pem"
+
+void ssl_ret_check( int ret, int line, const char *msg );
+
+#define SSL_RET(x)		ssl_ret_check( (x),    __LINE__, #x );
+#define SSL_RETN(x)		ssl_ret_check( !(x), __LINE__, #x );
 
 #define RE_TRY  1000
 

@@ -84,3 +84,11 @@ int verify_callback(int ok, X509_STORE_CTX *ctx) {
    */
 	return 1;
 }
+
+void ssl_ret_check( int ret, int line, const char *msg ){
+  if ( 1 == ret ) return;
+
+  fprintf(stderr, "%d :%d errno:%d\n", line, ret, errno );
+  perror(msg);
+  exit(EXIT_FAILURE);
+}

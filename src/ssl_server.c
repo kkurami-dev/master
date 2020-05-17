@@ -31,9 +31,9 @@ int main(void)
   ctx = SSL_CTX_new(SSLv23_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
 
   /* サーバ認証設定 */
-  SSL_CTX_use_certificate_file(ctx, S_CERT, SSL_FILETYPE_PEM); // 証明書の登録
-  SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM); // 秘密鍵の登録
-  //SSL_CTX_load_verify_locations(ctx, ca_certificate, NULL);// CA証明書の登録とクライアント証明書の要求
+  SSL_RET(SSL_CTX_use_certificate_file(ctx, S_CERT, SSL_FILETYPE_PEM)); // 証明書の登録
+  SSL_RETN(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM)); // 秘密鍵の登録
+  //SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL);// CA証明書の登録とクライアント証明書の要求
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
   SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
   

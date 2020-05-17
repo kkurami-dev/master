@@ -57,10 +57,10 @@ int main(void)
     ctx = SSL_CTX_new(SSLv23_client_method());
 
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
-    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
-    SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM);// 証明書の登録
-    SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM);// 秘密鍵の登録
-    //SSL_CTX_load_verify_locations(ctx, ca_certificate, NULL);// CA証明書の登録
+    //SSL_RET(SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2));/* SSLv2はセキュリティ的にNGなので除く*/
+    SSL_RET(SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM));// 証明書の登録
+    SSL_RETN(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
+    //SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL);// CA証明書の登録
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);// 証明書検証機能の有効化
     SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
 

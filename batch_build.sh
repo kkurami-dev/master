@@ -29,13 +29,13 @@ gcc ${DEBUG_OPTE} -o bin/dtls_server -I ~/tools/include -L ~/tools/lib  ./src/dt
 gcc ${DEBUG_OPTE} -o bin/dtls_client -I ~/tools/include -L ~/tools/lib  ./src/dtls_client.c -lssl -lcrypto 2>&1
 
 
+if [ ! -d bin ]; then
+    mkdir bin
+fi
 # https://ozuma.hatenablog.jp/entry/20130511/1368284304
-if [ ! -f bin/server.key ]; then
-    cd bin
-    openssl genrsa 2048 > server.key
-    openssl req -new -key server.key > server.csr
-    openssl x509 -days 3650 -req -signkey server.key < server.csr > server.crt
-    cd ..
+if [ ! -f bin/ca.pem ]; then
+    cp src/ca.pem bin/ca.pem
+    cert.sh
 fi
 
 exit
