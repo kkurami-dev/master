@@ -20,7 +20,7 @@ int main(void)
 
   SSL *ssl;
   SSL_CTX *ctx;
-  char msg[100];
+  char msg[BUFSIZE];
   int port = 32323;
 
   memset(&server, 0, sizeof(server));

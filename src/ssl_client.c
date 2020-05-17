@@ -18,12 +18,11 @@ int main(void)
   SSL *ssl;
   SSL_CTX *ctx;
 
-  char msg[100];
+  char msg[BUFSIZE];
 
   int port = 8765;
 
-  int buf_size = BUFSIZE;
-  char buf[buf_size];
+  char buf[BUFSIZE + 1];
   int read_size;
 
   memset(&server, 0, sizeof(server));

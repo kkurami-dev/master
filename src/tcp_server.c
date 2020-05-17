@@ -74,7 +74,10 @@ int main(int argc, char* argv[]) {
       }
       
       int ret = rcvprint( recvBuffer );
-      if( ret == 0 ) break;
+      if( ret == 0 ) {
+        close(servSock);
+        return EXIT_SUCCESS;
+      }
     }
 
     close(clitSock);

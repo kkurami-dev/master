@@ -12,6 +12,6 @@
 #define HOST    "localhost"
 #define HOST_IP "127.0.0.1"
 
-#define RE_TRY  2
+#define RE_TRY  1000
 
 #include "common_data.c"

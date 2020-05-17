@@ -23,9 +23,10 @@ int get_data( int count, char *type, char *msg )
   int size = senddata_size[idx];
 
   /* 1つの送信データ送信完了 */
+  if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
   if ( 0 != count && 0 == no ){
-    printf("-,%s\n", type);
-    usleep( 500000 );
+    printf("-,%s,%d\n", type, senddata_size[idx -1]);
+    usleep( 300000 );
   }
   /* 全ての計測用データ送信完了 */
   if ( DATA_NUM <= idx){
@@ -53,11 +54,14 @@ int rcvprint( char *msg ){
   int size = 0;
   sscanf( msg, "%4d,%s%d", &no, type, &size);
   //printf(":%d %s %d:", no, type, size);
+  if((RE_TRY - 1) == no) {
+    printf("-,%s%d\n", type, size);
+  }
   if((RE_TRY - 1) == no && senddata_size[DATA_NUM - 1] == size ){
     return 0;
   }
   
-  usleep( 20000 );
+  usleep( 10000 );
   return 1;
 }
 
