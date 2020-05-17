@@ -76,3 +76,11 @@ void endprint( void ){
   
   usleep( 20000 );
 }
+
+int verify_callback(int ok, X509_STORE_CTX *ctx) {
+	/* This function should ask the user if he trusts the received certificate. Here we always trust.
+   * この関数は、ユーザーが受信した証明書を信頼しているかどうかをユーザーに確認する必要があります。
+   * ここでは常に信頼しています。
+   */
+	return 1;
+}

@@ -20,8 +20,6 @@ int main(void)
 
   int server, client, sd;
   int port = 32323;
-  char crt_file[] = "server.crt";
-  char key_file[] = "server.key";
 
   struct sockaddr_in addr;
   socklen_t size = sizeof(struct sockaddr_in);
@@ -31,10 +29,14 @@ int main(void)
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
-
   ctx = SSL_CTX_new(DTLSv1_2_server_method());
-  SSL_CTX_use_certificate_file(ctx, crt_file, SSL_FILETYPE_PEM);
-  SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM);
+
+  /* サーバ認証設定 */
+  SSL_CTX_use_certificate_file(ctx, S_CERT, SSL_FILETYPE_PEM); // 証明書の登録
+  SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM); // 秘密鍵の登録
+  //SSL_CTX_load_verify_locations(ctx, ca_certificate, NULL);// CA証明書の登録とクライアント証明書の要求
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
+  SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
 
   server = socket(PF_INET, SOCK_STREAM, 0);
   bzero(&addr, sizeof(addr));

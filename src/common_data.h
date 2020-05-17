@@ -7,10 +7,19 @@
 #include <string.h> //memset(), strcmp()
 #include <unistd.h> //close()
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/crypto.h>
+
 #define MSGSIZE 2048
 #define BUFSIZE (MSGSIZE + 1)
 #define HOST    "localhost"
 #define HOST_IP "127.0.0.1"
+
+#define S_CERT "server-cert.pem"
+#define S_KEY  "server-key.pem"
+#define C_CERT "client-cert.pem"
+#define C_KEY  "client-key.pem"
 
 #define RE_TRY  1000
 
