@@ -141,7 +141,7 @@ int main(void)
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
   SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
 
-  bzero(&addr, sizeof(addr));
+  bzero(&server_addr, sizeof(server_addr));
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(TLS_PORT);
@@ -154,7 +154,7 @@ int main(void)
   LOG(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
  
   while(1) {
-    memset(&client_addr, 0, sizeof(client_addr));
+    bzero(&client_addr, sizeof(client_addr));
     BIO *bio = BIO_new_dgram(server, BIO_NOCLOSE);
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_bio(ssl, bio, bio));
