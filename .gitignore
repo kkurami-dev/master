@@ -59,3 +59,8 @@ openssl-3.0.0-alpha1
 */.*
 *.tar.gz
 src/certs
+/ca-*
+/*.pem
+/src/dtls_udp_echo
+/*.csr
+/log*
