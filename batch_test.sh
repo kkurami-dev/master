@@ -3,7 +3,7 @@
 
 set -xue
 
-LD_LIBRARY_PATH=./bin:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=.:..:./bin
 
 declare -a array=(
     "ssl"
@@ -28,6 +28,8 @@ do
 done
 
 pushd ~/OpenSSL/bin
+[ ! -d ../log ]; mkdir ../log
+
 for ((i = 0; i < ${#array[@]}; i++)) {
         echo "array[$i] = ${array[i]}"
         COMMAND=${array[i]}_${TYPE}

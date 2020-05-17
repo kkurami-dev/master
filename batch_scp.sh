@@ -6,7 +6,7 @@ set -xue
 HOME='/home/kazu/keys'
 
 LOCAL=/mnt/i/yoshimaru/linux_home/OpenSSL
-REMOTE=/home/ec2-user/OpenSSL
+REMOTE=./OpenSSL
 
 FROM1=$LOCAL/bin
 FROM2=$LOCAL/batch_test.sh
@@ -40,7 +40,7 @@ for ((i = 0; i < ${#array[@]}; i++)) {
         key=${array[i]}
         list=(${key//,/ })
         if [[ ${TYPE} == 0 ]]; then
-            scp -p -C -r -i ${list[0]} $FROM1 ${list[1]}:$TO/bin
+            scp -p -C -r -i ${list[0]} $FROM1 ${list[1]}:$TO
             scp -p -C -i ${list[0]} $FROM2 ${list[1]}:$TO
             scp -p -C -i ${list[0]} $FROM3 ${list[1]}:$TO/bin
             scp -p -C -i ${list[0]} $FROM4 ${list[1]}:$TO/bin
