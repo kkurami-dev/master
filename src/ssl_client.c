@@ -33,13 +33,23 @@ int main(void)
 
   int i = 0;
   while(1){
+    int retval = 0;
     int size = get_data(i++, " ssl", msg );
     if ( 0 == size ){
       break;
     }
 
     mysocket = socket(AF_INET, SOCK_STREAM, 0); 
-    connect(mysocket, (struct sockaddr*) &server, sizeof(server));
+    if (mysocket < 0) {
+      perror("socket");
+      exit(EXIT_FAILURE);
+    }
+    retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server));
+    if (retval){
+      fprintf(stderr, "connect :%d errno:%d\n", retval, errno );
+      perror("connect");
+      exit(EXIT_FAILURE);
+    }
  
     SSL_load_error_strings();
     SSL_library_init();
@@ -47,9 +57,9 @@ int main(void)
     ctx = SSL_CTX_new(SSLv23_client_method());
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, mysocket);
-    int retval = SSL_connect(ssl);
+    retval = SSL_connect(ssl);
     if ( retval <= 0 ){
-      fprintf(stderr, "SSL_connect failed with %d\n", retval);
+      fprintf(stderr, "SSL_connect failed with :%d errno:%d\n", SSL_get_error(ssl, retval), errno );
       exit(EXIT_FAILURE);
     }
 
