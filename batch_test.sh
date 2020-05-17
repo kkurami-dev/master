@@ -3,6 +3,8 @@
 
 set -xue
 
+LD_LIBRARY_PATH=./bin:${LD_LIBRARY_PATH}
+
 declare -a array=(
     "ssl"
     "dtls"
