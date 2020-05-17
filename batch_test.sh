@@ -28,7 +28,9 @@ do
 done
 
 pushd ~/OpenSSL/bin
-[ ! -d ../log ]; mkdir ../log
+if [ ! -d ../log ]; then
+    mkdir ../log
+fi
 
 for ((i = 0; i < ${#array[@]}; i++)) {
         echo "array[$i] = ${array[i]}"
