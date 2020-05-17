@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-18 06:21:41 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-18 06:34:03 kuramitu"
 --------------------------------------------------------------------------------
 - C言語で書かれている TCP / UDP / TLS / DTLS の通信サンプル
 - TLS の相互認証を行うようにする
@@ -13,6 +13,7 @@
 - server のプログラムを実行後に、client のプログラムを実行
 - 実行後は server / client ともに終了（速度計測用の為）
 - 時間と指定バイトまで「A」で埋めたデータを送信、応答は「ack」固定
+- エラー処理が不足しているが、速度計測用と割り切っている
 
 ## 参考URL
 - SSL : https://blog.sarabande.jp/post/82087204080
@@ -23,8 +24,11 @@
 - DTLS: https://github.com/nplab/DTLS-Examples/blob/master/src/dtls_udp_echo.c
 - DTLS: https://gist.github.com/Jxck/b211a12423622fe304d2370b1f1d30d5
 - Linux ERRNO：https://software.fujitsu.com/jp/manual/manualfiles/M090058/J2X14260/05Z200/pclmsab/pclms130.html
-- 
 
+## 未対応
+- TLS の Session 再開機能 : https://techblog.yahoo.co.jp/infrastructure/ssl-session-resumption/
+- HTTP/2 クライアント実装サンプル (TLS版) : https://www.nslabs.jp/http2-client-implementation-sample-tls-version.rhtml
+- 
 
 # SSL
 SSL/TLS で通信を行い、その時間を計測する
