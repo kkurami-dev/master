@@ -19,14 +19,13 @@ int main(int argc, char* argv[]) {
   unsigned int clitLen; // client internet socket address length
   char recvBuffer[BUFSIZE];//receive temporary buffer
   int recvMsgSize, sendMsgSize; // recieve and send buffer size
-  char port[] = "1443";
 
   /* if ( argc != 2) { */
   /*     fprintf(stderr, "argument count mismatch error.\n"); */
   /*     exit(EXIT_FAILURE); */
   /* } */
 
-  if ((servPort = (unsigned short) atoi(port)) == 0) {
+  if ((servPort = TLS_PORT) == 0) {
     fprintf(stderr, "invalid port number.\n");
     exit(EXIT_FAILURE);
   }

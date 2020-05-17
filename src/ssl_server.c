@@ -17,8 +17,6 @@ int main(void)
   SSL *ssl;
 
   int server, client, sd;
-  int port = 8765;
-
   struct sockaddr_in addr;
   socklen_t size = sizeof(struct sockaddr_in);
 
@@ -32,16 +30,16 @@ int main(void)
 
   /* サーバ認証設定 */
   SSL_RET(SSL_CTX_use_certificate_file(ctx, S_CERT, SSL_FILETYPE_PEM)); // 証明書の登録
-  SSL_RETN(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM)); // 秘密鍵の登録
-  //SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL);// CA証明書の登録とクライアント証明書の要求
+  SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM)); // 秘密鍵の登録
+  SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録とクライアント証明書の要求
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
   SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
   
   server = socket(PF_INET, SOCK_STREAM, 0);
   bzero(&addr, sizeof(addr));
   addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = INADDR_ANY;
-  addr.sin_port = htons(port);
+  addr.sin_addr.s_addr = INADDR_ANY; // 全てのアドレスからの要求を受け付ける
+  addr.sin_port = htons( TLS_PORT );
 
   bind(server, (struct sockaddr*)&addr, sizeof(addr));
   listen(server, 10);
@@ -64,7 +62,7 @@ int main(void)
 
     int ret = rcvprint( buf );
     if( ret == 0 ) break;
-    fprintf(stderr, "%s\n", buf);
+    //fprintf(stderr, "%s\n", buf);
   }
 
   close(server);

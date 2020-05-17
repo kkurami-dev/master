@@ -16,9 +16,6 @@ int main(void)
   SSL_CTX *ctx;
 
   char msg[BUFSIZE];
-
-  int port = 8765;
-
   char buf[BUFSIZE + 1];
   int read_size;
 
@@ -29,7 +26,7 @@ int main(void)
     exit(EXIT_FAILURE);
   }
   //server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  server.sin_port = htons(port);
+  server.sin_port = htons( TLS_PORT );
   //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
 
   int i = 0;
@@ -59,8 +56,8 @@ int main(void)
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
     //SSL_RET(SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2));/* SSLv2はセキュリティ的にNGなので除く*/
     SSL_RET(SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM));// 証明書の登録
-    SSL_RETN(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
-    //SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL);// CA証明書の登録
+    SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
+    SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);// 証明書検証機能の有効化
     SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
 

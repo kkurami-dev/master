@@ -15,17 +15,15 @@ int main(int argc, char* argv[]) {
   unsigned short servPort; //server port number
   char recvBuffer[BUFSIZE];//receive temporary buffer
   char sendBuffer[BUFSIZE]; // send temporary buffer
-  char host[] = HOST_IP;
-  char port[] = "1443";
 
   /* 接続情報の作成 */
   memset(&servSockAddr, 0, sizeof(servSockAddr));
   servSockAddr.sin_family = AF_INET;
-  if (inet_aton(host, &servSockAddr.sin_addr) == 0) {
+  if (inet_aton(HOST_IP, &servSockAddr.sin_addr) == 0) {
     fprintf(stderr, "Invalid IP Address.\n");
     exit(EXIT_FAILURE);
   }
-  if ((servPort = (unsigned short) atoi(port)) == 0) {
+  if ((servPort = TLS_PORT) == 0) {
     fprintf(stderr, "invalid port number.\n");
     exit(EXIT_FAILURE);
   }

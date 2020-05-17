@@ -23,7 +23,7 @@ int main(int argc, char** argv)
  
     // 待ち受けるIPとポート番号を設定
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(22222);
+    addr.sin_port = htons(TLS_PORT);
     addr.sin_addr.s_addr = INADDR_ANY; // すべてのアドレス宛のパケットを受信する
  
     // バインドする

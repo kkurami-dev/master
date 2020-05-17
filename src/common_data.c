@@ -92,3 +92,38 @@ void ssl_ret_check( int ret, int line, const char *msg ){
   perror(msg);
   exit(EXIT_FAILURE);
 }
+
+int ssl_get_error(SSL *ssl, int len ){
+  int reading = 0;
+  switch (SSL_get_error(ssl, len)) {
+  case SSL_ERROR_NONE:
+    reading = 0;
+    break;
+  case SSL_ERROR_WANT_READ:
+    /* Stop reading on socket timeout, otherwise try again */
+    if (BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)) {
+      printf("Timeout! No response received.\n");
+      reading = 0;
+    }
+    break;
+  case SSL_ERROR_ZERO_RETURN:
+    reading = 0;
+    break;
+  case SSL_ERROR_SYSCALL:
+    printf("Socket read error: ");
+    if (!errno) exit(1);
+    reading = 0;
+    break;
+  case SSL_ERROR_SSL:
+    printf("SSL read error: ");
+    printf("%ld (%d)\n", ERR_get_error(), SSL_get_error(ssl, len));
+    exit(1);
+    break;
+  default:
+    printf("Unexpected error while reading!\n");
+    exit(1);
+    break;
+  }
+
+  return reading;
+}
