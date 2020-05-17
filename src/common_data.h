@@ -29,7 +29,8 @@ void ssl_ret_check( int ret, int line, const char *msg );
 #define SSL_RETN(x)		ssl_ret_check( !(x), __LINE__, #x );
 #define SSL_RET1(x)		ssl_ret_check( (1 != x), __LINE__, #x );
 
-#define LOG(x)        printf("%d:%s\n", __LINE__, #x);x;
+//#define LOG(x)        printf("%d:%s\n", __LINE__, #x);x;
+#define LOG(x)        x
 
 #define RE_TRY  1000
 
