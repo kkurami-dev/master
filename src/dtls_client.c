@@ -28,7 +28,6 @@ int main(void)
     fprintf(stderr, "Invalid IP Address.\n");
     exit(EXIT_FAILURE);
   }
-  //server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   server.sin_port = htons( TLS_PORT );
   //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
 

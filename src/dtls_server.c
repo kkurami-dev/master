@@ -124,8 +124,7 @@ int main(void)
   SSL_CTX *ctx;
   SSL *ssl;
 
-  int server, sd;
-  struct sockaddr_in addr;
+  int server;
   struct sockaddr_in server_addr;
   struct sockaddr_storage client_addr;
   char buf[BUFSIZE];
@@ -153,7 +152,6 @@ int main(void)
 
   LOG(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
   LOG(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
-  //LOG(connect(server, (struct sockaddr*) &server_addr, sizeof(server_addr)));
  
   while(1) {
     memset(&client_addr, 0, sizeof(client_addr));
@@ -184,7 +182,7 @@ int main(void)
 
     int ret = rcvprint( buf );
     if( ret == 0 ) break;
-    //fprintf(stderr, "%s\n", buf);
+    //fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
     memset(buf, 0x00, BUFSIZE);
   }
 
