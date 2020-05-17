@@ -16,8 +16,6 @@
 #define HOST    "localhost"
 #define HOST_IP "127.0.0.1"
 #define TLS_PORT 1443
-//#define HOST    "ec2-13-112-55-94.ap-northeast-1.compute.amazonaws.com"
-//#define HOST_IP "13.112.55.94"
 
 #define S_CERT "server-cert.pem"
 #define S_KEY  "server-key.pem"
