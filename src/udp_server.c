@@ -47,7 +47,7 @@ int main(int argc, char** argv)
       }
       
       // 受信データの出力
-      int ret = rcvprint( buf );
+      ret = rcvprint( buf );
       if( ret == 0 ) break;
     }
  

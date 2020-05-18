@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
         break;
       }
       
-      LOG(ret = rcvprint( recvBuffer ));
+      ret = rcvprint( recvBuffer );
       if( ret == 0 ) {
         LOG(close(servSock));
         return EXIT_SUCCESS;
