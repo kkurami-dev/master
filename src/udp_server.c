@@ -12,7 +12,7 @@ int main(int argc, char** argv)
  
     socklen_t sin_size;
     struct sockaddr_in from_addr;
- 
+    int ret;
     char buf[2048]; // 受信バッファ
  
     // IPv4 UDP のソケットを作成
@@ -27,7 +27,8 @@ int main(int argc, char** argv)
     addr.sin_addr.s_addr = INADDR_ANY; // すべてのアドレス宛のパケットを受信する
  
     // バインドする
-    if(bind(sd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    LOG(ret = bind(sd, (struct sockaddr *)&addr, sizeof(addr)) );
+    if(ret < 0) {
         perror("bind");
         return -1;
     }
@@ -38,8 +39,9 @@ int main(int argc, char** argv)
     while(1){
       // 受信 パケットが到着するまでブロック
       // from_addr には、送信元アドレスが格納される
-      if(recvfrom(sd, buf, sizeof(buf), 0,
-                  (struct sockaddr *)&from_addr, &sin_size) < 0) {
+      LOG( ret = recvfrom(sd, buf, sizeof(buf), 0,
+                          (struct sockaddr *)&from_addr, &sin_size));
+      if(ret < 0) {
         perror("recvfrom");
         return -1;
       }

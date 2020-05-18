@@ -6,8 +6,9 @@
 
 int main(int argc, char** argv)
 {
-    int sd;
+  int sd, ret;
     char msg[2048];
+    char log[128];
     struct sockaddr_in addr;
  
     // 送信先アドレスとポート番号を設定する
@@ -18,26 +19,28 @@ int main(int argc, char** argv)
 
     int i = 0;
     while(1){
-      int size = get_data(i++, " udp", msg);
+      int size = get_data(i++, " udp", msg, log);
       if( 0 == size ){
         break;
       }
 
       /* 接続 */
-      if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+      LOG( ret = (sd = socket(AF_INET, SOCK_DGRAM, 0)));
+      if( ret < 0) {
         perror("socket");
         return -1;
       }
 
       // パケットをUDPで送信
-      if(sendto(sd, msg, size, 0,
-                (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+      LOG( ret = sendto(sd, msg, size, 0,
+                        (struct sockaddr *)&addr, sizeof(addr)));
+      if( ret < 0) {
         perror("sendto");
         return -1;
       }
-      close(sd);
+      LOG(close(sd));
 
-      endprint();
+      endprint(log);
     }
  
     return 0;

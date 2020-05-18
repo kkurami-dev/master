@@ -15,6 +15,7 @@ int main(void)
   SSL *ssl;
   SSL_CTX *ctx;
 
+  char log[128];
   char msg[BUFSIZE];
   char buf[BUFSIZE + 1];
   int read_size;
@@ -32,17 +33,17 @@ int main(void)
   int i = 0;
   while(1){
     int retval = 0;
-    int size = get_data(i++, " ssl", msg );
+    int size = get_data(i++, " ssl", msg, log );
     if ( 0 == size ){
       break;
     }
 
-    mysocket = socket(AF_INET, SOCK_STREAM, 0); 
+    LOG(mysocket = socket(AF_INET, SOCK_STREAM, 0)); 
     if (mysocket < 0) {
       perror("socket");
       exit(EXIT_FAILURE);
     }
-    retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server));
+    LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
     if (retval){
       fprintf(stderr, "%d :%d errno:%d\n", __LINE__, retval, errno );
       perror("connect");
@@ -50,8 +51,8 @@ int main(void)
     }
  
     SSL_load_error_strings();
-    SSL_library_init();
-    ctx = SSL_CTX_new(SSLv23_client_method());
+    LOG(SSL_library_init());
+    LOG(ctx = SSL_CTX_new(SSLv23_client_method()));
 
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
     //SSL_RET(SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2));/* SSLv2はセキュリティ的にNGなので除く*/
@@ -62,27 +63,27 @@ int main(void)
     SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
 
     /* 接続 */
-    ssl = SSL_new(ctx);
-    SSL_set_fd(ssl, mysocket);
-    retval = SSL_connect(ssl);
+    LOG(ssl = SSL_new(ctx));
+    LOG(SSL_set_fd(ssl, mysocket));
+    LOG(retval = SSL_connect(ssl));
     if ( retval <= 0 ){
       fprintf(stderr, "SSL_connect failed with :%d errno:%d\n", SSL_get_error(ssl, retval), errno );
       exit(EXIT_FAILURE);
     }
 
     /* 通信開始 */
-    SSL_write(ssl, msg, size);
+    LOG(SSL_write(ssl, msg, size));
     do {
-      read_size = SSL_read(ssl, buf, BUFSIZE);
+      LOG(read_size = SSL_read(ssl, buf, BUFSIZE));
     } while (read_size > 0);
 
     /* 切断 */
-    SSL_shutdown(ssl); 
-    SSL_free(ssl); 
-    SSL_CTX_free(ctx);
+    LOG(SSL_shutdown(ssl));
+    LOG(SSL_free(ssl)); 
+    LOG(SSL_CTX_free(ctx));
     ERR_free_strings();
-    close(mysocket);
-    endprint();
+    LOG(close(mysocket));
+    endprint(log);
   }
 
   return EXIT_SUCCESS;

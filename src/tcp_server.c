@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
   unsigned int clitLen; // client internet socket address length
   char recvBuffer[BUFSIZE];//receive temporary buffer
   int recvMsgSize, sendMsgSize; // recieve and send buffer size
+  int ret;
 
   /* if ( argc != 2) { */
   /*     fprintf(stderr, "argument count mismatch error.\n"); */
@@ -45,44 +46,40 @@ int main(int argc, char* argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  if (listen(servSock, QUEUELIMIT) < 0) {
-    perror("listen() failed.");
-    exit(EXIT_FAILURE);
-  }
+  LOG(listen(servSock, 10));
 
   while(1) {
     clitLen = sizeof(clitSockAddr);
-    if ((clitSock = accept(servSock, (struct sockaddr *) &clitSockAddr, &clitLen)) < 0) {
-      perror("accept() failed.");
-      exit(EXIT_FAILURE);
-    }
+    LOG(clitSock = accept(servSock, (struct sockaddr *) &clitSockAddr, &clitLen));
 
     while(1) {
-      if ((recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0)) < 0) {
+      LOG(ret = (recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0)));
+      if (ret < 0) {
         perror("recv() failed.");
         exit(EXIT_FAILURE);
       } else if(recvMsgSize == 0){
         break;
       }
 
-      if((sendMsgSize = send(clitSock, "ack", 4, 0)) < 0){
+      LOG(ret = (sendMsgSize = send(clitSock, "ack", 4, 0)));
+      if(ret < 0){
         perror("send() failed.");
         exit(EXIT_FAILURE);
       } else if(sendMsgSize == 0){
         break;
       }
       
-      int ret = rcvprint( recvBuffer );
+      LOG(ret = rcvprint( recvBuffer ));
       if( ret == 0 ) {
-        close(servSock);
+        LOG(close(servSock));
         return EXIT_SUCCESS;
       }
     }
 
-    close(clitSock);
+    LOG(close(clitSock));
   }
 
-  close(servSock);
+  LOG(close(servSock));
 
   return EXIT_SUCCESS;
 }

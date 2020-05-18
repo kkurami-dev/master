@@ -21,6 +21,7 @@ int main(void)
   SSL *ssl;
   SSL_CTX *ctx;
   char msg[BUFSIZE];
+  char log[128];
 
   memset(&server, 0, sizeof(server));
   server.sin_family = AF_INET;
@@ -34,7 +35,7 @@ int main(void)
   int i = 0;
   int len = 0;
   while(1){
-    int size = get_data(i++, "dtls", msg );
+    int size = get_data(i++, "dtls", msg, log );
     if ( 0 == size ){
       break;
     }
@@ -69,7 +70,7 @@ int main(void)
     /* 切断 */
     SSL_shutdown(ssl);
     close(mysocket);
-    endprint();
+    endprint(log);
   }
 
   return EXIT_SUCCESS;

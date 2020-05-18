@@ -15,6 +15,8 @@ int main(int argc, char* argv[]) {
   unsigned short servPort; //server port number
   char recvBuffer[BUFSIZE];//receive temporary buffer
   char sendBuffer[BUFSIZE]; // send temporary buffer
+  char log[128];
+  int ret;
 
   /* 接続情報の作成 */
   memset(&servSockAddr, 0, sizeof(servSockAddr));
@@ -32,33 +34,36 @@ int main(int argc, char* argv[]) {
 
   int i = 0;
   while(1){
-    int size = get_data(i++, " tcp", sendBuffer);
+    int size = get_data(i++, " tcp", sendBuffer, log);
     /* 計測終了 */
     if( 0 == size ){
       break;
     }
 
     /* 接続 */
-    if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ){
+    LOG(ret = (sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)));
+    if (ret < 0 ){
       perror("socket() failed.");
       exit(EXIT_FAILURE);
     }
-    if (connect(sock, (struct sockaddr*) &servSockAddr, sizeof(servSockAddr)) < 0) {
+    LOG(ret = connect(sock, (struct sockaddr*) &servSockAddr, sizeof(servSockAddr)));
+    if (ret < 0) {
       perror("connect() failed.");
       exit(EXIT_FAILURE);
     }
 
     /* 送信 */
-    if (0 != size && send(sock, sendBuffer, size, 0) <= 0) {
+    LOG(ret = send(sock, sendBuffer, size, 0)); 
+    if (ret <= 0) {
       perror("send() failed.");
       exit(EXIT_FAILURE);
     }
 
     /* 受信 */
     int byteRcvd  = 0;
-    byteRcvd = recv(sock, recvBuffer, BUFSIZE, 0);
+    LOG(byteRcvd = recv(sock, recvBuffer, BUFSIZE, 0));
     if (byteRcvd > 0) {
-      close(sock);
+      LOG(close(sock));
     } else if(byteRcvd == 0){
       perror("ERR_EMPTY_RESPONSE");
       exit(EXIT_FAILURE);
@@ -67,7 +72,7 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    endprint();
+    endprint(log);
   }
 
   return EXIT_SUCCESS;

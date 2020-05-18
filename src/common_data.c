@@ -13,7 +13,14 @@ const int senddata_size[ DATA_NUM + 1] =
    500,
    0
   };
-int get_data( int count, char *type, char *msg )
+
+void time_log(int line, char *msg){
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  printf("%ld.%06lu,%4d %s\n", tv.tv_sec, tv.tv_usec, line, msg);
+}
+
+int get_data( int count, char *type, char *msg, char *log )
 {
   struct timeval tv;
 
@@ -40,7 +47,7 @@ int get_data( int count, char *type, char *msg )
   /* https://www.mm2d.net/main/prog/c/time-04.html  */
   gettimeofday(&tv, NULL);
   sprintf(buf, "%4d,%4s, %d,%ld.%06lu", no, type, size, tv.tv_sec, tv.tv_usec);
-  printf("%.32s", buf);
+  sprintf(log, "%.32s", buf);
   strncpy(msg, buf, strlen(buf));
 
   return size;
@@ -68,11 +75,11 @@ int rcvprint( char *msg ){
   return 1;
 }
 
-void endprint( void ){
+void endprint( char *log ){
   struct timeval tv;
   gettimeofday(&tv, NULL);
   
-  printf(",%ld.%06lu\n", tv.tv_sec, tv.tv_usec);
+  printf("%s,%ld.%06lu\n", log, tv.tv_sec, tv.tv_usec);
   
   usleep( 20000 );
 }
