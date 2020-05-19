@@ -176,9 +176,8 @@ int main(void)
     int len = SSL_read(ssl, buf, BUFSIZE);
     ssl_get_error(ssl, len);
 
-    LOG(SSL_shutdown(ssl));
-    LOG(close(client_fd));
     LOG(SSL_free(ssl));
+    LOG(close(client_fd));
 
     int ret = rcvprint( buf );
     if( ret == 0 ) break;

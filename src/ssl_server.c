@@ -48,8 +48,8 @@ int main(void)
   while(1) {
     /* 接続と通信開始 */
     LOG(client = accept(server, (struct sockaddr*)&addr, &size));
-    ssl = SSL_new(ctx);/* SSLオブジェクトを生成 */
-    SSL_set_fd(ssl, client);/* SSLオブジェクトとファイルディスクリプタを接続 */
+    LOG(ssl = SSL_new(ctx));/* SSLオブジェクトを生成 */
+    LOG(SSL_set_fd(ssl, client));/* SSLオブジェクトとファイルディスクリプタを接続 */
 
     /* SSL通信の開始 */
     LOG(ret = SSL_accept(ssl));
