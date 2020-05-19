@@ -17,7 +17,7 @@ const int senddata_size[ DATA_NUM + 1] =
 void time_log(int line, char *msg){
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  printf("%ld.%06lu,%4d %s\n", tv.tv_sec, tv.tv_usec, line, msg);
+  printf("%ld.%06lu,%4d \"%s\"\n", tv.tv_sec, tv.tv_usec, line, msg);
 }
 
 int get_data( int count, char *type, char *msg, char *log )
