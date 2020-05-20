@@ -18,7 +18,6 @@ int main(void)
   char log[128];
   char msg[BUFSIZE];
   char buf[BUFSIZE + 1];
-  int read_size;
 
   memset(&server, 0, sizeof(server));
   server.sin_family = AF_INET;
@@ -73,9 +72,14 @@ int main(void)
 
     /* 通信開始 */
     LOG(SSL_write(ssl, msg, size));
+    LOGS();
     do {
-      LOG(read_size = SSL_read(ssl, buf, BUFSIZE));
-    } while (read_size > 0);
+      /* 読込が成功するまで繰り返す */
+      retval = SSL_read(ssl, buf, BUFSIZE);
+      retval = ssl_read_error(ssl, retval);
+      LOGC();
+    } while (retval);
+    LOGE( SSL_read );
 
     /* 切断 */
     LOG(SSL_shutdown(ssl));

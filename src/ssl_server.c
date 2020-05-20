@@ -52,12 +52,28 @@ int main(void)
     LOG(SSL_set_fd(ssl, client));/* SSLオブジェクトとファイルディスクリプタを接続 */
 
     /* SSL通信の開始 */
-    LOG(ret = SSL_accept(ssl));
-    if (ret > 0) {
-      LOG(SSL_read(ssl, buf, sizeof(buf)));
-      LOG(snprintf(msg, sizeof(msg), "ack"));
-      LOG(SSL_write(ssl, msg, strlen(msg)));
-    }
+    LOGS();
+    do{
+      ret = SSL_accept(ssl);
+      ret = ssl_get_accept( ssl, ret );
+      LOGC();
+      //} while(ret > 0);
+    } while(ret);
+    LOGE( SSL_accept );
+
+    LOGS();
+    do {
+      /* 読込が成功するまで繰り返す */
+      ret = SSL_read(ssl, buf, BUFSIZE);
+      ret = ssl_read_error(ssl, ret);
+      LOGC();
+    } while (ret);
+    LOGE( SSL_read );
+
+    LOG(snprintf(msg, sizeof(msg), "ack"));
+    LOG(ret = SSL_write(ssl, msg, strlen(msg)));
+    SSL_get_error(ssl, ret);
+    LOG(SSL_shutdown(ssl));
 
     LOG(sd = SSL_get_fd(ssl));
     LOG(SSL_free(ssl));
@@ -68,9 +84,8 @@ int main(void)
     //fprintf(stderr, "%s\n", buf);
   }
 
-  LOG(close(server));
   LOG(SSL_CTX_free(ctx));
-
+  LOG(close(server));
   return EXIT_SUCCESS;
 }
 
