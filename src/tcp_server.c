@@ -61,8 +61,8 @@ int main(int argc, char* argv[]) {
         break;
       }
 
-      LOG(ret = (sendMsgSize = send(clitSock, "ack", 4, 0)));
-      if(ret < 0){
+      LOG(sendMsgSize = send(clitSock, "ack", 4, 0));
+      if(sendMsgSize < 0){
         perror("send() failed.");
         exit(EXIT_FAILURE);
       } else if(sendMsgSize == 0){
