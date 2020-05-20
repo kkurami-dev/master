@@ -34,17 +34,19 @@ int main(void)
     int retval = 0;
     int size = get_data(i++, " ssl", msg, log );
     if ( 0 == size ){
+      fprintf(stderr, "end\n\n");
       break;
     }
 
     LOG(mysocket = socket(AF_INET, SOCK_STREAM, 0)); 
     if (mysocket < 0) {
       perror("socket");
+      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, mysocket, errno );
       exit(EXIT_FAILURE);
     }
     LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
     if (retval){
-      fprintf(stderr, "%d :%d errno:%d\n", __LINE__, retval, errno );
+      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, retval, errno );
       perror("connect");
       exit(EXIT_FAILURE);
     }
@@ -66,12 +68,20 @@ int main(void)
     LOG(SSL_set_fd(ssl, mysocket));
     LOG(retval = SSL_connect(ssl));
     if ( retval <= 0 ){
-      fprintf(stderr, "SSL_connect failed with :%d errno:%d\n", SSL_get_error(ssl, retval), errno );
+      fprintf(stderr, "\nSSL_connect failed with :%d errno:%d\n\n", SSL_get_error(ssl, retval), errno );
       exit(EXIT_FAILURE);
     }
 
     /* 通信開始 */
-    LOG(SSL_write(ssl, msg, size));
+    LOGS();
+    do {
+      /* 書き込みが成功するまで繰り返す */
+      retval = SSL_write(ssl, buf, BUFSIZE);
+      retval = ssl_write_error(ssl, retval);
+      LOGC();
+    } while (retval);
+    LOGE( SSL_write );
+
     LOGS();
     do {
       /* 読込が成功するまで繰り返す */

@@ -176,6 +176,7 @@ int main(void)
     int len = SSL_read(ssl, buf, BUFSIZE);
     ssl_read_error(ssl, len);
 
+    LOG(SSL_shutdown(ssl));
     LOG(SSL_free(ssl));
     LOG(close(client_fd));
 

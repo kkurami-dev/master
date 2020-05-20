@@ -111,28 +111,29 @@ void ssl_ret_check( int ret, int line, const char *msg ){
 }
 
 int ssl_write_error(SSL *ssl, int len ){
-  int reading = 0;
-  switch (SSL_get_error(ssl, len)) {
+  if(len > 0){
+    return 0;
+  }
+  int reading = SSL_get_error(ssl, len);
+  switch (reading) {
   case SSL_ERROR_NONE:
     reading = 0;
     break;
   case SSL_ERROR_WANT_WRITE:
-    /* Stop reading on socket timeout, otherwise try again */
   case SSL_ERROR_ZERO_RETURN:
     reading = 1;
     break;
   case SSL_ERROR_SYSCALL:
-    fprintf(stderr, "Socket read error: ");
+    fprintf(stderr, "\n\nSocket write error: \n\n");
     if (!errno) exit(1);
     reading = 1;
     break;
   case SSL_ERROR_SSL:
-    fprintf(stderr, "SSL read error: ");
-    fprintf(stderr, "%ld (%d)\n", ERR_get_error(), SSL_get_error(ssl, len));
+    fprintf(stderr, "\nSSL read error: %ld (%d)\n\n", ERR_get_error(), SSL_get_error(ssl, len));
     exit(1);
     break;
   default:
-    printf("Unexpected error while reading!\n");
+    fprintf(stderr, "\nUnexpected error while writeing!: %d\n\n", reading);
     exit(1);
     break;
   }
@@ -140,7 +141,7 @@ int ssl_write_error(SSL *ssl, int len ){
   return reading;
 }
 int ssl_read_error(SSL *ssl, int len ){
-  if(len >= 0){
+  if(len > 0){
     return 0;
   }
   int reading = SSL_get_error(ssl, len);
@@ -149,22 +150,20 @@ int ssl_read_error(SSL *ssl, int len ){
     reading = 0;
     break;
   case SSL_ERROR_WANT_READ:
-    /* Stop reading on socket timeout, otherwise try again */
   case SSL_ERROR_ZERO_RETURN:
     reading = 1;
     break;
   case SSL_ERROR_SYSCALL:
-    fprintf(stderr, "Socket read error: ");
+    fprintf(stderr, "\n\nSocket read error: \n\n");
     if (!errno) exit(1);
     reading = 1;
     break;
   case SSL_ERROR_SSL:
-    fprintf(stderr, "SSL read error: ");
-    fprintf(stderr, "%ld (%d)\n", ERR_get_error(), reading);
+    fprintf(stderr, "\nSSL read error:%ld (%d)\n\n", ERR_get_error(), reading);
     exit(1);
     break;
   default:
-    printf("Unexpected error while reading!\n");
+    fprintf(stderr, "\nUnexpected error while reading!: %d\n\n", reading);
     exit(1);
     break;
   }
