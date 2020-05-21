@@ -178,7 +178,7 @@ int main(void)
     LOGS();
     do{
       ret = SSL_accept(ssl);
-      ret = ssl_get_accept( ssl, ret );
+      ret = ssl_bioread_error(ssl, ret );
       LOGC();
       //} while(ret > 0);
     } while(ret);
