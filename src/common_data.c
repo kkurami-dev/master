@@ -28,7 +28,7 @@ void time_log(int line, char *msg){
   gettimeofday(&tv_e, NULL);
   tv.tv_sec = tv_e.tv_sec - tv_s.tv_sec;
   tv.tv_usec = tv_e.tv_usec - tv_s.tv_usec;
-  printf("%ld.%06lu,%4d \"%s\"\n", tv.tv_sec, tv.tv_usec, line, msg);
+  printf("%ld.%06lu,%4d %s\n", tv.tv_sec, tv.tv_usec, line, msg);
 }
 
 int get_data( int count, char *type, char *msg, char *log )
@@ -89,7 +89,7 @@ void endprint( char *log ){
   struct timeval tv;
   gettimeofday(&tv, NULL);
   
-  printf("%s,%ld.%06lu\n", log, tv.tv_sec, tv.tv_usec);
+  printf("%s,%ld.%06lu\n", log, (tv.tv_sec % TIME_MAX), tv.tv_usec);
   
   //usleep( 50000 );
 }

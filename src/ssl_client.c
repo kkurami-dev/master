@@ -63,36 +63,28 @@ int main(void)
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);// 証明書検証機能の有効化
     SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
 
-    /* 接続 */
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_fd(ssl, mysocket));
-    LOG(retval = SSL_connect(ssl));
-    if ( retval <= 0 ){
-      fprintf(stderr, "\nSSL_connect failed with :%d errno:%d\n\n", SSL_get_error(ssl, retval), errno );
-      exit(EXIT_FAILURE);
+
+    /* 接続 */
+    LOGS();
+    if( -1 == SSL_connect(ssl) ){
+      /* 接続失敗したら処理を最初からやり直す  */
+      fprintf(stderr, "\nSSL_connect failed with :%d errno:%d\n\n", SSL_get_error(ssl, -1), errno );
+      goto cleanup;
     }
+    LOGE( "SSL_connect" );
 
-    /* 通信開始 */
-    LOGS();
+    /*  受送信処理 */
+    LOG(SSL_write(ssl, msg, size));
     do {
-      /* 書き込みが成功するまで繰り返す */
-      retval = SSL_write(ssl, buf, BUFSIZE);
-      retval = ssl_write_error(ssl, retval);
-      LOGC();
-    } while (retval);
-    LOGE( SSL_write );
-
-    LOGS();
-    do {
-      /* 読込が成功するまで繰り返す */
-      retval = SSL_read(ssl, buf, BUFSIZE);
-      retval = ssl_read_error(ssl, retval);
-      LOGC();
-    } while (retval);
-    LOGE( SSL_read );
+      LOG(retval = SSL_read(ssl, buf, BUFSIZE));
+    } while (retval > 0);
 
     /* 切断 */
     LOG(SSL_shutdown(ssl));
+
+  cleanup:
     LOG(SSL_free(ssl)); 
     LOG(SSL_CTX_free(ctx));
     ERR_free_strings();

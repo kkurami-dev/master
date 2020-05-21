@@ -79,7 +79,7 @@ int main(void)
     LOG(SSL_free(ssl));
     LOG(close(sd));
 
-    int ret = rcvprint( buf );
+    ret = rcvprint( buf );
     if( ret == 0 ) break;
     //fprintf(stderr, "%s\n", buf);
   }

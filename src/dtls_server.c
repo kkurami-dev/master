@@ -124,7 +124,7 @@ int main(void)
   SSL_CTX *ctx;
   SSL *ssl;
 
-  int server;
+  int server, ret;
   struct sockaddr_in server_addr;
   struct sockaddr_storage client_addr;
   char buf[BUFSIZE];
@@ -162,28 +162,51 @@ int main(void)
 
     int listen = -1;
     while (listen <= 0){
-      listen = DTLSv1_listen(ssl, (BIO_ADDR *) &client_addr);///
+      LOG(listen = DTLSv1_listen(ssl, (BIO_ADDR *) &client_addr));///
     }
 
     int client_fd = 0;
     LOG(client_fd = socket(client_addr.ss_family, SOCK_DGRAM, 0));
     LOG(bind(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)));
     LOG(connect(client_fd, (struct sockaddr*) &server_addr, sizeof(server_addr)));
+#if 0
     int accept = 0;
     while(accept == 0) {
       accept = SSL_accept(ssl);
     }
+#else
+    LOGS();
+    do{
+      ret = SSL_accept(ssl);
+      ret = ssl_get_accept( ssl, ret );
+      LOGC();
+      //} while(ret > 0);
+    } while(ret);
+    LOGE( SSL_accept );
+#endif
+    
+#if 1
     int len = SSL_read(ssl, buf, BUFSIZE);
     ssl_read_error(ssl, len);
+#else
+    LOGS();
+    do {
+      /* 読込が成功するまで繰り返す */
+      ret = SSL_read(ssl, buf, BUFSIZE);
+      ret = ssl_read_error(ssl, ret);
+      LOGC();
+    } while (ret);
+    LOGE( SSL_read );
+#endif
 
     LOG(SSL_shutdown(ssl));
     LOG(SSL_free(ssl));
     LOG(close(client_fd));
 
-    int ret = rcvprint( buf );
+    ret = rcvprint( buf );
     if( ret == 0 ) break;
     //fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
-    memset(buf, 0x00, BUFSIZE);
+    //memset(buf, 0x00, BUFSIZE);
   }
 
   close(server);

@@ -35,7 +35,7 @@ void ssl_ret_check( int ret, int line, const char *msg );
 #define LOGE(x)        sprintf(log_msg, "%s(%d)", #x, log_count );time_log(__LINE__, log_msg);
 //#define LOG(x)        x
 
-#define RE_TRY  1000
+#define RE_TRY  10
 
 struct timeval tv_s;
 int log_count;
