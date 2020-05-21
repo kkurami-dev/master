@@ -168,8 +168,8 @@ int main(void)
     int client_fd = 0;
     LOG(client_fd = socket(client_addr.ss_family, SOCK_DGRAM, 0));
     LOG(bind(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)));
-    LOG(connect(client_fd, (struct sockaddr*) &server_addr, sizeof(server_addr)));
-#if 0
+    LOG(connect(client_fd, (struct sockaddr*) &client_addr, sizeof(client_addr)));
+#if 1
     int accept = 0;
     while(accept == 0) {
       accept = SSL_accept(ssl);
@@ -185,9 +185,9 @@ int main(void)
     LOGE( SSL_accept );
 #endif
     
-#if 1
+#if 0
     int len = SSL_read(ssl, buf, BUFSIZE);
-    ssl_read_error(ssl, len);
+    ssl_bioread_error(ssl, len);
 #else
     LOGS();
     do {
@@ -198,6 +198,8 @@ int main(void)
     } while (ret);
     LOGE( SSL_read );
 #endif
+    fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
+    OPENSSL_assert(strlen(buf) > 0);
 
     LOG(SSL_shutdown(ssl));
     LOG(SSL_free(ssl));
@@ -205,12 +207,11 @@ int main(void)
 
     ret = rcvprint( buf );
     if( ret == 0 ) break;
-    //fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
-    //memset(buf, 0x00, BUFSIZE);
+    memset(buf, 0x00, BUFSIZE);
   }
 
-  close(server);
   SSL_CTX_free(ctx);
+  close(server);
 
   return EXIT_SUCCESS;
 }

@@ -17,6 +17,7 @@ int main(void)
 {
   int mysocket;
   struct sockaddr_in server;
+  struct sockaddr_in local;
 
   SSL *ssl;
   SSL_CTX *ctx;
@@ -31,6 +32,9 @@ int main(void)
   }
   server.sin_port = htons( TLS_PORT );
   //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
+  memset(&local, 0, sizeof(local));
+  local.sin_family = AF_INET;
+  local.sin_port = htons(0);
 
   int i = 0;
   int len = 0;
@@ -56,7 +60,9 @@ int main(void)
 
     /* 接続 */
     mysocket = socket(AF_INET, SOCK_DGRAM, 0);
+    bind(mysocket, (struct sockaddr*)&local, sizeof(local));
     connect(mysocket, (struct sockaddr*)&server, sizeof(server));
+    
     BIO *bio = BIO_new_dgram(mysocket, BIO_NOCLOSE);
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
@@ -68,7 +74,7 @@ int main(void)
     SSL_get_error(ssl, len);
 
     /* 切断 */
-    SSL_shutdown(ssl);
+    //SSL_shutdown(ssl);
     close(mysocket);
     endprint(log);
   }

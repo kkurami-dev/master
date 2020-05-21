@@ -29,6 +29,7 @@ void ssl_ret_check( int ret, int line, const char *msg );
 #define SSL_RETN(x)		ssl_ret_check( !(x), __LINE__, #x );
 #define SSL_RET1(x)		ssl_ret_check( (1 != x), __LINE__, #x );
 
+//#define LOG(x)        time_log_s(__LINE__, #x);x;
 #define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);
 #define LOGS()        {gettimeofday(&tv_s, NULL);log_count = 0;}
 #define LOGC()        log_count++;

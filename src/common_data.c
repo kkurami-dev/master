@@ -22,6 +22,13 @@ const int senddata_size[ DATA_NUM + 1] =
    0
   };
 
+
+
+void time_log_s(int line, char *msg){
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  printf("%ld.%06lu,%4d %s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, line, msg);
+}
 void time_log(int line, char *msg){
   struct timeval tv_e;
   struct timeval tv;
@@ -102,6 +109,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx) {
 	return 1;
 }
 
+#define ssl_get_error ssl_bioread_error
 int ssl_bioread_error(SSL *ssl, int len ){
   int reading = 0;
   switch (SSL_get_error(ssl, len)) {
@@ -185,6 +193,7 @@ int ssl_read_error(SSL *ssl, int len ){
     break;
   case SSL_ERROR_WANT_READ:
   case SSL_ERROR_ZERO_RETURN:
+    fprintf(stderr, "Socket read warn: re try\n");
     reading = 1;
     break;
   case SSL_ERROR_SYSCALL:
