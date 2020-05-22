@@ -1,7 +1,7 @@
 /* -*- coding: utf-8-unix -*- */
 #include <unistd.h>
 
-#define DATA_NUM 12
+#define DATA_NUM 24
 #define TIME_MAX (3600 * 24)
 
 const int senddata_size[ DATA_NUM + 1] =
@@ -19,23 +19,29 @@ const int senddata_size[ DATA_NUM + 1] =
    8800	,
    17600	,
    35200	,
+   70401	,
+   101	,
+   302	,
+   503	,
+   704	,
+   905	,
+   1106	,
+   2208	,
+   4409	,
+   8801	,
+   17602	,
+   35203	,
    0
   };
 
-
-
-void time_log_s(int line, char *msg){
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  printf("%ld.%06lu,%4d %s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, line, msg);
-}
 void time_log(int line, char *msg){
   struct timeval tv_e;
   struct timeval tv;
   gettimeofday(&tv_e, NULL);
   tv.tv_sec = tv_e.tv_sec - tv_s.tv_sec;
   tv.tv_usec = tv_e.tv_usec - tv_s.tv_usec;
-  printf("%ld.%06lu,%4d %s\n", tv.tv_sec, tv.tv_usec, line, msg);
+  printf("%ld.%06lu,%ld.%06lu,%4d:%s\n",
+         (tv_e.tv_sec % TIME_MAX), tv_e.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
 }
 
 int get_data( int count, char *type, char *msg, char *log )
@@ -50,9 +56,9 @@ int get_data( int count, char *type, char *msg, char *log )
 
   /* 1つの送信データ送信完了 */
   //if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
-  //if ( 0 != count && 0 == no ){
-  //  usleep( 300000 );
-  //}
+  if ( 0 != count && 0 == no ){
+    fprintf(stderr, "end : %s%d\n", type, senddata_size[idx - 1]);
+  }
   /* 全ての計測用データ送信完了 */
   if ( DATA_NUM <= idx){
     return 0;
@@ -81,14 +87,14 @@ int rcvprint( char *msg ){
   sscanf( msg, "%4d,%s%d", &no, type, &size);
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
-  //if((RE_TRY - 1) == no) {
-  //  printf("-,%s%d\n", type, size);
-  //}
+  if((RE_TRY - 1) == no) {
+    fprintf(stderr, "end : %s%d\n", type, size);
+  }
   if((RE_TRY - 1) == no && senddata_size[DATA_NUM - 1] == size ){
     return 0;
   }
   
-  //usleep( 10000 );
+  usleep( TIME_WAIT );
   return 1;
 }
 
@@ -98,7 +104,7 @@ void endprint( char *log ){
   
   printf("%s,%ld.%06lu\n", log, (tv.tv_sec % TIME_MAX), tv.tv_usec);
   
-  //usleep( 50000 );
+  usleep( TIME_WAIT + 30000 );
 }
 
 int verify_callback(int ok, X509_STORE_CTX *ctx) {

@@ -64,3 +64,4 @@ src/certs
 /src/dtls_udp_echo
 /*.csr
 /log*
+/src_lts

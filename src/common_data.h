@@ -11,7 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
-#define MSGSIZE 102400
+#define MSGSIZE 102656
 #define BUFSIZE (MSGSIZE + 1)
 #define HOST    "localhost"
 #define HOST_IP "127.0.0.1"
@@ -23,7 +23,7 @@
 #define C_KEY  "client-key.pem"
 #define CA_PEM "ca.pem"
 
-void ssl_ret_check( int ret, int line, const char *msg );
+//void ssl_ret_check( int ret, int line, const char *msg );
 
 #define SSL_RET(x)		ssl_ret_check( (x),    __LINE__, #x );
 #define SSL_RETN(x)		ssl_ret_check( !(x), __LINE__, #x );
@@ -36,10 +36,11 @@ void ssl_ret_check( int ret, int line, const char *msg );
 #define LOGE(x)        sprintf(log_msg, "%s(%d)", #x, log_count );time_log(__LINE__, log_msg);
 //#define LOG(x)        x
 
-#define RE_TRY  10
+#define RE_TRY  100
+#define TIME_WAIT 1000
 
 struct timeval tv_s;
 int log_count;
-char log_msg[MSGSIZE];
+char log_msg[BUFSIZE];
 
 #include "common_data.c"

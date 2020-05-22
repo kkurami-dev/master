@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     socklen_t sin_size;
     struct sockaddr_in from_addr;
     int ret;
-    char buf[2048]; // 受信バッファ
+    char buf[BUFSIZE]; // 受信バッファ
  
     // IPv4 UDP のソケットを作成
     if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {

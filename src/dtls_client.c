@@ -38,6 +38,7 @@ int main(void)
 
   int i = 0;
   int len = 0;
+  BIO *bio;
   while(1){
     int size = get_data(i++, "dtls", msg, log );
     if ( 0 == size ){
@@ -45,25 +46,25 @@ int main(void)
     }
 
     /* 前準備 */
-    SSL_load_error_strings();
-    SSL_library_init();
-    ctx = SSL_CTX_new(DTLSv1_2_client_method());
+    LOG(SSL_load_error_strings());
+    LOG(SSL_library_init());
+    LOG(ctx = SSL_CTX_new(DTLSv1_2_client_method()));
 
     /* 認証設定 */
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
-    //SSL_RET(SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2));/* SSLv2はセキュリティ的にNGなので除く*/
-    SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, C_CERT));// 証明書の登録
+    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
+    SSL_RET(SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM));// 証明書の登録
     SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
-    //SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
-    SSL_CTX_set_verify_depth (ctx, 2);// 証明書チェーンの深さ
-    SSL_CTX_set_read_ahead(ctx, 1);
+    SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);// 証明書検証機能の有効化
+    SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
 
     /* 接続 */
-    mysocket = socket(AF_INET, SOCK_DGRAM, 0);
-    bind(mysocket, (struct sockaddr*)&local, sizeof(local));
-    connect(mysocket, (struct sockaddr*)&server, sizeof(server));
-    
-    BIO *bio = BIO_new_dgram(mysocket, BIO_NOCLOSE);
+    LOG(mysocket = socket(AF_INET, SOCK_DGRAM, 0));
+    //LOG(bind(mysocket, (struct sockaddr*)&local, sizeof(local)));
+    //LOG(connect(mysocket, (struct sockaddr*)&server, sizeof(server)));
+    //BIO *bio = BIO_new_dgram(mysocket, BIO_CLOSE);
+    LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_bio(ssl, bio, bio));
@@ -71,15 +72,14 @@ int main(void)
 
     /* 通信 */
     LOG(len = SSL_write(ssl, msg, size));
-    SSL_get_error(ssl, len);
+    LOG(LOG(SSL_get_error(ssl, len)));
 
     /* 切断 */
-    //SSL_shutdown(ssl);
-    close(mysocket);
+    SSL_shutdown(ssl);
+    LOG(close(mysocket));
     endprint(log);
   }
 
   return EXIT_SUCCESS;
 }
-
 

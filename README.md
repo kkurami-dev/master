@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-18 06:34:03 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-23 04:56:27 kuramitu"
 --------------------------------------------------------------------------------
 - C言語で書かれている TCP / UDP / TLS / DTLS の通信サンプル
 - TLS の相互認証を行うようにする
@@ -24,6 +24,11 @@
 - DTLS: https://github.com/nplab/DTLS-Examples/blob/master/src/dtls_udp_echo.c
 - DTLS: https://gist.github.com/Jxck/b211a12423622fe304d2370b1f1d30d5
 - Linux ERRNO：https://software.fujitsu.com/jp/manual/manualfiles/M090058/J2X14260/05Z200/pclmsab/pclms130.html
+
+- SSL : [OpenSSL APIを利用したSSL/TLS通信](https://qiita.com/yoshida-jk/items/fc5f8357adcbcbf6044a)
+- TCP : [ソケットプログラミング](https://www.katto.comm.waseda.ac.jp/~katto/Class/11/GazoTokuron/code/socket.html)
+- 
+
 
 ## 未対応
 - TLS の Session 再開機能 : https://techblog.yahoo.co.jp/infrastructure/ssl-session-resumption/

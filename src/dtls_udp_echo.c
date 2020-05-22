@@ -302,7 +302,6 @@ void* connection_handle(void *info) {
 		perror("socket");
 		goto cleanup;
 	}
-
 	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
   if (bind(fd, (const struct sockaddr *) &pinfo->server_addr, sizeof(struct sockaddr_in))) {
     perror("bind");
@@ -608,6 +607,7 @@ void start_client(const char *remote_address, const char *local_address, int por
 	timeout.tv_usec = 0;
 	BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
 
+  /* log */
 	if (verbose) {
 		if (remote_addr.ss.ss_family == AF_INET) {
 			printf ("\nConnected to %s\n",
@@ -617,7 +617,6 @@ void start_client(const char *remote_address, const char *local_address, int por
               inet_ntop(AF_INET6, &remote_addr.s6.sin6_addr, addrbuf, INET6_ADDRSTRLEN));
 		}
 	}
-
 	if (veryverbose && SSL_get_peer_certificate(ssl)) {
 		printf ("------------------------------------------------------------\n");
 		X509_NAME_print_ex_fp(stdout, X509_get_subject_name(SSL_get_peer_certificate(ssl)),

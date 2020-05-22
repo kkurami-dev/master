@@ -7,7 +7,7 @@
 int main(int argc, char** argv)
 {
   int sd, ret;
-    char msg[2048];
+    char msg[BUFSIZE];
     char log[128];
     struct sockaddr_in addr;
  
