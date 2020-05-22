@@ -78,7 +78,7 @@ int get_data( int count, char *type, char *msg, char *log )
 int rcvprint( char *msg ){
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  printf("%.30s,%ld.%06lu\n", msg, (tv.tv_sec % TIME_MAX), tv.tv_usec);
+  printf("%ld.%06lu,%.30s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, msg);
 
   int no = 0;
   char type[128];
@@ -172,16 +172,16 @@ int ssl_write_error(SSL *ssl, int len ){
     reading = 1;
     break;
   case SSL_ERROR_SYSCALL:
-    fprintf(stderr, "\n\nSocket write error: \n\n");
+    fprintf(stderr, "\nSocket write error: %d", errno);
     if (!errno) exit(1);
     reading = 1;
     break;
   case SSL_ERROR_SSL:
-    fprintf(stderr, "\nSSL read error: %ld (%d)\n\n", ERR_get_error(), SSL_get_error(ssl, len));
+    fprintf(stderr, "\nSSL read error: %ld (%d) errno:%d\n", ERR_get_error(), SSL_get_error(ssl, len), errno);
     exit(1);
     break;
   default:
-    fprintf(stderr, "\nUnexpected error while writeing!: %d\n\n", reading);
+    fprintf(stderr, "\nUnexpected error while writeing!: %d errno:%d\n", reading, errno);
     exit(1);
     break;
   }
