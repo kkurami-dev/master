@@ -126,7 +126,7 @@ int main(void)
 
   int server, ret;
   struct sockaddr_in server_addr;
-  struct sockaddr_storage client_addr;
+  struct sockaddr_in client_addr;
   char buf[BUFSIZE];
   BIO *bio;
   BIO *cbio = 0x0;
@@ -165,20 +165,24 @@ int main(void)
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
-    //LOG(bind(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)));
-    //LOG(connect(client_fd, (struct sockaddr*) &client_addr, sizeof(client_addr)));// サーバへの接続 (クライアント側)
-
+    /* TCP の listen, accept の代わり */
     int listen = -1;
     while (listen <= 0){
       LOG(listen = DTLSv1_listen(ssl, (BIO_ADDR *) &client_addr));///
     }
 
+    LOG(client_fd = socket(AF_INET, SOCK_DGRAM, 0));
+    LOG(bind(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)));
+    //LOG(connect(client_fd, (struct sockaddr*) &client_addr, sizeof(client_addr)));// サーバへの接続 (クライアント側)
+
     /* Set new fd and set BIO to connected */
     LOG(cbio = SSL_get_rbio(ssl));
-    LOG(BIO_set_fd(cbio, client_fd, BIO_NOCLOSE));
+    LOG(BIO_set_fd(cbio, server, BIO_NOCLOSE));
     LOG(BIO_ctrl(cbio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &client_addr));///サーバへの接続 (クライアント側)
-
+    //SSL_set_fd(ssl, server);
+  
 #if 1
+    /* Finish handshake */
     LOGS();
     while(accept == 0) {
       accept = SSL_accept(ssl);/* 接続受入れ (サーバ側) */
@@ -191,7 +195,7 @@ int main(void)
       ret = SSL_accept(ssl);
       ret = ssl_bioread_error(ssl, ret );
       LOGC();
-      //} while(ret > 0);
+      //} while(ret > 0)
     } while(ret);
     LOGE( SSL_accept );
 #endif

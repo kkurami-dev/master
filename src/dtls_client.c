@@ -15,7 +15,7 @@
 
 int main(void)
 {
-  int mysocket;
+  int mysocket, ssocket;
   struct sockaddr_in server;
   struct sockaddr_in local;
 
@@ -23,22 +23,25 @@ int main(void)
   SSL_CTX *ctx;
   char msg[BUFSIZE];
   char log[128];
+  int i = 0;
+  int len = 0;
+  BIO *bio;
 
-  memset(&server, 0, sizeof(server));
+  len = sizeof(server);
+  memset(&server, 0, len);
   server.sin_family = AF_INET;
   if (inet_aton(HOST_IP, &server.sin_addr) == 0) {
     fprintf(stderr, "Invalid IP Address.\n");
     exit(EXIT_FAILURE);
   }
   server.sin_port = htons( TLS_PORT );
+  //server.sin_len = len;
   //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
-  memset(&local, 0, sizeof(local));
+  memset(&local, 0, len);
   local.sin_family = AF_INET;
   local.sin_port = htons(0);
+  //local.sin_len = len;
 
-  int i = 0;
-  int len = 0;
-  BIO *bio;
   while(1){
     int size = get_data(i++, "dtls", msg, log );
     if ( 0 == size ){
@@ -62,12 +65,15 @@ int main(void)
     /* 接続 */
     LOG(mysocket = socket(AF_INET, SOCK_DGRAM, 0));
     //LOG(bind(mysocket, (struct sockaddr*)&local, sizeof(local)));
-    //LOG(connect(mysocket, (struct sockaddr*)&server, sizeof(server)));
-    //BIO *bio = BIO_new_dgram(mysocket, BIO_CLOSE);
+    LOG(connect(mysocket, (struct sockaddr*)&server, sizeof(server)));
+
     LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
+    
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_bio(ssl, bio, bio));
+    LOG(BIO_set_fd(bio, mysocket, BIO_NOCLOSE));
+    
     LOG(SSL_connect(ssl));///
 
     /* 通信 */
