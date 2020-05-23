@@ -76,14 +76,18 @@ int get_data( int count, char *type, char *msg, char *log )
 }
 
 int rcvprint( char *msg ){
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  printf("%ld.%06lu,%.30s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, msg);
-
+  struct timeval tv, tv_s;
   int no = 0;
   char type[128];
   int size = 0;
-  sscanf( msg, "%4d,%s%d", &no, type, &size);
+
+  gettimeofday(&tv, NULL);
+  sscanf( msg, "%4d,%s%d,%ld.%06lu", &no, type, &size, &(tv_s.tv_sec), &(tv_s.tv_usec));
+  tv.tv_sec = (tv.tv_sec % TIME_MAX);
+  tv_s.tv_sec = tv.tv_sec - tv_s.tv_sec;
+  tv_s.tv_usec = tv.tv_usec > tv_s.tv_usec ? tv.tv_usec - tv_s.tv_usec : tv.tv_usec;
+  printf("%ld.%06lu,%ld.%06lu,%.29s\n", tv.tv_sec, tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
+
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
   if((RE_TRY - 1) == no) {
@@ -99,10 +103,16 @@ int rcvprint( char *msg ){
 }
 
 void endprint( char *log ){
-  struct timeval tv;
+  struct timeval tv, tv_s;
   gettimeofday(&tv, NULL);
+  char dummy[256];
+  int i;
 
-  printf("%ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, log);
+  sscanf( log, "%18s%d,%ld.%06lu", dummy, &i, &(tv_s.tv_sec), &(tv_s.tv_usec));
+  tv.tv_sec = (tv.tv_sec % TIME_MAX);
+  tv_s.tv_sec = tv.tv_sec - tv_s.tv_sec;
+  tv_s.tv_usec = tv.tv_usec > tv_s.tv_usec ? tv.tv_usec - tv_s.tv_usec : tv.tv_usec;
+  printf("%ld.%06lu,%ld.%06lu,%s\n", tv.tv_sec, tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
 
   usleep( TIME_WAIT + 30000 );
 }
@@ -117,16 +127,20 @@ int verify_callback(int ok, X509_STORE_CTX *ctx) {
 
 #define ssl_get_error ssl_bioread_error
 int ssl_bioread_error(SSL *ssl, int len ){
-  int reading = 0;
-  switch (SSL_get_error(ssl, len)) {
+  int reading = 1;
+  if(len > 0){
+    return reading;
+  }
+  reading = SSL_get_error(ssl, len);
+  switch (reading) {
   case SSL_ERROR_NONE:
-    reading = 0;
+    reading = 1;
     break;
   case SSL_ERROR_WANT_READ:
     /* Stop reading on socket timeout, otherwise try again */
     if (BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)) {
       printf("Timeout! No response received.\n");
-      reading = 0;
+      reading = -1;
     }
     break;
   case SSL_ERROR_ZERO_RETURN:
@@ -139,12 +153,12 @@ int ssl_bioread_error(SSL *ssl, int len ){
     break;
   case SSL_ERROR_SSL:
     printf("SSL read error: ");
-    printf("%ld (%d)\n", ERR_get_error(), SSL_get_error(ssl, len));
-    exit(1);
+    printf("%ld (%d)\n", ERR_get_error(), reading);
+    reading = -1;
     break;
   default:
-    printf("Unexpected error while reading!\n");
-    exit(1);
+    fprintf(stderr, "Unexpected error while reading!\n");
+    reading = -1;
     break;
   }
   return reading;

@@ -34,6 +34,7 @@ int main(void)
 
   int i = 0;
   int len = 0;
+  BIO *bio;
   while(1){
     int size = get_data(i++, "dtls", msg, log );
     if ( 0 == size ){
@@ -41,9 +42,9 @@ int main(void)
     }
 
     /* 前準備 */
-    SSL_load_error_strings();
-    SSL_library_init();
-    ctx = SSL_CTX_new(DTLSv1_2_client_method());
+    LOG(SSL_load_error_strings());
+    LOG(SSL_library_init());
+    LOG(ctx = SSL_CTX_new(DTLSv1_2_client_method()));
 
     /* 認証設定 */
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
@@ -55,9 +56,9 @@ int main(void)
     SSL_CTX_set_read_ahead(ctx, 1);
 
     /* 接続 */
-    mysocket = socket(AF_INET, SOCK_DGRAM, 0);
-    connect(mysocket, (struct sockaddr*)&server, sizeof(server));
-    BIO *bio = BIO_new_dgram(mysocket, BIO_NOCLOSE);
+    LOG(mysocket = socket(AF_INET, SOCK_DGRAM, 0));
+    LOG(connect(mysocket, (struct sockaddr*)&server, sizeof(server)));
+    LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_bio(ssl, bio, bio));

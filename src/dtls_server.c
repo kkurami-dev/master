@@ -152,31 +152,44 @@ int main(void)
 
   LOG(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
   LOG(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
- 
+
+  BIO *bio;
+  int client_fd = 0;
+  int accept = 0;
+  int len;
+  int ret;
   while(1) {
-    bzero(&client_addr, sizeof(client_addr));
-    BIO *bio = BIO_new_dgram(server, BIO_NOCLOSE);
+    LOG(bzero(&client_addr, sizeof(client_addr)));
+    LOG(bio = BIO_new_dgram(server, BIO_NOCLOSE));
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
-    int listen = -1;
-    while (listen <= 0){
-      listen = DTLSv1_listen(ssl, (BIO_ADDR *) &client_addr);///
-    }
+    LOGS();
+    do {
+      ret = DTLSv1_listen(ssl, (BIO_ADDR *) &client_addr);///
+      LOGC()
+    }while (ret <= 0);
+    LOGE(DTLSv1_listen);
 
-    int client_fd = 0;
     LOG(client_fd = socket(client_addr.ss_family, SOCK_DGRAM, 0));
     LOG(bind(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)));
     LOG(connect(client_fd, (struct sockaddr*) &server_addr, sizeof(server_addr)));
-    int accept = 0;
+    LOGS();
     while(accept == 0) {
       accept = SSL_accept(ssl);
+      LOGC();
     }
-    int len = SSL_read(ssl, buf, BUFSIZE);
-    ssl_get_error(ssl, len);
+    LOGE(SSL_accept);
+    LOG(len = SSL_read(ssl, buf, BUFSIZE));
+    if(len <= 0){
+      fprintf(stderr, "SSL_read() size=0 error:%d errno:%d ", SSL_get_error(ssl, len), errno);
+      perror("read");
+    }
 
     LOG(SSL_shutdown(ssl));
+    
+  cleanup:
     LOG(close(client_fd));
     LOG(SSL_free(ssl));
 
