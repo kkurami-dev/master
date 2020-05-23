@@ -135,9 +135,10 @@ int main(void)
   ctx = SSL_CTX_new(DTLSv1_2_server_method());
 
   /* サーバ認証設定 */
+  SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
   SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, S_CERT)); // 証明書の登録
   SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM)); // 秘密鍵の登録
-  //SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録とクライアント証明書の要求
+  SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録とクライアント証明書の要求
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
   SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
 
@@ -154,12 +155,10 @@ int main(void)
   LOG(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
 
   BIO *bio;
-  int client_fd = 0;
   int accept = 0;
   int len;
   int ret;
   while(1) {
-    LOG(bzero(&client_addr, sizeof(client_addr)));
     LOG(bio = BIO_new_dgram(server, BIO_NOCLOSE));
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_bio(ssl, bio, bio));
@@ -172,9 +171,6 @@ int main(void)
     }while (ret <= 0);
     LOGE(DTLSv1_listen);
 
-    LOG(client_fd = socket(client_addr.ss_family, SOCK_DGRAM, 0));
-    LOG(bind(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)));
-    LOG(connect(client_fd, (struct sockaddr*) &server_addr, sizeof(server_addr)));
     LOGS();
     while(accept == 0) {
       accept = SSL_accept(ssl);
@@ -190,7 +186,6 @@ int main(void)
     LOG(SSL_shutdown(ssl));
     
   cleanup:
-    LOG(close(client_fd));
     LOG(SSL_free(ssl));
 
     int ret = rcvprint( buf );
