@@ -4,6 +4,9 @@
 #define DATA_NUM  23
 #define TIME_MAX (3600 * 24)
 
+int snd_count = 0;
+int rcv_count = 0;
+
 const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
@@ -56,12 +59,13 @@ int get_data( int count, char *type, char *msg, char *log )
   /* 1つの送信データ送信完了 */
   //if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
   if ( 0 != count && 0 == no ){
-    fprintf(stderr, "end : %s, %d\n", type, senddata_size[idx - 1]);
+    fprintf(stderr, "end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
   }
   /* 全ての計測用データ送信完了 */
   if ( DATA_NUM <= idx){
     return 0;
   }
+  snd_count++;
   memset( msg, 0x00, BUFSIZE);
   memset( msg, 'A', senddata_size[idx] );
 
@@ -91,12 +95,13 @@ int rcvprint( char *msg ){
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
   if((RE_TRY - 1) == no) {
-    fprintf(stderr, "end : %s%d\n", type, size);
+    fprintf(stderr, "end : %s%d rcv:%d\n", type, size, rcv_count);
     if(senddata_size[DATA_NUM - 1] == size ){
-      fprintf(stderr, "all end : %s%d\n", type, size);
       return 0;
     }
   }
+
+  rcv_count++;
 
   usleep( TIME_WAIT );
   return 1;

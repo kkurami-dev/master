@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-23 05:33:17 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-23 10:46:33 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -29,7 +29,7 @@ OpenSSL と通常のソケット通信を行うサンプル
 
 - SSL : [OpenSSL APIを利用したSSL/TLS通信](https://qiita.com/yoshida-jk/items/fc5f8357adcbcbf6044a)
 - TCP : [ソケットプログラミング](https://www.katto.comm.waseda.ac.jp/~katto/Class/11/GazoTokuron/code/socket.html)
-- 
+- SSL : [OpenSSL API によるセキュア・プログラミング 第 1 回 API の概要 基本的なセキュア接続と非セキュア接続を作成する](https://www.ibm.com/developerworks/jp/linux/library/l-openssl/index.html)
 
 
 ## 未対応

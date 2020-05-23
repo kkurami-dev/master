@@ -13,7 +13,7 @@ REBULD=0
 while getopts rch OPT
 do
     case $OPT in
-        c)  ${CLEN}
+        d)  ${CLEN}
             exit;
             ;;
         r)  REBULD=1
