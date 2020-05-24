@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-23 10:46:33 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-24 01:03:18 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -17,7 +17,7 @@ OpenSSL と通常のソケット通信を行うサンプル
 - 時間と指定バイトまで「A」で埋めたデータを送信、応答は「ack」固定
 - マイクロ秒単位までの時間を出力
 
-## 参考URL
+## サンプル
 - SSL : https://blog.sarabande.jp/post/82087204080
 - SSL : https://blog.sarabande.jp/post/82068392478
 - SSL : https://qiita.com/yoshida-jk/items/fc5f8357adcbcbf6044a
@@ -28,14 +28,13 @@ OpenSSL と通常のソケット通信を行うサンプル
 - Linux ERRNO：https://software.fujitsu.com/jp/manual/manualfiles/M090058/J2X14260/05Z200/pclmsab/pclms130.html
 
 - SSL : [OpenSSL APIを利用したSSL/TLS通信](https://qiita.com/yoshida-jk/items/fc5f8357adcbcbf6044a)
-- TCP : [ソケットプログラミング](https://www.katto.comm.waseda.ac.jp/~katto/Class/11/GazoTokuron/code/socket.html)
-- SSL : [OpenSSL API によるセキュア・プログラミング 第 1 回 API の概要 基本的なセキュア接続と非セキュア接続を作成する](https://www.ibm.com/developerworks/jp/linux/library/l-openssl/index.html)
-
-
-## 未対応
 - TLS の Session 再開機能 : https://techblog.yahoo.co.jp/infrastructure/ssl-session-resumption/
 - HTTP/2 クライアント実装サンプル (TLS版) : https://www.nslabs.jp/http2-client-implementation-sample-tls-version.rhtml
-- 
+
+## 参考資料
+- SSL : [OpenSSL API によるセキュア・プログラミング 第 1 回 API の概要 基本的なセキュア接続と非セキュア接続を作成する](https://www.ibm.com/developerworks/jp/linux/library/l-openssl/index.html)
+- [SOCKET](https://linuxjm.osdn.jp/html/LDP_man-pages/man2/socket.2.html)
+- TCP : [ソケットプログラミング](https://www.katto.comm.waseda.ac.jp/~katto/Class/11/GazoTokuron/code/socket.html)
 
 # SSL
 SSL/TLS で通信を行い、その時間を計測する

@@ -55,6 +55,7 @@ do
 
     if [ ! -f ${BIN} ]; then
         # bin がないのでコンパイル
+        #echo "gcc ${DEBUG_OPTE} -o ${BIN} ${INC} ${SRC} ${LIB}"
         gcc ${DEBUG_OPTE} -o ${BIN} ${INC} ${SRC} ${LIB} 2>&1
     elif [ ${SRC} -nt ${BIN} ]; then
         # bin が古いのでコンパイル
