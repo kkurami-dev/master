@@ -64,8 +64,10 @@ struct timeval diff_time( struct timeval *tv_s, struct timeval *tv_e){
   tmp_e = ((tv_e->tv_sec % TIME_MAX) * 1000000) + tv_e->tv_usec;
   if (tmp_e > tmp_s){
     tmp_s = tmp_e - tmp_s;
-  } else {
+  } else if(tmp_e < tmp_s) {
     tmp_s = tmp_e + ((TIME_MAX * 1000000) - tmp_s);
+  } else {
+    tmp_s = 0;
   }
   tv.tv_sec  = (long)(tmp_s / 1000000);
   tv.tv_usec = tmp_s % 1000000;
@@ -160,7 +162,7 @@ void endprint( char *log ){
 
   if(strlen(log) > 0) ++snd_count;
 
-  sscanf( log, "%18s%d,%ld.%06lu", dummy, &i, &(tv_s.tv_sec), &(tv_s.tv_usec));
+  sscanf( log, "%d,%s%d,%ld.%06lu", &i, dummy, &i, &(tv_s.tv_sec), &(tv_s.tv_usec));
   tv_s = diff_time( &tv_s, &tv );
   printf("% 4ld.%06lu,% 2ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
 

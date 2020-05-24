@@ -68,10 +68,10 @@ int main(int argc, char* argv[]) {
       } else if(sendMsgSize == 0){
         break;
       }
-      
+
       ret = rcvprint( recvBuffer );
       if( ret == 0 ) {
-        LOG(close(servSock));
+        close(servSock);
         return EXIT_SUCCESS;
       }
     }
@@ -79,7 +79,6 @@ int main(int argc, char* argv[]) {
     LOG(close(clitSock));
   }
 
-  LOG(close(servSock));
-
+  close(servSock);
   return EXIT_SUCCESS;
 }
