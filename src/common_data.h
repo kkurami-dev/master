@@ -29,15 +29,28 @@
 #define SSL_RETN(x)		ssl_ret_check( !(x), __LINE__, #x );
 #define SSL_RET1(x)		ssl_ret_check( (1 != x), __LINE__, #x );
 
-//#define LOG(x)        time_log_s(__LINE__, #x);x;
+#define LOG_PRINT  1 /*  詳細にログを出力する  */
+#define TEST       0 /*  テストデータを少なく絞る  */
+
+#if (LOG_PRINT == 1)
 #define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);
 #define LOGS()        {gettimeofday(&tv_s, NULL);log_count = 0;}
 #define LOGC()        log_count++;
 #define LOGE(x)        sprintf(log_msg, "%s(%d)", #x, log_count );time_log(__LINE__, log_msg);
-//#define LOG(x)        x
+#else
+#define LOG(x)        x
+#define LOGS()
+#define LOGC()
+#define LOGE(x)
+#endif
 
+#if (TEST == 1)
+#define RE_TRY  50
+#define TIME_WAIT 0
+#else
 #define RE_TRY  100
 #define TIME_WAIT 1000
+#endif
 
 struct timeval tv_s;
 int log_count;

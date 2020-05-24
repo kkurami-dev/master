@@ -161,12 +161,13 @@ int main(void)
   while(1) {
     LOG(bio = BIO_new_dgram(server, BIO_NOCLOSE));
     LOG(ssl = SSL_new(ctx));
+    LOG(SSL_set_fd(ssl, server));
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
     LOGS();
     do {
-      ret = DTLSv1_listen(ssl, (BIO_ADDR *) &client_addr);///
+      ret = DTLSv1_listen(ssl, (BIO_ADDR *)&client_addr);///
       LOGC()
     }while (ret <= 0);
     LOGE(DTLSv1_listen);
@@ -177,13 +178,75 @@ int main(void)
       LOGC();
     }
     LOGE(SSL_accept);
+
+#if 0
     LOG(len = SSL_read(ssl, buf, BUFSIZE));
     if(len <= 0){
       fprintf(stderr, "SSL_read() size=0 error:%d errno:%d ", SSL_get_error(ssl, len), errno);
       perror("read");
     }
+#else
+    LOGS();
+    while (1)
+    {
+      LOGC();
+        /* SSLデータ受信 */
+      len  = SSL_read(ssl, buf, BUFSIZE);
+      if ( 0 < len ) break;
+      ret = SSL_get_error(ssl, len);
+      switch (ret)
+        {
+        case SSL_ERROR_NONE:
+          break;
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_SYSCALL:
+          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
+          perror("read");
+          continue;
+          //case SSL_ERROR_ZERO_RETURN:
+        case SSL_ERROR_SSL:
+          printf("SSL read error: %s (%d)\n", ERR_error_string(ERR_get_error(), buf), ret);
+          break;
+        default:
+          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
+          perror("read");
+          goto cleanup;
+          // エラー処理
+        }
+      break;
+    }
+    LOGE(SSL_read);
+#endif
 
+#if 0
     LOG(SSL_shutdown(ssl));
+#else
+    LOGS();
+    while (1)
+      {
+        LOGC();
+        /* SSL通信の終了 */
+        len  = SSL_shutdown(ssl);
+        ret = SSL_get_error(ssl, len);
+        switch (ret)
+          {
+          case SSL_ERROR_NONE:
+            break;
+          case SSL_ERROR_WANT_READ:
+          case SSL_ERROR_WANT_WRITE:
+          case SSL_ERROR_SYSCALL:
+            //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
+            continue;
+          default:
+            fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
+            perror("write");
+            break;
+          }
+        break;
+      }
+    LOGE(SSL_shutdown);
+#endif
     
   cleanup:
     LOG(SSL_free(ssl));

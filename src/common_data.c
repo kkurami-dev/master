@@ -1,16 +1,24 @@
 /* -*- coding: utf-8-unix -*- */
 #include <unistd.h>
 
-#define DATA_NUM  23
-#define TIME_MAX (3600 * 24)
+//#define TIME_MAX (long)(3600)
+#define TIME_MAX (long) ( 10 )
 
-int snd_count = 0;
-int rcv_count = 0;
-
+#if (TEST == 1)
+#define DATA_NUM  2
 const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
-   35200	,
+   //35200	,
+   10000	, 100, 0
+  };
+#else
+#define DATA_NUM  23
+const int senddata_size[ DATA_NUM + 1] =
+  {
+   /* 送信データ  */
+   //35200	,
+   10000	,
    100	,
    300	,
    500	,
@@ -20,7 +28,8 @@ const int senddata_size[ DATA_NUM + 1] =
    2200	,
    4400	,
    8800	,
-   17600	,
+   //17600	,
+   10100	,
    101	,
    302	,
    503	,
@@ -30,19 +39,45 @@ const int senddata_size[ DATA_NUM + 1] =
    2208	,
    4409	,
    8801	,
-   17602	,
-   35203	,
+   //17602	,
+   10300	,
+   //35203	,
+   10010	,
    999,
    0
   };
+#endif
+
+int snd_count = 0;
+int rcv_count = 0;
+
+/* 
+ * 経過時刻の計算
+ * timeval構造体の差分計算（最大１日の差分まで出す)
+ */
+struct timeval diff_time( struct timeval *tv_s, struct timeval *tv_e){
+  struct timeval tv;
+  long tmp_s;
+  long tmp_e;
+
+  tmp_s = ((tv_s->tv_sec % TIME_MAX) * 1000000) + tv_s->tv_usec;
+  tmp_e = ((tv_e->tv_sec % TIME_MAX) * 1000000) + tv_e->tv_usec;
+  if (tmp_e > tmp_s){
+    tmp_s = tmp_e - tmp_s;
+  } else {
+    tmp_s = tmp_e + ((TIME_MAX * 1000000) - tmp_s);
+  }
+  tv.tv_sec  = (long)(tmp_s / 1000000);
+  tv.tv_usec = tmp_s % 1000000;
+  return tv;
+}
 
 void time_log(int line, char *msg){
   struct timeval tv_e;
   struct timeval tv;
   gettimeofday(&tv_e, NULL);
-  tv.tv_sec = tv_e.tv_sec - tv_s.tv_sec;
-  tv.tv_usec = tv_e.tv_usec > tv_s.tv_usec ? tv_e.tv_usec - tv_s.tv_usec : tv_e.tv_usec;
-  printf("%ld.%06lu,%ld.%06lu,%4d:%s\n",
+  tv = diff_time( &tv_s, &tv_e );
+  printf("% 4ld.%06lu,% 2ld.%06lu,%4d:%s\n",
          (tv_e.tv_sec % TIME_MAX), tv_e.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
 }
 
@@ -65,14 +100,14 @@ int get_data( int count, char *type, char *msg, char *log )
   if ( DATA_NUM <= idx){
     return 0;
   }
-  snd_count++;
+
   memset( msg, 0x00, BUFSIZE);
   memset( msg, 'A', senddata_size[idx] );
 
   /* 送信文字列の設定 */
   /* https://www.mm2d.net/main/prog/c/time-04.html  */
   gettimeofday(&tv, NULL);
-  sprintf(buf, "%4d,%4s, %6d,%ld.%06lu", no, type, size, (tv.tv_sec % TIME_MAX), tv.tv_usec);
+  sprintf(buf, "%4d,%4s, %6d,% 4ld.%06lu", no, type, size, (tv.tv_sec % TIME_MAX), tv.tv_usec);
   sprintf(log, "%.30s", buf);
   strncpy(msg, buf, strlen(buf));
 
@@ -87,10 +122,8 @@ int rcvprint( char *msg ){
 
   gettimeofday(&tv, NULL);
   sscanf( msg, "%4d,%s%d,%ld.%06lu", &no, type, &size, &(tv_s.tv_sec), &(tv_s.tv_usec));
-  tv.tv_sec = (tv.tv_sec % TIME_MAX);
-  tv_s.tv_sec = tv.tv_sec - tv_s.tv_sec;
-  tv_s.tv_usec = tv.tv_usec > tv_s.tv_usec ? tv.tv_usec - tv_s.tv_usec : tv.tv_usec;
-  printf("%ld.%06lu,%ld.%06lu,%.29s\n", tv.tv_sec, tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
+  tv_s = diff_time( &tv_s, &tv );
+  printf("% 4ld.%06lu,% 2ld.%06lu,%.29s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
 
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
@@ -101,7 +134,7 @@ int rcvprint( char *msg ){
     }
   }
 
-  rcv_count++;
+  if(strlen(msg) > 0) ++rcv_count;
 
   usleep( TIME_WAIT );
   return 1;
@@ -113,11 +146,11 @@ void endprint( char *log ){
   char dummy[256];
   int i;
 
+  if(strlen(log) > 0) ++snd_count;
+
   sscanf( log, "%18s%d,%ld.%06lu", dummy, &i, &(tv_s.tv_sec), &(tv_s.tv_usec));
-  tv.tv_sec = (tv.tv_sec % TIME_MAX);
-  tv_s.tv_sec = tv.tv_sec - tv_s.tv_sec;
-  tv_s.tv_usec = tv.tv_usec > tv_s.tv_usec ? tv.tv_usec - tv_s.tv_usec : tv.tv_usec;
-  printf("%ld.%06lu,%ld.%06lu,%s\n", tv.tv_sec, tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
+  tv_s = diff_time( &tv_s, &tv );
+  printf("% 4ld.%06lu,% 2ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
 
   usleep( TIME_WAIT + 30000 );
 }

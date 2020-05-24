@@ -17,6 +17,7 @@ int main(void)
 {
   int mysocket;
   struct sockaddr_in server;
+  //struct sockaddr_in local;
 
   SSL *ssl;
   SSL_CTX *ctx;
@@ -57,19 +58,81 @@ int main(void)
 
     /* 接続 */
     LOG(mysocket = socket(AF_INET, SOCK_DGRAM, 0));
+    //LOG(bind(mysocket, (struct sockaddr *)&server, sizeof(server))); // ?
     LOG(connect(mysocket, (struct sockaddr*)&server, sizeof(server)));
     LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
+    //LOG(SSL_set_fd(ssl, mysocket));
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_connect(ssl));///
 
     /* 通信 */
+#if 0
     LOG(len = SSL_write(ssl, msg, size));
     SSL_get_error(ssl, len);
+#else
+    int ret = 0;
+    LOGS();
+    while (1)
+    {
+      LOGC();
+        /* SSLデータ送信 */
+      len  = SSL_write(ssl, msg, size);
+      if ( 0 < len ) break;
+      ret = SSL_get_error(ssl, ret);
+      switch (ret)
+        {
+        case SSL_ERROR_NONE:
+          break;
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_SYSCALL:
+          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
+          perror("write");
+          continue;
+        case SSL_ERROR_SSL:
+          printf("SSL write error: %s (%d)\n", ERR_error_string(ERR_get_error(), msg), ret);
+          break;
+        default:
+          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
+          perror("write");
+          goto cleanup;
+          // エラー処理
+        }
+      break;
+    }
+    LOGE(SSL_write);
+#endif
 
     /* 切断 */
+#if 1
     LOG(SSL_shutdown(ssl));
+#else
+    while (1)
+      {
+        /* SSL通信の終了 */
+        LOG(len  = SSL_shutdown(ssl));
+        ret = SSL_get_error(ssl, len);
+        switch (ret)
+          {
+          case SSL_ERROR_NONE:
+            break;
+          case SSL_ERROR_WANT_READ:
+          case SSL_ERROR_WANT_WRITE:
+          case SSL_ERROR_SYSCALL:
+            fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
+            continue;
+          default:
+            fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
+            perror("write");
+            break;
+          }
+        break;
+      }
+#endif
+    
+  cleanup:
     LOG(close(mysocket));
     LOG(SSL_free(ssl));
     LOG(SSL_CTX_free(ctx));
