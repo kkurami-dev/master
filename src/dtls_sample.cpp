@@ -15,8 +15,7 @@ struct DTLSStuff { //struct to contain DTLS object instances
 };
 
 void DTLSErr() { //DTLS error reporting
-  ERR_print_errors_fp(stderr);
-  exit(1);
+  ERR_print_errors_fp(stderr); exit(1);
 }
 
 int newSocket(sockaddr_in addr) { //creates a socket and returns the file descriptor //TODO expand for multi-platform
@@ -24,10 +23,19 @@ int newSocket(sockaddr_in addr) { //creates a socket and returns the file descri
   int fd;
   int iResult;
   iResult = WSAStartup(MAKEWORD(2, 2), &wsaData); //Initialize Winsock
-  if (iResult != 0) { printf("WSAStartup failed: %d\n", iResult); exit(1); }
-  fd = socket(AF_INET, SOCK_DGRAM, 0); if (fd < 0) { perror("Unable to create socket"); exit(1); } //create socket
+  if (iResult != 0) {
+    printf("WSAStartup failed: %d\n", iResult); exit(1);
+  }
+
+  fd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (fd < 0) {
+    perror("Unable to create socket"); exit(1);
+  } //create socket
+
   printf("New Socket: %i\n", fd);
-  if (bind(fd, (struct sockaddr *)&addr, sizeof(sockaddr)) < 0) { printf("bind failed with error %u\n", WSAGetLastError()); exit(1); }
+  if (bind(fd, (struct sockaddr *)&addr, sizeof(sockaddr)) < 0) {
+    printf("bind failed with error %u\n", WSAGetLastError()); exit(1);
+  }
   return fd; //file descriptor
 }
 

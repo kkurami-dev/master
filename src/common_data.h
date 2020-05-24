@@ -52,6 +52,9 @@
 #define TIME_WAIT 1000
 #endif
 
+//#define NEXT_SEND_WAIT  30000
+#define NEXT_SEND_WAIT  0
+
 struct timeval tv_s;
 int log_count;
 char log_msg[BUFSIZE];

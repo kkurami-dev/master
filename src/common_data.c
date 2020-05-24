@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 //#define TIME_MAX (long)(3600)
-#define TIME_MAX (long) ( 10 )
+#define TIME_MAX (long) ( 600 )
 
 #if (TEST == 1)
 #define DATA_NUM  2
@@ -18,13 +18,13 @@ const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
    //35200	,
-   10000	,
-   100	,
-   300	,
-   500	,
-   700	,
-   900	,
-   1100	,
+   16383	,
+   16384	,
+   16385	,
+   6388	,
+   6390	,
+   7000	,
+   5000	,
    2200	,
    4400	,
    8800	,
@@ -72,6 +72,9 @@ struct timeval diff_time( struct timeval *tv_s, struct timeval *tv_e){
   return tv;
 }
 
+/*
+ * 処理終了時に呼び出し関数の処理時間を表示する
+ */
 void time_log(int line, char *msg){
   struct timeval tv_e;
   struct timeval tv;
@@ -81,6 +84,9 @@ void time_log(int line, char *msg){
          (tv_e.tv_sec % TIME_MAX), tv_e.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
 }
 
+/* 
+ * 送信メッセージ作成と送信開始時間の記録
+ */
 int get_data( int count, char *type, char *msg, char *log )
 {
   struct timeval tv;
@@ -114,6 +120,9 @@ int get_data( int count, char *type, char *msg, char *log )
   return size;
 }
 
+/* 
+ * メッセージ受信受診後のログだし
+ */
 int rcvprint( char *msg ){
   struct timeval tv, tv_s;
   int no = 0;
@@ -140,6 +149,9 @@ int rcvprint( char *msg ){
   return 1;
 }
 
+/* 
+ * メッセージ送信完了後のログだし
+ */
 void endprint( char *log ){
   struct timeval tv, tv_s;
   gettimeofday(&tv, NULL);
@@ -152,54 +164,18 @@ void endprint( char *log ){
   tv_s = diff_time( &tv_s, &tv );
   printf("% 4ld.%06lu,% 2ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
 
-  usleep( TIME_WAIT + 30000 );
+  usleep( TIME_WAIT + NEXT_SEND_WAIT );
 }
 
+/* 
+ * SSL通信時認証判定関数(常にOKを出している)
+ */
 int verify_callback(int ok, X509_STORE_CTX *ctx) {
 	/* This function should ask the user if he trusts the received certificate. Here we always trust.
    * この関数は、ユーザーが受信した証明書を信頼しているかどうかをユーザーに確認する必要があります。
    * ここでは常に信頼しています。
    */
 	return 1;
-}
-
-#define ssl_get_error ssl_bioread_error
-int ssl_bioread_error(SSL *ssl, int len ){
-  int reading = 1;
-  if(len > 0){
-    return reading;
-  }
-  reading = SSL_get_error(ssl, len);
-  switch (reading) {
-  case SSL_ERROR_NONE:
-    reading = 1;
-    break;
-  case SSL_ERROR_WANT_READ:
-    /* Stop reading on socket timeout, otherwise try again */
-    if (BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)) {
-      printf("Timeout! No response received.\n");
-      reading = -1;
-    }
-    break;
-  case SSL_ERROR_ZERO_RETURN:
-    reading = 0;
-    break;
-  case SSL_ERROR_SYSCALL:
-    printf("Socket read error: ");
-    if (!errno) exit(1);
-    reading = 0;
-    break;
-  case SSL_ERROR_SSL:
-    printf("SSL read error: ");
-    printf("%ld (%d)\n", ERR_get_error(), reading);
-    reading = -1;
-    break;
-  default:
-    fprintf(stderr, "Unexpected error while reading!\n");
-    reading = -1;
-    break;
-  }
-  return reading;
 }
 
 void ssl_ret_check( int ret, int line, const char *msg ){
@@ -210,36 +186,6 @@ void ssl_ret_check( int ret, int line, const char *msg ){
   exit(EXIT_FAILURE);
 }
 
-int ssl_write_error(SSL *ssl, int len ){
-  if(len > 0){
-    return 0;
-  }
-  int reading = SSL_get_error(ssl, len);
-  switch (reading) {
-  case SSL_ERROR_NONE:
-    reading = 0;
-    break;
-  case SSL_ERROR_WANT_WRITE:
-  case SSL_ERROR_ZERO_RETURN:
-    reading = 1;
-    break;
-  case SSL_ERROR_SYSCALL:
-    fprintf(stderr, "\nSocket write error: %d", errno);
-    if (!errno) exit(1);
-    reading = 1;
-    break;
-  case SSL_ERROR_SSL:
-    fprintf(stderr, "\nSSL read error: %ld (%d) errno:%d\n", ERR_get_error(), SSL_get_error(ssl, len), errno);
-    exit(1);
-    break;
-  default:
-    fprintf(stderr, "\nUnexpected error while writeing!: %d errno:%d\n", reading, errno);
-    exit(1);
-    break;
-  }
-
-  return reading;
-}
 int ssl_read_error(SSL *ssl, int len ){
   if(len > 0){
     return 0;
