@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 06:45:52 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 06:47:51 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -47,6 +47,9 @@ OpenSSL と通常のソケット通信を行うサンプル
 
 ## 通信内容
 - [【図解】https(SSL/TLS)の仕組みとシーケンス,パケット構造 〜暗号化の範囲, Encrypted Alert, ヘッダやレイヤについて～](https://milestone-of-se.nesuke.com/nw-basic/tls/https-structure/)
+  
+  ![図解](https://github.com/kkurami-dev/master/blob/Openssl-Examples/image/tls-sequence-01.webp "通信概要")
+
 
 
 - 通信内容を ワイヤーシャークでキャプチャした結果  
