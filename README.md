@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-25 22:22:50 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 06:43:52 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -45,6 +45,12 @@ OpenSSL と通常のソケット通信を行うサンプル
 -TCP/UDP : [C言語-ソケットプログラミング](http://capm-network.com/?tag=C言語-ソケットプログラミング)
 - GDB : [gcc+gdbによるプログラムのデバッグ 第3回 gdbの便利な機能、デバッグの例](https://rat.cis.k.hosei.ac.jp/article/devel/debugongccgdb3.html)
 
+## 通信内容
+- [【図解】https(SSL/TLS)の仕組みとシーケンス,パケット構造 〜暗号化の範囲, Encrypted Alert, ヘッダやレイヤについて～](https://milestone-of-se.nesuke.com/nw-basic/tls/https-structure/)
+
+
+- 通信内容を ワイヤーシャークでキャプチャした結果
+![DTLSの通信内容](https://github.com/kkurami-dev/master/blob/Openssl-Examples/image/DTLSの通信内容.png "通信内容")
 
 # SSL
 SSL/TLS で通信を行い、その時間を計測する
