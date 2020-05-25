@@ -73,7 +73,7 @@ int main(void)
       fprintf(stderr, "\nSSL_connect failed with :%d errno:%d\n\n", SSL_get_error(ssl, -1), errno );
       goto cleanup;
     }
-    LOGE( "SSL_connect" );
+    LOGE( SSL_connect() );
 
     do {
       /*  受送信処理 */

@@ -48,6 +48,9 @@
 #if (TEST == 1)
 #define RE_TRY  50
 #define TIME_WAIT 0
+#elif (TEST == 2)
+#define RE_TRY  100
+#define TIME_WAIT 1
 #elif (ONE_SEND == 1)
 #define RE_TRY  100
 #define TIME_WAIT 1000
