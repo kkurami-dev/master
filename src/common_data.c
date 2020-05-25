@@ -13,14 +13,14 @@ const int senddata_size[ DATA_NUM + 1] =
    10000	, 100, 0
   };
 #else
-#define DATA_NUM  23
+#define DATA_NUM  22
 const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
    //35200	,
    16383	,
    16384	,
-   16385	,
+   //16385	, /* このデータサイズは DTLS でエラーになる */
    6388	,
    6390	,
    7000	,
