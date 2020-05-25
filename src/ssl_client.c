@@ -75,11 +75,21 @@ int main(void)
     }
     LOGE( "SSL_connect" );
 
-    /*  受送信処理 */
-    LOG(SSL_write(ssl, msg, size));
     do {
-      LOG(retval = SSL_read(ssl, buf, BUFSIZE));
-    } while (retval > 0);
+      /*  受送信処理 */
+      ssl_check_write(ssl, msg, size);
+      ssl_check_read(ssl, buf);
+
+#if (ONE_SEND == 1)
+      /* 接続をしたまま、再度メッセージを送る */
+      endprint(log);
+      if ( get_data(i++, " ssl", msg, log ) == 0){
+        break;
+      }
+#else
+      break;
+#endif
+    } while(1);
 
     /* 切断 */
     LOG(SSL_shutdown(ssl));
@@ -89,7 +99,12 @@ int main(void)
     LOG(SSL_CTX_free(ctx));
     ERR_free_strings();
     LOG(close(mysocket));
+
+#if (ONE_SEND == 0)
     endprint(log);
+#else
+    break;
+#endif
   }
 
   return EXIT_SUCCESS;

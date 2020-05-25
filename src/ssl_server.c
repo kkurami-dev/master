@@ -61,6 +61,9 @@ int main(void)
     } while(ret);
     LOGE( SSL_accept );
 
+#if (ONE_SEND == 1)
+  re_read:
+#endif
     LOGS();
     do {
       /* 読込が成功するまで繰り返す */
@@ -70,17 +73,25 @@ int main(void)
     } while (ret);
     LOGE( SSL_read );
 
-    LOG(snprintf(msg, sizeof(msg), "ack"));
-    LOG(ret = SSL_write(ssl, msg, strlen(msg)));
-    SSL_get_error(ssl, ret);
+    ssl_check_write( ssl, "msg", 4);
+#if (ONE_SEND == 1)
+    if (rcvprint( buf )){
+      goto re_read;
+    }
+#endif
+
     LOG(SSL_shutdown(ssl));
 
     LOG(sd = SSL_get_fd(ssl));
     LOG(SSL_free(ssl));
     LOG(close(sd));
 
+#if (ONE_SEND == 0)
     ret = rcvprint( buf );
     if( ret == 0 ) break;
+#else
+    break;
+#endif
     //fprintf(stderr, "%s\n", buf);
   }
 
