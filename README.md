@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 06:47:51 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 07:35:04 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -50,6 +50,10 @@ OpenSSL と通常のソケット通信を行うサンプル
   
   ![図解](https://github.com/kkurami-dev/master/blob/Openssl-Examples/image/tls-sequence-01.webp "通信概要")
 
+- SSL のソースに当てはめて  
+  ![SSLの場合](https://github.com/kkurami-dev/master/blob/Openssl-Examples/image/SSL通信シーケンス.png "SSLの場合")
+
+- DTLS のソースに当てはめて  
 
 
 - 通信内容を ワイヤーシャークでキャプチャした結果  
