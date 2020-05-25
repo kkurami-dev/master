@@ -74,6 +74,10 @@ int main(int argc, char* argv[]) {
         close(servSock);
         return EXIT_SUCCESS;
       }
+
+#if (ONE_SEND == 0)
+      break;
+#endif
     }
 
     LOG(close(clitSock));

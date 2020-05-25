@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
     /* 接続 */
     LOG(ret = (sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)));
-    if (ret < 0 ){
+    if (sock < 0 ){
       perror("socket() failed.");
       exit(EXIT_FAILURE);
     }
@@ -52,8 +52,12 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
 
+#if (ONE_SEND == 1)
+  re_send:
+#endif
+
     /* 送信 */
-    LOG(ret = send(sock, sendBuffer, size, 0)); 
+    LOG(ret = send(sock, sendBuffer, size, 0));
     if (ret <= 0) {
       perror("send() failed.");
       exit(EXIT_FAILURE);
@@ -63,7 +67,15 @@ int main(int argc, char* argv[]) {
     int byteRcvd  = 0;
     LOG(byteRcvd = recv(sock, recvBuffer, BUFSIZE, 0));
     if (byteRcvd > 0) {
-      LOG(close(sock));
+#if (ONE_SEND == 1)
+      endprint(log);
+      size = get_data(i++, " tcp", sendBuffer, log);
+      /* 計測終了 */
+      if( 0 == size ){
+        break;
+      }
+      goto re_send;
+#endif
     } else if(byteRcvd == 0){
       perror("ERR_EMPTY_RESPONSE");
       exit(EXIT_FAILURE);
@@ -72,6 +84,7 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
 
+    LOG(close(sock));
     endprint(log);
   }
 
