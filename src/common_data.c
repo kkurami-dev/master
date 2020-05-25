@@ -188,38 +188,6 @@ void ssl_ret_check( int ret, int line, const char *msg ){
   exit(EXIT_FAILURE);
 }
 
-int ssl_read_error(SSL *ssl, int len ){
-  if(len > 0){
-    return 0;
-  }
-  int reading = SSL_get_error(ssl, len);
-  switch (reading) {
-  case SSL_ERROR_NONE:
-    reading = 0;
-    break;
-  case SSL_ERROR_WANT_READ:
-  case SSL_ERROR_ZERO_RETURN:
-    fprintf(stderr, "Socket read warn: re try\n");
-    reading = 1;
-    break;
-  case SSL_ERROR_SYSCALL:
-    fprintf(stderr, "Socket read (SSL_ERROR_SYSCALL) errno:%d\n", errno);
-    if (!errno) exit(1);
-    reading = 1;
-    break;
-  case SSL_ERROR_SSL:
-    fprintf(stderr, "SSL read error:%ld (%d) errno:%d\n", ERR_get_error(), reading, errno);
-    exit(1);
-    break;
-  default:
-    fprintf(stderr, "Unexpected error while reading!: %d errno:%d\n", reading, errno);
-    exit(1);
-    break;
-  }
-
-  return reading;
-}
-
 int ssl_get_accept(SSL *ssl, int sslret){
   if(sslret >= 0){
     return 0;

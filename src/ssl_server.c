@@ -21,7 +21,6 @@ int main(void)
   socklen_t size = sizeof(struct sockaddr_in);
 
   char buf[BUFSIZE];
-  char msg[MSGSIZE];
   int ret;
 
   SSL_load_error_strings();
@@ -61,24 +60,17 @@ int main(void)
     } while(ret);
     LOGE( SSL_accept );
 
-#if (ONE_SEND == 1)
-  re_read:
-#endif
-    LOGS();
     do {
-      /* 読込が成功するまで繰り返す */
-      ret = SSL_read(ssl, buf, BUFSIZE);
-      ret = ssl_read_error(ssl, ret);
-      LOGC();
-    } while (ret);
-    LOGE( SSL_read );
-
-    ssl_check_write( ssl, "msg", 4);
+      ssl_check_read(ssl, buf);
+      ssl_check_write( ssl, "ack", 4);
 #if (ONE_SEND == 1)
-    if (rcvprint( buf )){
-      goto re_read;
-    }
+      if (rcvprint( buf ) == 0){
+        break;
+      }
+#else
+      break;
 #endif
+    } while(1);
 
     LOG(SSL_shutdown(ssl));
 
