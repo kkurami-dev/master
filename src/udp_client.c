@@ -25,21 +25,33 @@ int main(int argc, char** argv)
       }
 
       /* 接続 */
-      LOG( ret = (sd = socket(AF_INET, SOCK_DGRAM, 0)));
-      if( ret < 0) {
+      LOG(sd = socket(AF_INET, SOCK_DGRAM, 0));
+      if( sd < 0) {
         perror("socket");
         return -1;
       }
 
       // パケットをUDPで送信
-      LOG( ret = sendto(sd, msg, size, 0,
-                        (struct sockaddr *)&addr, sizeof(addr)));
-      if( ret < 0) {
-        perror("sendto");
-        return -1;
-      }
-      LOG(close(sd));
+      do {
+        LOG( ret = sendto(sd, msg, size, 0,
+                          (struct sockaddr *)&addr, sizeof(addr)));
+        if( ret < 0) {
+          perror("sendto");
+          return -1;
+        }
 
+#if (ONE_SEND == 1)
+        endprint(log);
+        size = get_data(i++, " udp", msg, log);
+        if( 0 == size ){
+          break;
+        }
+#else
+        break;
+#endif
+      } while(1);
+
+      LOG(close(sd));
       endprint(log);
     }
  
