@@ -34,10 +34,10 @@ int main(void)
   //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
 
   int i = 0;
-  int len = 0;
   BIO *bio;
+  int size;
   while(1){
-    int size = get_data(i++, "dtls", msg, log );
+    size = get_data(i++, "dtls", msg, log );
     if ( 0 == size ){
       break;
     }
@@ -69,41 +69,26 @@ int main(void)
 
     /* 通信 */
 #if 0
+    int len = 0;
     LOG(len = SSL_write(ssl, msg, size));
     SSL_get_error(ssl, len);
 #else
-    int ret = 0;
-    LOGS();
-    while (1)
-    {
-      LOGC();
-        /* SSLデータ送信 */
-      len  = SSL_write(ssl, msg, size);
-      if ( 0 < len ) break;
-      ret = SSL_get_error(ssl, ret);
-      switch (ret)
-        {
-        case SSL_ERROR_NONE:
-          break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        case SSL_ERROR_SYSCALL:
-          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
-          perror("write");
-          continue;
-        case SSL_ERROR_SSL:
-          printf("SSL write error: %s (%d)\n", ERR_error_string(ERR_get_error(), msg), ret);
-          break;
-        default:
-          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
-          perror("write");
-          goto cleanup;
-          // エラー処理
-        }
+    do {
+      if(ssl_check_write(ssl, msg, size)){
+        goto cleanup;
+      }
+
+#if (ONE_SEND == 1)
+      endprint(log);
+      size = get_data(i++, "dtls", msg, log );
+      if (size == 0){
+        break;
+      }
+#else // (ONE_SEND == 1)
       break;
-    }
-    LOGE(SSL_write);
+#endif //(ONE_SEND == 1)
 #endif
+    } while (1);
 
     /* 切断 */
 #if 1
@@ -136,7 +121,12 @@ int main(void)
     LOG(close(mysocket));
     LOG(SSL_free(ssl));
     LOG(SSL_CTX_free(ctx));
+
+#if (ONE_SEND == 0)
     endprint(log);
+#else
+    break;
+#endif
   }
 
   return EXIT_SUCCESS;

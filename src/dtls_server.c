@@ -186,37 +186,18 @@ int main(void)
       perror("read");
     }
 #else
-    LOGS();
-    while (1)
-    {
-      LOGC();
-        /* SSLデータ受信 */
-      len  = SSL_read(ssl, buf, BUFSIZE);
-      if ( 0 < len ) break;
-      ret = SSL_get_error(ssl, len);
-      switch (ret)
-        {
-        case SSL_ERROR_NONE:
-          break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        case SSL_ERROR_SYSCALL:
-          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
-          perror("read");
-          continue;
-          //case SSL_ERROR_ZERO_RETURN:
-        case SSL_ERROR_SSL:
-          printf("SSL read error: %s (%d)\n", ERR_error_string(ERR_get_error(), buf), ret);
-          break;
-        default:
-          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
-          perror("read");
-          goto cleanup;
-          // エラー処理
-        }
+    do {
+      if(ssl_check_read(ssl , buf)){
+        goto cleanup;
+      }
+#if (ONE_SEND == 1)
+      if (rcvprint( buf ) == 0){
+        break;
+      }
+#else // (ONE_SEND == 1)
       break;
-    }
-    LOGE(SSL_read);
+#endif // (ONE_SEND == 1)
+    } while(1);
 #endif
 
 #if 0
@@ -251,10 +232,14 @@ int main(void)
   cleanup:
     LOG(SSL_free(ssl));
 
-    int ret = rcvprint( buf );
+#if (ONE_SEND == 0)
+    ret = rcvprint( buf );
     if( ret == 0 ) break;
     //fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
     memset(buf, 0x00, BUFSIZE);
+#else
+    break;
+#endif
   }
 
   close(server);

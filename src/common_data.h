@@ -29,8 +29,9 @@
 #define SSL_RETN(x)		ssl_ret_check( !(x), __LINE__, #x );
 #define SSL_RET1(x)		ssl_ret_check( (1 != x), __LINE__, #x );
 
-#define LOG_PRINT  1 /*  詳細にログを出力する  */
+#define LOG_PRINT  1 /*  詳細にログを出力する     */
 #define TEST       0 /*  テストデータを少なく絞る  */
+#define ONE_SEND   1 /* データを全て1接続で送る    */
 
 #if (LOG_PRINT == 1)
 #define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);
@@ -47,6 +48,9 @@
 #if (TEST == 1)
 #define RE_TRY  50
 #define TIME_WAIT 0
+#elif (ONE_SEND == 1)
+#define RE_TRY  100
+#define TIME_WAIT 1000
 #else
 #define RE_TRY  100
 #define TIME_WAIT 1000

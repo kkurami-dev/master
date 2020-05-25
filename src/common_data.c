@@ -239,3 +239,73 @@ int ssl_get_accept(SSL *ssl, int sslret){
       exit(1);
     }
 }
+
+int ssl_check_read( SSL *ssl, char *buf){
+  int len, ret;
+  LOGS();
+  while (1)
+    {
+      LOGC();
+      /* SSLデータ受信 */
+      len  = SSL_read(ssl, buf, BUFSIZE);
+      if ( 0 < len ) break;
+      ret = SSL_get_error(ssl, len);
+      switch (ret)
+        {
+        case SSL_ERROR_NONE:
+          break;
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_SYSCALL:
+          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
+          perror("read");
+          continue;
+          //case SSL_ERROR_ZERO_RETURN:
+        case SSL_ERROR_SSL:
+          printf("SSL read error: %s (%d)\n", ERR_error_string(ERR_get_error(), buf), ret);
+          break;
+        default:
+          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
+          perror("read");
+          return 1;
+          // エラー処理
+        }
+      break;
+    }
+  LOGE(SSL_read);
+  return 0;
+}
+int ssl_check_write( SSL *ssl, char *msg, int size){
+  int ret, len;
+  LOGS();
+  while (1)
+    {
+      LOGC();
+      /* SSLデータ送信 */
+      len  = SSL_write(ssl, msg, size);
+      if ( 0 < len ) break;
+      ret = SSL_get_error(ssl, ret);
+      switch (ret)
+        {
+        case SSL_ERROR_NONE:
+          break;
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_SYSCALL:
+          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
+          perror("write");
+          continue;
+        case SSL_ERROR_SSL:
+          printf("SSL write error: %s (%d)\n", ERR_error_string(ERR_get_error(), msg), ret);
+          break;
+        default:
+          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
+          perror("write");
+          return 1;
+          // エラー処理
+        }
+      break;
+    }
+  LOGE(SSL_write);
+  return 0;
+}
