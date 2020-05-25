@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-24 16:03:48 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-25 22:22:50 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -34,11 +34,17 @@ OpenSSL と通常のソケット通信を行うサンプル
 - SSL : [OpenSSL APIを利用したSSL/TLS通信](https://qiita.com/yoshida-jk/items/fc5f8357adcbcbf6044a)
 - TLS の Session 再開機能 : https://techblog.yahoo.co.jp/infrastructure/ssl-session-resumption/
 - HTTP/2 クライアント実装サンプル (TLS版) : https://www.nslabs.jp/http2-client-implementation-sample-tls-version.rhtml
+- 
 
 ## 参考資料
 - SSL : [OpenSSL API によるセキュア・プログラミング 第 1 回 API の概要 基本的なセキュア接続と非セキュア接続を作成する](https://www.ibm.com/developerworks/jp/linux/library/l-openssl/index.html)
 - [SOCKET](https://linuxjm.osdn.jp/html/LDP_man-pages/man2/socket.2.html)
 - TCP : [ソケットプログラミング](https://www.katto.comm.waseda.ac.jp/~katto/Class/11/GazoTokuron/code/socket.html)
+- DTLS: [OpenSSL DTLS API](https://gist.github.com/Jxck/b211a12423622fe304d2370b1f1d30d5)
+  APIの解説の日本語訳
+-TCP/UDP : [C言語-ソケットプログラミング](http://capm-network.com/?tag=C言語-ソケットプログラミング)
+- GDB : [gcc+gdbによるプログラムのデバッグ 第3回 gdbの便利な機能、デバッグの例](https://rat.cis.k.hosei.ac.jp/article/devel/debugongccgdb3.html)
+
 
 # SSL
 SSL/TLS で通信を行い、その時間を計測する
