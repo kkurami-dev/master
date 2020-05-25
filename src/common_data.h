@@ -31,7 +31,7 @@
 
 #define LOG_PRINT  1 /*  詳細にログを出力する     */
 #define TEST       0 /*  テストデータを少なく絞る  */
-#define ONE_SEND   1 /* データを全て1接続で送る    */
+#define ONE_SEND   0 /* データを全て1接続で送る    */
 
 #if (LOG_PRINT == 1)
 #define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);

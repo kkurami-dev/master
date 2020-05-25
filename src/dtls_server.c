@@ -179,13 +179,6 @@ int main(void)
     }
     LOGE(SSL_accept);
 
-#if 0
-    LOG(len = SSL_read(ssl, buf, BUFSIZE));
-    if(len <= 0){
-      fprintf(stderr, "SSL_read() size=0 error:%d errno:%d ", SSL_get_error(ssl, len), errno);
-      perror("read");
-    }
-#else
     do {
       if(ssl_check_read(ssl , buf)){
         goto cleanup;
@@ -198,11 +191,7 @@ int main(void)
       break;
 #endif // (ONE_SEND == 1)
     } while(1);
-#endif
 
-#if 0
-    LOG(SSL_shutdown(ssl));
-#else
     LOGS();
     while (1)
       {
@@ -227,7 +216,6 @@ int main(void)
         break;
       }
     LOGE(SSL_shutdown);
-#endif
     
   cleanup:
     LOG(SSL_free(ssl));
@@ -237,9 +225,9 @@ int main(void)
     if( ret == 0 ) break;
     //fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
     memset(buf, 0x00, BUFSIZE);
-#else
+#else// (ONE_SEND == 0)
     break;
-#endif
+#endif// (ONE_SEND == 0)
   }
 
   close(server);

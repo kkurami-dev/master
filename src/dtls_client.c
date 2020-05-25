@@ -68,11 +68,6 @@ int main(void)
     LOG(SSL_connect(ssl));///
 
     /* 通信 */
-#if 0
-    int len = 0;
-    LOG(len = SSL_write(ssl, msg, size));
-    SSL_get_error(ssl, len);
-#else
     do {
       if(ssl_check_write(ssl, msg, size)){
         goto cleanup;
@@ -87,35 +82,10 @@ int main(void)
 #else // (ONE_SEND == 1)
       break;
 #endif //(ONE_SEND == 1)
-#endif
     } while (1);
 
     /* 切断 */
-#if 1
     LOG(SSL_shutdown(ssl));
-#else
-    while (1)
-      {
-        /* SSL通信の終了 */
-        LOG(len  = SSL_shutdown(ssl));
-        ret = SSL_get_error(ssl, len);
-        switch (ret)
-          {
-          case SSL_ERROR_NONE:
-            break;
-          case SSL_ERROR_WANT_READ:
-          case SSL_ERROR_WANT_WRITE:
-          case SSL_ERROR_SYSCALL:
-            fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
-            continue;
-          default:
-            fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
-            perror("write");
-            break;
-          }
-        break;
-      }
-#endif
     
   cleanup:
     LOG(close(mysocket));
@@ -124,9 +94,9 @@ int main(void)
 
 #if (ONE_SEND == 0)
     endprint(log);
-#else
+#else// (ONE_SEND == 0)
     break;
-#endif
+#endif// (ONE_SEND == 0)
   }
 
   return EXIT_SUCCESS;
