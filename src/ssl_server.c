@@ -26,7 +26,7 @@ int main(void)
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
-  ctx = SSL_CTX_new(SSLv23_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
+  ctx = SSL_CTX_new(TLS_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
 
   /* サーバ認証設定 */
   SSL_RET(SSL_CTX_use_certificate_file(ctx, S_CERT, SSL_FILETYPE_PEM)); // 証明書の登録

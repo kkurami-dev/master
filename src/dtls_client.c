@@ -45,7 +45,7 @@ int main(void)
     /* 前準備 */
     LOG(SSL_load_error_strings());
     LOG(SSL_library_init());
-    LOG(ctx = SSL_CTX_new(DTLSv1_2_client_method()));
+    LOG(ctx = SSL_CTX_new(DTLS_client_method()));
 
     /* 認証設定 */
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */

@@ -132,7 +132,7 @@ int main(void)
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
-  ctx = SSL_CTX_new(DTLSv1_2_server_method());
+  ctx = SSL_CTX_new(DTLS_server_method());
 
   /* サーバ認証設定 */
   SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/

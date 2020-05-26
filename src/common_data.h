@@ -31,7 +31,8 @@
 
 #define LOG_PRINT  1 /*  詳細にログを出力する     */
 #define TEST       0 /*  テストデータを少なく絞る  */
-#define ONE_SEND   0 /* データを全て1接続で送る    */
+#define ONE_SEND   1 /* データを全て1接続で送る    */
+#define KEY_WAIT   1 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 
 #if (LOG_PRINT == 1)
 #define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);
@@ -46,14 +47,14 @@
 #endif
 
 #if (TEST == 1)
-#define RE_TRY  50
+#define RE_TRY  10
 #define TIME_WAIT 0
 #elif (TEST == 2)
 #define RE_TRY  100
 #define TIME_WAIT 1
 #elif (ONE_SEND == 1)
 #define RE_TRY  100
-#define TIME_WAIT 1000
+#define TIME_WAIT 10000
 #else
 #define RE_TRY  100
 #define TIME_WAIT 1000

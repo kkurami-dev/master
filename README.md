@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 07:35:04 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 21:44:09 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -66,8 +66,8 @@ ssl_client.c
 ssl_server.c
 ```
 - SOCK_STREAM
-- SSLv23_client_method
-- SSLv23_server_method
+- SSL_client_method
+- SSL_server_method
 - SSL_write() -> SSL_read()
 - SSL_read() <- SSL_write()
 - SSL_connect() 後 SSL_write() を開始、SSL_read() でいるまで待つ
@@ -79,8 +79,8 @@ dtls_client.c
 dtls_server.c
 ```
 - SOCK_DGRAM
-- DTLSv1_2_server_method
-- DTLSv1_2_client_method
+- DTLS_server_method
+- DTLS_client_method
 - DTLSv1_listen : で待ち受け続ける
 - SSL_accept() ： 読込を待ち続ける
 - BIO

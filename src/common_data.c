@@ -10,7 +10,7 @@ const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
    //35200	,
-   10000	, 100, 0
+   100	, 100, 0
   };
 #else
 #define DATA_NUM  22
@@ -83,7 +83,7 @@ void time_log(int line, char *msg){
   gettimeofday(&tv_e, NULL);
   tv = diff_time( &tv_s, &tv_e );
   printf("% 4ld.%06lu,% 2ld.%06lu,%4d:%s\n",
-         (tv_e.tv_sec % TIME_MAX), tv_e.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
+         (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
 }
 
 /* 
@@ -103,6 +103,12 @@ int get_data( int count, char *type, char *msg, char *log )
   //if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
   if ( 0 != count && 0 == no ){
     fprintf(stderr, "end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
+    
+#if (KEY_WAIT == 1)
+    fprintf(stderr, "eny Enter key >");
+    getchar();
+    fflush(stdin);
+#endif
   }
   /* 全ての計測用データ送信完了 */
   if ( DATA_NUM <= idx){

@@ -53,7 +53,7 @@ int main(void)
  
     SSL_load_error_strings();
     LOG(SSL_library_init());
-    LOG(ctx = SSL_CTX_new(SSLv23_client_method()));
+    LOG(ctx = SSL_CTX_new(TLS_client_method()));
 
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
     //SSL_RET(SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2));/* SSLv2はセキュリティ的にNGなので除く*/
