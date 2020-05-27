@@ -17,7 +17,6 @@ int main(void)
 
   char log[128];
   char msg[BUFSIZE];
-  char buf[BUFSIZE + 1];
 
   memset(&server, 0, sizeof(server));
   server.sin_family = AF_INET;
@@ -56,7 +55,7 @@ int main(void)
     LOG(ctx = SSL_CTX_new(TLS_client_method()));
 
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
-    //SSL_RET(SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2));/* SSLv2はセキュリティ的にNGなので除く*/
+    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
     SSL_RET(SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM));// 証明書の登録
     SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
     SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
@@ -78,7 +77,11 @@ int main(void)
     do {
       /*  受送信処理 */
       ssl_check_write(ssl, msg, size);
+
+#if (SERVER_REPLY == 1)
+      char buf[BUFSIZE];
       ssl_check_read(ssl, buf);
+#endif
 
 #if (ONE_SEND == 1)
       /* 接続をしたまま、再度メッセージを送る */

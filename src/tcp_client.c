@@ -13,7 +13,6 @@ int main(int argc, char* argv[]) {
   int sock; //local socket descriptor
   struct sockaddr_in servSockAddr; //server internet socket address
   unsigned short servPort; //server port number
-  char recvBuffer[BUFSIZE];//receive temporary buffer
   char sendBuffer[BUFSIZE]; // send temporary buffer
   char log[128];
   int ret;
@@ -54,7 +53,7 @@ int main(int argc, char* argv[]) {
 
 #if (ONE_SEND == 1)
   re_send:
-#endif
+#endif // (ONE_SEND == 1)
 
     /* 送信 */
     LOG(ret = send(sock, sendBuffer, size, 0));
@@ -63,19 +62,12 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
 
+#if (SERVER_REPLY == 1)
     /* 受信 */
     int byteRcvd  = 0;
+    char recvBuffer[BUFSIZE];//receive temporary buffer
     LOG(byteRcvd = recv(sock, recvBuffer, BUFSIZE, 0));
     if (byteRcvd > 0) {
-#if (ONE_SEND == 1)
-      endprint(log);
-      size = get_data(i++, " tcp", sendBuffer, log);
-      /* 計測終了 */
-      if( 0 == size ){
-        break;
-      }
-      goto re_send;
-#endif
     } else if(byteRcvd == 0){
       perror("ERR_EMPTY_RESPONSE");
       exit(EXIT_FAILURE);
@@ -83,9 +75,20 @@ int main(int argc, char* argv[]) {
       perror("recv() failed. ");
       exit(EXIT_FAILURE);
     }
+#endif // (SERVER_REPLY == 1)
 
+#if (ONE_SEND == 1)
+    endprint(log);
+    size = get_data(i++, " tcp", sendBuffer, log);
+    /* 計測終了 */
+    if( 0 == size ){
+      break;
+    }
+    goto re_send;
+#else // (ONE_SEND == 1)
     LOG(close(sock));
     endprint(log);
+#endif // (ONE_SEND == 1)
   }
 
   return EXIT_SUCCESS;

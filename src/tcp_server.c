@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   unsigned short servPort; //server port number
   unsigned int clitLen; // client internet socket address length
   char recvBuffer[BUFSIZE];//receive temporary buffer
-  int recvMsgSize, sendMsgSize; // recieve and send buffer size
+  int recvMsgSize; // recieve and send buffer size
   int ret;
 
   /* if ( argc != 2) { */
@@ -61,6 +61,8 @@ int main(int argc, char* argv[]) {
         break;
       }
 
+#if (SERVER_REPLY == 1)
+      int sendMsgSize;
       LOG(sendMsgSize = send(clitSock, "ack", 4, 0));
       if(sendMsgSize < 0){
         perror("send() failed.");
@@ -68,6 +70,7 @@ int main(int argc, char* argv[]) {
       } else if(sendMsgSize == 0){
         break;
       }
+#endif // (SERVER_REPLY == 1)
 
       ret = rcvprint( recvBuffer );
       if( ret == 0 ) {
@@ -77,7 +80,7 @@ int main(int argc, char* argv[]) {
 
 #if (ONE_SEND == 0)
       break;
-#endif
+#endif // (ONE_SEND == 0)
     }
 
     LOG(close(clitSock));

@@ -62,7 +62,11 @@ int main(void)
 
     do {
       ssl_check_read(ssl, buf);
+
+#if (SERVER_REPLY == 1)
       ssl_check_write( ssl, "ack", 4);
+#endif // (SERVER_REPLY == 1)
+
 #if (ONE_SEND == 1)
       if (rcvprint( buf ) == 0){
         break;
