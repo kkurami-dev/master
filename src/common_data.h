@@ -29,10 +29,10 @@
 #define SSL_RETN(x)		ssl_ret_check( !(x), __LINE__, #x );
 #define SSL_RET1(x)		ssl_ret_check( (1 != x), __LINE__, #x );
 
-#define LOG_PRINT          0 /*  詳細にログを出力する     */
+#define LOG_PRINT          1 /*  詳細にログを出力する     */
 #define TEST               1 /*  テストデータを少なく絞る  */
-#define ONE_SEND           1 /* データを全て1接続で送る    */
-#define KEY_WAIT           0 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
+#define ONE_SEND           0 /* データを全て1接続で送る    */
+#define KEY_WAIT           1 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 #define SERVER_REPLY       1 /* TPC/TLS の場合にサーバから応答を返すか  */
 
 #if (LOG_PRINT == 1)

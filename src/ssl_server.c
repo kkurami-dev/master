@@ -28,10 +28,9 @@ int main(void)
   OpenSSL_add_all_algorithms();
   ctx = SSL_CTX_new(TLS_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
 
-long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
-SSL_CTX *m_sslContext = SSL_CTX_new(TLS_client_method());
-SSL_CTX_set_options(m_sslContext, flags);  
   /* サーバ認証設定 */
+  long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  SSL_CTX_set_options(ctx, flags);
   SSL_RET(SSL_CTX_use_certificate_file(ctx, S_CERT, SSL_FILETYPE_PEM)); // 証明書の登録
   SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM)); // 秘密鍵の登録
   SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録とクライアント証明書の要求
