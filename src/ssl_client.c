@@ -50,17 +50,19 @@ int main(void)
       exit(EXIT_FAILURE);
     }
  
-    SSL_load_error_strings();
+    LOG(SSL_load_error_strings());
     LOG(SSL_library_init());
     LOG(ctx = SSL_CTX_new(TLS_client_method()));
 
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
+    LOGS();
     SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
     SSL_RET(SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM));// 証明書の登録
     SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
     SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);// 証明書検証機能の有効化
     SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
+    LOGE(SSL_CTX_set());
 
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_fd(ssl, mysocket));

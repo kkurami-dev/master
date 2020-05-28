@@ -9,8 +9,9 @@
 const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
-   //35200	,
-   100	, 100, 0
+   100,
+   16384,
+   0
   };
 #else
 #define DATA_NUM  22
@@ -102,13 +103,17 @@ int get_data( int count, char *type, char *msg, char *log )
   /* 1つの送信データ送信完了 */
   //if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
   if ( 0 != count && 0 == no ){
-    fprintf(stderr, "end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
     
 #if (KEY_WAIT == 1)
+    if(senddata_size[DATA_NUM] == size ){
+      fprintf(stderr, "all end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
+      return 0;
+    }
     fprintf(stderr, "eny Enter key >");
     getchar();
     fflush(stdin);
 #endif
+    fprintf(stderr, "end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
   }
   /* 全ての計測用データ送信完了 */
   if ( DATA_NUM <= idx){
@@ -145,9 +150,11 @@ int rcvprint( char *msg ){
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
   if((RE_TRY - 1) == no) {
-    fprintf(stderr, "end : %s%d rcv:%d\n", type, size, rcv_count);
     if(senddata_size[DATA_NUM - 1] == size ){
+      fprintf(stderr, "all end : %s%d rcv:%d\n", type, size, rcv_count);
       return 0;
+    } else {
+      fprintf(stderr, "end : %s%d rcv:%d\n", type, size, rcv_count);
     }
   }
 

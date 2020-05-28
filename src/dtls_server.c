@@ -223,8 +223,6 @@ int main(void)
 #if (ONE_SEND == 0)
     ret = rcvprint( buf );
     if( ret == 0 ) break;
-    //fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
-    memset(buf, 0x00, BUFSIZE);
 #else// (ONE_SEND == 0)
     break;
 #endif// (ONE_SEND == 0)
