@@ -1,8 +1,12 @@
 /* -*- coding: utf-8-unix -*- */
 #include <unistd.h>
+#include <openssl/rand.h>
 
-//#define TIME_MAX (long)(3600)
-#define TIME_MAX (long) ( 600 )
+#define TIME_MAX (long)(3600)
+//#define TIME_MAX (long) ( 600 )
+#define TIME_FMT  "% 5ld.%06lu"
+
+#define COOKIE_SECRET_LENGTH 16
 
 #if (TEST == 1)
 #define DATA_NUM  2
@@ -52,6 +56,9 @@ const int senddata_size[ DATA_NUM + 1] =
 int snd_count = 0;
 int rcv_count = 0;
 
+unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
+int cookie_initialized = 0;
+
 /* 
  * 経過時刻の計算
  * timeval構造体の差分計算（最大１日の差分まで出す)
@@ -83,7 +90,7 @@ void time_log(int line, char *msg){
   struct timeval tv;
   gettimeofday(&tv_e, NULL);
   tv = diff_time( &tv_s, &tv_e );
-  printf("% 4ld.%06lu,% 2ld.%06lu,%4d:%s\n",
+  printf( TIME_FMT",% 2ld.%06lu,%4d:%s\n",
          (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
 }
 
@@ -126,8 +133,8 @@ int get_data( int count, char *type, char *msg, char *log )
   /* 送信文字列の設定 */
   /* https://www.mm2d.net/main/prog/c/time-04.html  */
   gettimeofday(&tv, NULL);
-  sprintf(buf, "%4d,%4s, %6d,% 4ld.%06lu", no, type, size, (tv.tv_sec % TIME_MAX), tv.tv_usec);
-  sprintf(log, "%.30s", buf);
+  sprintf(buf, "%4d,%4s, %6d,"TIME_FMT , no, type, size, (tv.tv_sec % TIME_MAX), tv.tv_usec);
+  sprintf(log, "%.31s", buf);
   strncpy(msg, buf, strlen(buf));
 
   return size;
@@ -145,7 +152,7 @@ int rcvprint( char *msg ){
   gettimeofday(&tv, NULL);
   sscanf( msg, "%4d,%s%d,%ld.%06lu", &no, type, &size, &(tv_s.tv_sec), &(tv_s.tv_usec));
   tv_s = diff_time( &tv_s, &tv );
-  printf("% 4ld.%06lu,% 2ld.%06lu,%.29s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
+  printf(TIME_FMT",% 2ld.%06lu,%.30s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
 
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
@@ -177,7 +184,7 @@ void endprint( char *log ){
 
   sscanf( log, "%d,%s%d,%ld.%06lu", &i, dummy, &i, &(tv_s.tv_sec), &(tv_s.tv_usec));
   tv_s = diff_time( &tv_s, &tv );
-  printf("% 4ld.%06lu,% 2ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
+  printf( TIME_FMT",% 2ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
 
   usleep( TIME_WAIT + NEXT_SEND_WAIT );
 }
@@ -290,3 +297,104 @@ int ssl_check_write( SSL *ssl, char *msg, int size){
   LOGE(SSL_write);
   return 0;
 }
+
+int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+{
+	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
+	unsigned int length = 0, resultlength;
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in6 s6;
+		struct sockaddr_in s4;
+	} peer;
+
+	/* Initialize a random secret */
+	if (!cookie_initialized)
+		{
+      if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH))
+        {
+          printf("error setting random cookie secret\n");
+          return 0;
+        }
+      cookie_initialized = 1;
+		}
+
+	/* Read peer information */
+	(void) BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+
+	/* Create buffer with peer's address and port */
+	length = 0;
+  length += sizeof(struct in_addr);
+	length += sizeof(in_port_t);
+	buffer = (unsigned char*) OPENSSL_malloc(length);
+
+	if (buffer == NULL)
+		{
+      printf("out of memory\n");
+      return 0;
+		}
+
+  memcpy(buffer,
+         &peer.s4.sin_port,
+         sizeof(in_port_t));
+  memcpy(buffer + sizeof(peer.s4.sin_port),
+         &peer.s4.sin_addr,
+         sizeof(struct in_addr));
+
+	/* Calculate HMAC of buffer using the secret */
+	HMAC(EVP_sha1(), (const void*) cookie_secret, COOKIE_SECRET_LENGTH,
+       (const unsigned char*) buffer, length, result, &resultlength);
+	OPENSSL_free(buffer);
+
+	memcpy(cookie, result, resultlength);
+	*cookie_len = resultlength;
+
+	return 1;
+}
+
+int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len)
+{
+	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
+	unsigned int length = 0, resultlength;
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in6 s6;
+		struct sockaddr_in s4;
+	} peer;
+
+	/* If secret isn't initialized yet, the cookie can't be valid */
+	if (!cookie_initialized)
+		return 0;
+
+	/* Read peer information */
+	(void) BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+
+	/* Create buffer with peer's address and port */
+	length = 0;
+  length += sizeof(struct in_addr);
+	length += sizeof(in_port_t);
+	buffer = (unsigned char*) OPENSSL_malloc(length);
+
+	if (buffer == NULL)
+		{
+      printf("out of memory\n");
+      return 0;
+		}
+  memcpy(buffer,
+         &peer.s4.sin_port,
+         sizeof(in_port_t));
+  memcpy(buffer + sizeof(in_port_t),
+         &peer.s4.sin_addr,
+         sizeof(struct in_addr));
+
+	/* Calculate HMAC of buffer using the secret */
+	HMAC(EVP_sha1(), (const void*) cookie_secret, COOKIE_SECRET_LENGTH,
+       (const unsigned char*) buffer, length, result, &resultlength);
+	OPENSSL_free(buffer);
+
+	if (cookie_len == resultlength && memcmp(result, cookie, resultlength) == 0)
+		return 1;
+
+	return 0;
+}
+
