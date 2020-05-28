@@ -33,7 +33,7 @@
 #define TEST               1 /*  テストデータを少なく絞る  */
 #define ONE_SEND           0 /* データを全て1接続で送る    */
 #define KEY_WAIT           1 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
-#define SERVER_REPLY       1 /* TPC/TLS の場合にサーバから応答を返すか  */
+#define SERVER_REPLY       0 /* TPC/TLS の場合にサーバから応答を返すか  */
 
 #if (LOG_PRINT == 1)
 #define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);
@@ -49,20 +49,16 @@
 
 #if (TEST == 1)
 #define RE_TRY  10   /* 一つのサイズのメッセージ送信回数 */
-#define TIME_WAIT 0  /* μ秒のスリープ */
 #elif (TEST == 2)
 #define RE_TRY  100
-#define TIME_WAIT 1
 #elif (ONE_SEND == 1)
 #define RE_TRY  10000
-#define TIME_WAIT 100
 #else
 #define RE_TRY  100
-#define TIME_WAIT 1000
 #endif
 
-//#define NEXT_SEND_WAIT  30000
-#define NEXT_SEND_WAIT  0
+#define TIME_WAIT 0
+#define NEXT_SEND_WAIT  30000
 
 struct timeval tv_s;
 int log_count;
