@@ -58,7 +58,8 @@
 #endif
 
 #define TIME_WAIT 0
-#define NEXT_SEND_WAIT  30000
+//#define NEXT_SEND_WAIT  30000
+#define NEXT_SEND_WAIT  0
 
 struct timeval tv_s;
 int log_count;

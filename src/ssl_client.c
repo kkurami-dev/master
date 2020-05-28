@@ -25,9 +25,7 @@ int main(void)
     fprintf(stderr, "Invalid IP Address.\n");
     exit(EXIT_FAILURE);
   }
-  //server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   server.sin_port = htons( TLS_PORT );
-  //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
 
   int i = 0;
   while(1){
@@ -57,7 +55,7 @@ int main(void)
 
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
     LOGS();
-    SSL_CTX_set_options(ctx, flags);/* SSLv2はセキュリティ的にNGなので除く*/
+    SSL_CTX_set_max_proto_version();
     SSL_RET(SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM));// 証明書の登録
     SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
     SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録

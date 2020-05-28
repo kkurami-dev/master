@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-26 21:44:09 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-28 21:42:10 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -124,7 +124,7 @@ udp_client.c
 - clean.sh : 一時ファイルをいったん作成
 
 # 確認
-Linux で  tshark  を使いパケットキャプチャを行い。  
+## Linux で  tshark  を使いパケットキャプチャを行い。  
 キャプチャ内容は Windows の Wireshark で確認する。
 
 [Wiresharkを使った通信監視（後編）――コマンドラインベースでのパケットキャプチャ](https://knowledge.sakura.ad.jp/6311/)
@@ -139,4 +139,13 @@ Linux で  tshark  を使いパケットキャプチャを行い。
     $ echo > ./log/capture2.dtls
     $ tshark -i eth0 -w ./log/capture2.dtls -f "port 1443" -a duration:10
     
-
+## 相互認証の場合
+「多くの場合」３つのメッセージから構成されると書いたのは、
+クライアントからも証明書を送って相互認証
+(Mutual Authentication)を行う場合、Server Hello 手順には
+Server Key Exchange メッセージ(msg_type=13)と
+Certificate Request メッセージ(msg_type=13) が追加で含まれるからです。
+この場合、クライアントは
+Client Key Exchange 手順の前に
+Certificate メッセージ(msg_type=11) と
+Certificate Verify メッセージ(msg_type=15) を返送します。

@@ -62,12 +62,10 @@ int main(void)
 
     /* 接続 */
     LOG(mysocket = socket(AF_INET, SOCK_DGRAM, 0));
-    //LOG(bind(mysocket, (struct sockaddr *)&server, sizeof(server))); // ?
     LOG(connect(mysocket, (struct sockaddr*)&server, sizeof(server)));
     LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
-    //LOG(SSL_set_fd(ssl, mysocket));
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_connect(ssl));///
 
