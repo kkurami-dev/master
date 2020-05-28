@@ -14,7 +14,8 @@ int main(void)
 
   SSL *ssl;
   SSL_CTX *ctx;
-  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
 
   char log[128];
   char msg[BUFSIZE];
@@ -55,12 +56,13 @@ int main(void)
 
     /* クライアント認証設定 (テストなのでエラー確認のを除く) */
     LOGS();
-    SSL_CTX_set_max_proto_version();
-    SSL_RET(SSL_CTX_use_certificate_file(ctx, C_CERT, SSL_FILETYPE_PEM));// 証明書の登録
+    SSL_CTX_set_options(ctx, flags);/* SSLv2はセキュリティ的にNGなので除く*/
+    SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, C_CERT));// 証明書の登録
     SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
     SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);// 証明書検証機能の有効化
-    SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
+    SSL_CTX_set_verify_depth (ctx, 2);// 証明書チェーンの深さ
+    SSL_CTX_set_read_ahead(ctx, 1);
     LOGE(SSL_CTX_set());
 
     LOG(ssl = SSL_new(ctx));

@@ -23,7 +23,8 @@ int main(void)
   char buf[BUFSIZE];
   int ret;
 
-  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
 
   SSL_load_error_strings();
   SSL_library_init();
@@ -32,11 +33,15 @@ int main(void)
 
   /* サーバ認証設定 */
   SSL_CTX_set_options(ctx, flags);
-  SSL_RET(SSL_CTX_use_certificate_file(ctx, S_CERT, SSL_FILETYPE_PEM));// 証明書の登録
-  SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
-  SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);// 証明書検証機能の有効化
-  SSL_CTX_set_verify_depth(ctx,9);// 証明書チェーンの深さ
+  SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, S_CERT)); // 証明書の登録
+  SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM)); // 秘密鍵の登録
+  SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録とクライアント証明書の要求
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
+  SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
+
+	//SSL_CTX_set_read_ahead(ctx, 1);
+	//SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
+	//SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
   server = socket(PF_INET, SOCK_STREAM, 0);
   bzero(&addr, sizeof(addr));
