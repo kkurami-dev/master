@@ -41,7 +41,7 @@ void connection_handle( int clitSock, SSL *ssl ){
   } while(1);
 
   ssl_check_shutdown( ssl );
-    
+
  cleanup:
   LOGR(SSL_free(ssl));
 
@@ -103,7 +103,7 @@ int main(void)
     LOGE(DTLSv1_listen);
 
 #if (M_SERVER ==1)
-    sock_thread_post( th, 0, ssl );
+    sock_thread_post( th, server, ssl );
 #else //(M_SERVER ==1)
     int accept = 0;
     char buf[BUFSIZE];
