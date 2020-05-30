@@ -47,7 +47,7 @@ void connection_handle( int client, SSL *ssl ){
 #endif
   } while(1);
 
-  LOG(SSL_shutdown(ssl));
+  ssl_check_shutdown( ssl );
 
   LOG(sd = SSL_get_fd(ssl));
   LOG(SSL_free(ssl));
@@ -68,8 +68,8 @@ int main(void)
   struct sockaddr_in addr;
 
 
-  //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
-  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
+  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
 
   SSL_load_error_strings();
   SSL_library_init();
@@ -101,7 +101,9 @@ int main(void)
   while(1) {
     /* 接続と通信開始 */
     LOG(client = accept(server, NULL, NULL));
-    LOG(ssl = SSL_new(ctx));/* SSLオブジェクトを生成 */
+    /* SSLオブジェクトを生成 */
+    LOG(ssl = SSL_new(ctx));
+    /* メッセージ受信用のスレッドでジュ受信  */
     sock_thread_post( th, client, ssl );
   }
   sock_thread_join( th );

@@ -87,7 +87,7 @@ int main(void)
     } while (1);
 
     /* 切断 */
-    LOG(SSL_shutdown(ssl));
+    ssl_check_shutdown( ssl );
     
   cleanup:
     LOG(close(mysocket));

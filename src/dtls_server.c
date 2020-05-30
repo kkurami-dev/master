@@ -18,9 +18,7 @@
 
 void connection_handle( int clitSock, SSL *ssl ){
   int accept = 0;
-  int len;
   char buf[BUFSIZE];
-  int ret;
 
   LOGS();
   while(accept == 0) {
@@ -42,36 +40,13 @@ void connection_handle( int clitSock, SSL *ssl ){
 #endif // (ONE_SEND == 1)
   } while(1);
 
-  LOGS();
-  while (1)
-    {
-      LOGC();
-      /* SSL通信の終了 */
-      len  = SSL_shutdown(ssl);
-      ret = SSL_get_error(ssl, len);
-      switch (ret)
-        {
-        case SSL_ERROR_NONE:
-          break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        case SSL_ERROR_SYSCALL:
-          //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
-          continue;
-        default:
-          fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
-          perror("write");
-          break;
-        }
-      break;
-    }
-  LOGE(SSL_shutdown);
+  ssl_check_shutdown( ssl );
     
  cleanup:
   LOGR(SSL_free(ssl));
 
 #if (ONE_SEND == 0)
-  ret = rcvprint( buf );
+  rcvprint( buf );
 #endif // (ONE_SEND == 0)
 }
 
@@ -131,7 +106,6 @@ int main(void)
     sock_thread_post( th, 0, ssl );
 #else //(M_SERVER ==1)
     int accept = 0;
-    int len;
     char buf[BUFSIZE];
     LOGS();
     while(accept == 0) {
@@ -153,30 +127,7 @@ int main(void)
 #endif // (ONE_SEND == 1)
     } while(1);
 
-    LOGS();
-    while (1)
-      {
-        LOGC();
-        /* SSL通信の終了 */
-        len  = SSL_shutdown(ssl);
-        ret = SSL_get_error(ssl, len);
-        switch (ret)
-          {
-          case SSL_ERROR_NONE:
-            break;
-          case SSL_ERROR_WANT_READ:
-          case SSL_ERROR_WANT_WRITE:
-          case SSL_ERROR_SYSCALL:
-            //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
-            continue;
-          default:
-            fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
-            perror("write");
-            break;
-          }
-        break;
-      }
-    LOGE(SSL_shutdown);
+    ssl_check_shutdown( ssl );
     
   cleanup:
     LOGR(SSL_free(ssl));

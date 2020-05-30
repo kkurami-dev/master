@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-30 10:12:37 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-30 14:31:56 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -42,7 +42,7 @@ OpenSSL と通常のソケット通信を行うサンプル
 - TCP : [ソケットプログラミング](https://www.katto.comm.waseda.ac.jp/~katto/Class/11/GazoTokuron/code/socket.html)
 - DTLS: [OpenSSL DTLS API](https://gist.github.com/Jxck/b211a12423622fe304d2370b1f1d30d5)
   APIの解説の日本語訳
--TCP/UDP : [C言語-ソケットプログラミング](http://capm-network.com/?tag=C言語-ソケットプログラミング)
+- TCP/UDP : [C言語-ソケットプログラミング](http://capm-network.com/?tag=C言語-ソケットプログラミング)
 - GDB : [gcc+gdbによるプログラムのデバッグ 第3回 gdbの便利な機能、デバッグの例](https://rat.cis.k.hosei.ac.jp/article/devel/debugongccgdb3.html)
 - LINUX：[10.3　メッセージに含まれるエラー情報](http://itdoc.hitachi.co.jp/manuals/3020/30203N6450/BJEX0275.HTM)
 

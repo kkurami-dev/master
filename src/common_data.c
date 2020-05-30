@@ -311,6 +311,35 @@ int ssl_check_write( SSL *ssl, char *msg, int size){
   return 0;
 }
 
+void ssl_check_shutdown( SSL *ssl ){
+  int ret, len;
+
+  LOGS();
+  while (1)
+    {
+      LOGC();
+      /* SSL通信の終了 */
+      len  = SSL_shutdown(ssl);
+      ret = SSL_get_error(ssl, len);
+      switch (ret)
+        {
+        case SSL_ERROR_NONE:
+          break;
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_SYSCALL:
+          //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
+          continue;
+        default:
+          fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
+          perror("write");
+          break;
+        }
+      break;
+    }
+  LOGE(SSL_shutdown);
+}
+
 int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 {
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
@@ -411,14 +440,6 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 	return 0;
 }
 
-/*
-
-  pthread_barrier_init
-  pthread_barrier_destroy
-  pthread_barrier_wait
-
-
-*/
 
 ////////////////////////////////////////////////////////////////////////////////
 /* --------------------------------- DEFS ---------------------------------- */

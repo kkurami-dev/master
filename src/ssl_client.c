@@ -58,11 +58,20 @@ int main(void)
       perror("socket");
       exit(EXIT_FAILURE);
     }
-    LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
-    if (retval){
-      fprintf(stderr, "\nconnect %d :%d errno:%d\n", __LINE__, retval, errno );
-      perror("connect");
-      exit(EXIT_FAILURE);
+
+    int i = 0;
+    while(1){
+      LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
+      if( retval == 0 ){
+        break;
+      } else if (retval && i++ > 3){
+        fprintf(stderr, "\nconnect %d :%d errno:%d\n", __LINE__, retval, errno );
+        perror("connect");
+        exit(EXIT_FAILURE);
+      } else {
+        fprintf(stderr, "connect %d :%d errno:%d\n", __LINE__, retval, errno );
+        usleep(100);
+      }
     }
  
     LOG(ssl = SSL_new(ctx));
@@ -98,7 +107,7 @@ int main(void)
     } while(1);
 
     /* 切断 */
-    LOG(SSL_shutdown(ssl));
+    ssl_check_shutdown( ssl );
 
   cleanup:
     LOG(SSL_free(ssl)); 

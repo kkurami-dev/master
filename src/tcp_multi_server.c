@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 {
   int fd;             // 接続待ち用ディスクリプタ
   int fd2[10];        // 通信用ディスクリプタの配列
-  struct servent *serv;
+  //struct servent *serv;
   struct sockaddr_in addr;
   socklen_t len = sizeof(struct sockaddr_in);
   struct sockaddr_in from_addr;
