@@ -235,7 +235,8 @@ int ssl_get_accept(SSL *ssl, int sslret){
       return 1;
     default:
       // エラー処理
-      fprintf(stderr, "%ld (%d)\n", ERR_get_error(),ssl_eno );
+      fprintf(stderr, "ssl_get_accept %ld (%d)\n", ERR_get_error(), ssl_eno );
+      perror("ssl_get_accept");
       exit(1);
     }
 }

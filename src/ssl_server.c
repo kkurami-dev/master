@@ -11,16 +11,62 @@
 
 #include "common_data.h"
 
+#define M_SERVER  1
+
+void connection_handle( int client, SSL *ssl ){
+  char buf[BUFSIZE];
+  int ret;
+  int sd;
+
+  LOG(SSL_set_fd(ssl, client));/* SSLオブジェクトとファイルディスクリプタを接続 */
+  LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));//
+
+  /* SSL通信の開始 */
+  LOGS();
+  do{
+    ret = SSL_accept(ssl);
+    ret = ssl_get_accept( ssl, ret );
+    LOGC();
+    //} while(ret > 0);
+  } while(ret);
+  LOGE( SSL_accept );
+
+  do {
+    ssl_check_read(ssl, buf);
+
+#if (SERVER_REPLY == 1)
+    ssl_check_write( ssl, "ack", 4);
+#endif // (SERVER_REPLY == 1)
+
+#if (ONE_SEND == 1)
+    if (rcvprint( buf ) == 0){
+      break;
+    }
+#else
+    break;
+#endif
+  } while(1);
+
+  LOG(SSL_shutdown(ssl));
+
+  LOG(sd = SSL_get_fd(ssl));
+  LOG(SSL_free(ssl));
+  LOG(close(sd));
+
+#if (ONE_SEND == 0)
+  ret = rcvprint( buf );
+#endif // (ONE_SEND == 0)
+}
+
+
 int main(void)
 {
   SSL_CTX *ctx;
   SSL *ssl;
 
-  int server, client, sd;
+  int server, client;
   struct sockaddr_in addr;
 
-  char buf[BUFSIZE];
-  int ret;
 
   //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
   const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
@@ -51,53 +97,14 @@ int main(void)
   bind(server, (struct sockaddr*)&addr, sizeof(addr));
   listen(server, 10);
 
+  struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
     /* 接続と通信開始 */
     LOG(client = accept(server, NULL, NULL));
     LOG(ssl = SSL_new(ctx));/* SSLオブジェクトを生成 */
-    LOG(SSL_set_fd(ssl, client));/* SSLオブジェクトとファイルディスクリプタを接続 */
-    LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));//
-
-    /* SSL通信の開始 */
-    LOGS();
-    do{
-      ret = SSL_accept(ssl);
-      ret = ssl_get_accept( ssl, ret );
-      LOGC();
-      //} while(ret > 0);
-    } while(ret);
-    LOGE( SSL_accept );
-
-    do {
-      ssl_check_read(ssl, buf);
-
-#if (SERVER_REPLY == 1)
-      ssl_check_write( ssl, "ack", 4);
-#endif // (SERVER_REPLY == 1)
-
-#if (ONE_SEND == 1)
-      if (rcvprint( buf ) == 0){
-        break;
-      }
-#else
-      break;
-#endif
-    } while(1);
-
-    LOG(SSL_shutdown(ssl));
-
-    LOG(sd = SSL_get_fd(ssl));
-    LOG(SSL_free(ssl));
-    LOG(close(sd));
-
-#if (ONE_SEND == 0)
-    ret = rcvprint( buf );
-    if( ret == 0 ) break;
-#else
-    break;
-#endif
-    //fprintf(stderr, "%s\n", buf);
+    sock_thread_post( th, client, ssl );
   }
+  sock_thread_join( th );
 
   SSL_CTX_free(ctx);
   close(server);

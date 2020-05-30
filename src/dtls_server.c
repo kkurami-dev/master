@@ -13,11 +13,13 @@
 #include "common_data.h"
 
 #define BUFFER_SIZE          (1<<16)
+#define M_SERVER  0
+
 
 void connection_handle( int clitSock, SSL *ssl ){
-  char buf[BUFSIZE];
   int accept = 0;
   int len;
+  char buf[BUFSIZE];
   int ret;
 
   LOGS();
@@ -66,11 +68,11 @@ void connection_handle( int clitSock, SSL *ssl ){
   LOGE(SSL_shutdown);
     
  cleanup:
-  LOG(SSL_free(ssl));
+  LOGR(SSL_free(ssl));
 
 #if (ONE_SEND == 0)
   ret = rcvprint( buf );
-#endif// (ONE_SEND == 0)
+#endif // (ONE_SEND == 0)
 }
 
 int main(void)
@@ -105,18 +107,18 @@ int main(void)
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
-  server = socket(server_addr.sin_family, SOCK_DGRAM, 0);
-  bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr));
+  LOGR(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
+  LOGR(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
 
   BIO *bio;
   int ret;
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-    LOG(bio = BIO_new_dgram(server, BIO_NOCLOSE));
-    LOG(ssl = SSL_new(ctx));
-    LOG(SSL_set_fd(ssl, server));
-    LOG(SSL_set_bio(ssl, bio, bio));
-    LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
+    LOGR(bio = BIO_new_dgram(server, BIO_NOCLOSE));
+    LOGR(ssl = SSL_new(ctx));
+    LOGR(SSL_set_fd(ssl, server));
+    LOGR(SSL_set_bio(ssl, bio, bio));
+    LOGR(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
     LOGS();
     do {
@@ -124,11 +126,70 @@ int main(void)
       LOGC()
     }while (ret <= 0);
     LOGE(DTLSv1_listen);
-    
+
+#if (M_SERVER ==1)
     sock_thread_post( th, 0, ssl );
+#else //(M_SERVER ==1)
+    int accept = 0;
+    int len;
+    char buf[BUFSIZE];
+    LOGS();
+    while(accept == 0) {
+      accept = SSL_accept(ssl);
+      LOGC();
+    }
+    LOGE(SSL_accept);
+
+    do {
+      if(ssl_check_read(ssl , buf)){
+        goto cleanup;
+      }
+#if (ONE_SEND == 1)
+      if (rcvprint( buf ) == 0){
+        break;
+      }
+#else // (ONE_SEND == 1)
+      break;
+#endif // (ONE_SEND == 1)
+    } while(1);
+
+    LOGS();
+    while (1)
+      {
+        LOGC();
+        /* SSL通信の終了 */
+        len  = SSL_shutdown(ssl);
+        ret = SSL_get_error(ssl, len);
+        switch (ret)
+          {
+          case SSL_ERROR_NONE:
+            break;
+          case SSL_ERROR_WANT_READ:
+          case SSL_ERROR_WANT_WRITE:
+          case SSL_ERROR_SYSCALL:
+            //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
+            continue;
+          default:
+            fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
+            perror("write");
+            break;
+          }
+        break;
+      }
+    LOGE(SSL_shutdown);
+    
+  cleanup:
+    LOGR(SSL_free(ssl));
+
+#if (ONE_SEND == 0)
+    ret = rcvprint( buf );
+    if( ret == 0 ) break;
+#else // (ONE_SEND == 0)
+    break;
+#endif // (ONE_SEND == 0)
+#endif // (M_SERVER ==1)
   }
   sock_thread_join( th );
-
   close(server);
   SSL_CTX_free(ctx);
 

@@ -54,13 +54,13 @@ int main(void)
 
     LOG(mysocket = socket(AF_INET, SOCK_STREAM, 0)); 
     if (mysocket < 0) {
+      fprintf(stderr, "\nsocket %d :%d errno:%d\n", __LINE__, mysocket, errno );
       perror("socket");
-      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, mysocket, errno );
       exit(EXIT_FAILURE);
     }
     LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
     if (retval){
-      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, retval, errno );
+      fprintf(stderr, "\nconnect %d :%d errno:%d\n", __LINE__, retval, errno );
       perror("connect");
       exit(EXIT_FAILURE);
     }
