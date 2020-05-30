@@ -2,6 +2,13 @@
 #include <unistd.h>
 #include <openssl/rand.h>
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <semaphore.h>
+#include <pthread.h>
+
 #define TIME_MAX (long)(3600)
 //#define TIME_MAX (long) ( 600 )
 #define TIME_FMT  "% 5ld.%06lu"
@@ -13,11 +20,12 @@
 const int senddata_size[ DATA_NUM + 1] =
   {
    /* 送信データ  */
-   100,
    16384,
-   0
+   100,
+   0 // 終了判定ダミーデータ
   };
-#else
+
+#else // (TEST == 1)
 #define DATA_NUM  22
 const int senddata_size[ DATA_NUM + 1] =
   {
@@ -49,9 +57,9 @@ const int senddata_size[ DATA_NUM + 1] =
    //35203	,
    10010	,
    999,
-   0
+   0 // 終了判定ダミーデータ
   };
-#endif
+#endif // (TEST == 1)
 
 int snd_count = 0;
 int rcv_count = 0;
@@ -91,7 +99,7 @@ void time_log(int line, char *msg){
   gettimeofday(&tv_e, NULL);
   tv = diff_time( &tv_s, &tv_e );
   printf( TIME_FMT",% 2ld.%06lu,%4d:%s\n",
-         (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
+          (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
 }
 
 /* 
@@ -167,7 +175,9 @@ int rcvprint( char *msg ){
 
   if(strlen(msg) > 0) ++rcv_count;
 
+#if ( TIME_WAIT > 0)
   usleep( TIME_WAIT );
+#endif
   return 1;
 }
 
@@ -186,7 +196,9 @@ void endprint( char *log ){
   tv_s = diff_time( &tv_s, &tv );
   printf( TIME_FMT",% 2ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
 
+#if ( (TIME_WAIT + NEXT_SEND_WAIT) > 0)
   usleep( TIME_WAIT + NEXT_SEND_WAIT );
+#endif
 }
 
 /* 
@@ -398,3 +410,138 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 	return 0;
 }
 
+/*
+
+  pthread_barrier_init
+  pthread_barrier_destroy
+  pthread_barrier_wait
+
+
+*/
+
+////////////////////////////////////////////////////////////////////////////////
+/* --------------------------------- DEFS ---------------------------------- */
+struct thdata {
+  int                 sock;
+  SSL                 *ssl;
+  void                (*func)( int sock, SSL *ssl );
+
+  pthread_t           th;
+  sem_t               sync;
+  sem_t               start;
+  int  end;
+};
+/* ------------------------------------------------------------------------- */
+
+/* ------------------------------- FUNCTIONS ------------------------------- */
+/*****************************************************************************
+ FUNCTION    : void *thread_function (void *thdata)
+ DESCRIPTION : Thread function.
+ * Argument
+                 void *
+                 * Return
+                 void *
+ ATTENTION   :
+*****************************************************************************/
+#define THREAD_MAX   10
+void *thread_function(void *thdata)
+{
+  struct thdata       *priv = (struct thdata *)thdata;
+
+  while(1){
+    /* sync */
+    sem_post(&priv->sync);
+    sem_wait(&priv->start);
+
+    /* 実行 */
+    if ( !(priv->end) ){
+      priv->func( priv->sock, priv->ssl );
+      priv->sock = 0;
+      priv->ssl = NULL;
+    } else {
+      /* sync */
+      sem_post(&priv->sync);
+      break;
+    }
+  }
+
+  /* done */
+  return (void *) NULL;
+}
+
+struct thdata *sock_thread_create( void (*func)(int sock, SSL *ssl) )
+{
+  struct thdata       *thdata;
+  int i;
+
+  /* initialize thread data */
+  thdata = calloc(sizeof(struct thdata), THREAD_MAX);
+  if (thdata == NULL) {
+    perror("calloc()");
+    exit(EXIT_FAILURE);
+  }
+
+  for (i = 0; i < THREAD_MAX; i++) {
+    thdata[i].sock = 0;
+    thdata[i].ssl = NULL;
+    thdata[i].end = 0;
+    thdata[i].func = func;
+    sem_init(&thdata[i].sync, 0, 0);
+    sem_init(&thdata[i].start, 0, 0);
+    int rtn = pthread_create(&thdata[i].th,
+                             NULL,
+                             thread_function,
+                             (void *) (&thdata[i]));
+    if (rtn != 0) {
+      fprintf(stderr, "pthread_create() #%0d failed for %d.", i, rtn);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  /* synchronization */
+  for (i = 0; i < THREAD_MAX; i++) {
+    sem_wait(&thdata[i].sync);
+  }
+
+  return thdata;
+}
+
+ void  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
+{
+  int i = 0;
+  for(i = 0; i < THREAD_MAX; i++){
+    struct thdata *priv = thdata + i;
+    if( priv->sock == 0 && priv->ssl == NULL ){
+      priv->sock = sock;
+      priv->ssl = ssl;
+      sem_post(&priv->start);
+      break;
+    }
+  }
+  if( i < THREAD_MAX){
+  } else {
+    fprintf(stderr, "ERROR: thread empty.\n");
+    exit(EXIT_FAILURE);
+  }
+}
+
+void  sock_thread_join( struct thdata *thdata )
+{
+  int i = 0;
+  for(i = 0; i < THREAD_MAX; i++){
+    struct thdata *priv = thdata + i;
+
+    /* スレッド終了を動作させる  */
+    sem_wait(&priv->sync);
+    priv->end = 1;
+    sem_post(&priv->start);
+    sem_wait(&priv->sync);
+
+    /* スレッド終了待ち  */
+    pthread_join(priv->th, NULL);
+    sem_destroy(&priv->sync);
+    sem_destroy(&priv->start);
+  }
+
+  free(thdata);
+}
