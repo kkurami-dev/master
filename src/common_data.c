@@ -7,12 +7,17 @@
 #include <string.h>
 #include <sys/io.h>            /* for inb,outb */
 
+#include <sys/types.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <openssl/evp.h>
+
 #include <semaphore.h>
 #include <pthread.h>
 
 #define TIME_MAX (long)(3600)
 //#define TIME_MAX (long) ( 600 )
-#define TIME_FMT  "% 5ld.%06lu"
+#define TIME_FMT  "% 5ld.%06lu,"
 
 #define COOKIE_SECRET_LENGTH 16
 
@@ -33,7 +38,7 @@ const int senddata_size[ DATA_NUM + 1] =
    100	,
    /* 送信データ  */
    //35200	,
-   16383	,
+   10200	,
    16384	,
    //16385	, /* このデータサイズは DTLS でエラーになる */
    6388	,
@@ -68,11 +73,80 @@ int rcv_count = 0;
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized = 0;
 
+int get_settings_fd(char *host, int type, int cs, struct addrinfo* out_adr){
+  struct addrinfo hints;
+  struct addrinfo *res, *ai;
+  const int on = 1;
+  int sockfd;
+
+  bzero(&hints, sizeof(hints));
+  hints.ai_socktype = type;
+
+  if( cs == TEST_RECEIVER ){
+    hints.ai_family = AF_INET6;
+    hints.ai_flags = AI_PASSIVE;
+  } else {
+    hints.ai_family = AF_UNSPEC;
+  }
+
+  getaddrinfo(host, TLS_PORT_W, &hints, &res);
+  ai = res;
+
+  if ( cs == TEST_RECEIVER ){
+    sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+#if (SETSOCKOPT == 1)
+    setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
+#endif // (SETSOCKOPT == 1)
+    bind(sockfd, ai->ai_addr, ai->ai_addrlen);
+
+    if ( type == SOCK_STREAM )
+      listen(sockfd, QUEUELIMIT);
+
+  } else {
+    for(ai = res; ai; ai = ai->ai_next) {
+      sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+      if(!connect(sockfd, ai->ai_addr, ai->ai_addrlen))
+        break;
+      close(sockfd);
+    }
+  }
+  if (!out_adr && !ai) *out_adr = *ai;
+
+  freeaddrinfo(res);
+  return sockfd;
+}
+/*
+struct addrinfo {
+    int              ai_flags;
+    int              ai_family;
+    int              ai_socktype;
+    int              ai_protocol;
+    socklen_t        ai_addrlen;
+    struct sockaddr *ai_addr;
+    char            *ai_canonname;
+    struct addrinfo *ai_next;
+};
+
+/usr/include/netinet/in.h:
+   struct in_addr {
+      u_int32_t s_addr;
+   };
+
+   struct sockaddr_in {
+      u_char  sin_len;    （このメンバは古いOSでは存在しない）
+      u_char  sin_family;    （アドレスファミリ．今回はAF_INETで固定）
+      u_short sin_port;    （ポート番号）
+      struct  in_addr sin_addr;    （IPアドレス）
+      char    sin_zero[8];    （無視してもよい．「詰め物」のようなもの）
+   };
+*/
+
 /* 
  * 経過時刻の計算
  * timeval構造体の差分計算（最大１日の差分まで出す)
  */
-struct timeval diff_time( struct timeval *tv_s, struct timeval *tv_e){
+static struct timeval diff_time( struct timeval *tv_s, struct timeval *tv_e){
   struct timeval tv;
   long tmp_s;
   long tmp_e;
@@ -94,13 +168,12 @@ struct timeval diff_time( struct timeval *tv_s, struct timeval *tv_e){
 /*
  * 処理終了時に呼び出し関数の処理時間を表示する
  */
-void time_log(int line, char *msg){
+static void time_log(int line, char *msg){
   struct timeval tv_e;
-  struct timeval tv;
   gettimeofday(&tv_e, NULL);
-  tv = diff_time( &tv_s, &tv_e );
-  printf( TIME_FMT",% 2ld.%06lu,%4d:%s\n",
-          (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv.tv_sec, tv.tv_usec, line, msg);
+  tv_e = diff_time( &tv_s, &tv_e );
+  printf( TIME_FMT"% 2ld.%06lu,%4d:%s\n",
+          (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv_e.tv_sec, tv_e.tv_usec, line, msg);
 }
 
 /* 
@@ -161,7 +234,8 @@ int rcvprint( char *msg ){
   gettimeofday(&tv, NULL);
   sscanf( msg, "%4d,%s%d,%ld.%06lu", &no, type, &size, &(tv_s.tv_sec), &(tv_s.tv_usec));
   tv_s = diff_time( &tv_s, &tv );
-  printf(TIME_FMT",% 2ld.%06lu,%.30s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
+  printf(TIME_FMT"% 2ld.%06lu,%.30s\n",
+         (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
 
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
@@ -174,7 +248,7 @@ int rcvprint( char *msg ){
     }
   }
 
-  if(strlen(msg) > 0) ++rcv_count;
+  if(strlen(msg) > 20) ++rcv_count;
 
 #if ( TIME_WAIT > 0)
   usleep( TIME_WAIT );
@@ -195,7 +269,8 @@ void endprint( char *log ){
 
   sscanf( log, "%d,%s%d,%ld.%06lu", &i, dummy, &i, &(tv_s.tv_sec), &(tv_s.tv_usec));
   tv_s = diff_time( &tv_s, &tv );
-  printf( TIME_FMT",% 2ld.%06lu,%s\n", (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
+  printf( TIME_FMT"% 2ld.%06lu,%s\n",
+          (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, log);
 
 #if ( (TIME_WAIT + NEXT_SEND_WAIT) > 0)
   usleep( TIME_WAIT + NEXT_SEND_WAIT );

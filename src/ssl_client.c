@@ -9,71 +9,44 @@
 
 int main(void)
 {
-  int mysocket;
-  struct sockaddr_in server;
+  int sockfd;
 
   SSL *ssl;
   SSL_CTX *ctx;
-  //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
-  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
+  SSL_SESSION *ssl_session = NULL;
+  const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
 
   char log[128];
   char msg[BUFSIZE];
 
-  memset(&server, 0, sizeof(server));
-  server.sin_family = AF_INET;
-  if (inet_aton(HOST_IP, &server.sin_addr) == 0) {
-    fprintf(stderr, "Invalid IP Address.\n");
-    exit(EXIT_FAILURE);
-  }
-  server.sin_port = htons( TLS_PORT );
+  SSL_load_error_strings();
+  SSL_library_init();
+  ctx = SSL_CTX_new(TLS_client_method());
+  SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH );
+
+  /* クライアント認証設定 (テストなのでエラー確認のを除く) */
+  LOG(SSL_CTX_set_options(ctx, flags));
+  SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, C_CERT));// 証明書の登録
+  SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
+  //SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
+  //LOG(SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback));// 証明書検証機能の有効化
+  //LOG(SSL_CTX_set_verify_depth (ctx, 2));// 証明書チェーンの深さ
+  //LOG(SSL_CTX_set_read_ahead(ctx, 1));
 
   int i = 0;
+  int size;
   while(1){
-    int retval = 0;
-    int size = get_data(i++, " ssl", msg, log );
+    size = get_data(i++, " ssl", msg, log );
     if ( 0 == size ){
       fprintf(stderr, "end\n\n");
       break;
     }
 
-    LOG(SSL_load_error_strings());
-    LOG(SSL_library_init());
-    LOG(ctx = SSL_CTX_new(TLS_client_method()));
-
-    /* クライアント認証設定 (テストなのでエラー確認のを除く) */
-    LOG(SSL_CTX_set_options(ctx, flags));
-    SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, C_CERT));// 証明書の登録
-    SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
-    SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
-    LOG(SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback));// 証明書検証機能の有効化
-    LOG(SSL_CTX_set_verify_depth (ctx, 2));// 証明書チェーンの深さ
-    LOG(SSL_CTX_set_read_ahead(ctx, 1));
-
-    LOG(mysocket = socket(AF_INET, SOCK_STREAM, 0)); 
-    if (mysocket < 0) {
-      fprintf(stderr, "\nsocket %d :%d errno:%d\n", __LINE__, mysocket, errno );
-      perror("socket");
-      exit(EXIT_FAILURE);
-    }
-
-    int i = 0;
-    while(1){
-      LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
-      if( retval == 0 ){
-        break;
-      } else if (retval && i++ > 3){
-        fprintf(stderr, "\nconnect %d :%d errno:%d\n", __LINE__, retval, errno );
-        perror("connect");
-        exit(EXIT_FAILURE);
-      } else {
-        fprintf(stderr, "connect %d :%d errno:%d\n", __LINE__, retval, errno );
-        usleep(100);
-      }
-    }
+    sockfd = get_settings_fd( HOST, SOCK_STREAM, TEST_SENDER, NULL);
  
     LOG(ssl = SSL_new(ctx));
-    LOG(SSL_set_fd(ssl, mysocket));
+    if(ssl_session) LOG(SSL_set_session(ssl, ssl_session));
+    LOG(SSL_set_fd(ssl, sockfd));
 
     /* 接続 */
     LOGS();
@@ -84,6 +57,9 @@ int main(void)
     }
     LOGE( SSL_connect() );
 
+#if (TEST_SSL_SESSION == 1)
+    if(!ssl_session) LOG(ssl_session = SSL_get1_session(ssl));
+#endif
     do {
       /*  受送信処理 */
       ssl_check_write(ssl, msg, size);
@@ -108,10 +84,8 @@ int main(void)
     ssl_check_shutdown( ssl );
 
   cleanup:
-    LOG(SSL_free(ssl)); 
-    LOG(SSL_CTX_free(ctx));
-    ERR_free_strings();
-    LOG(close(mysocket));
+    LOG(SSL_free(ssl));
+    LOG(close(sockfd));
 
 #if (ONE_SEND == 0)
     endprint(log);
@@ -120,6 +94,9 @@ int main(void)
 #endif
   }
 
+  if(ssl_session) LOG(SSL_SESSION_free(ssl_session));
+  LOG(SSL_CTX_free(ctx));
+  ERR_free_strings();
   return EXIT_SUCCESS;
 }
 

@@ -54,9 +54,7 @@ int main(void)
 {
   SSL_CTX *ctx;
   SSL *ssl;
-  const int on = 1;
-  int server;
-  struct sockaddr_in server_addr;
+  int server_fd;
   struct sockaddr_storage client_addr;
   const long flags=(SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1);
 
@@ -65,6 +63,14 @@ int main(void)
   OpenSSL_add_all_algorithms();
   ctx = SSL_CTX_new(DTLS_server_method());
 
+#if (TEST_SSL_SESSION == 1)
+  /* セッションの再開機能 */
+  SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH );
+  //SSL_CTX_sess_set_new_cb(ctx, sess_cache_new);
+  //SSL_CTX_sess_set_get_cb(ctx, sess_cache_get);
+  //SSL_CTX_sess_set_remove_cb(ctx, sess_cache_remove);
+#endif // (TEST_SSL_SESSION == 1)
+  
   /* サーバ認証設定 */
   SSL_CTX_set_options(ctx, flags);
   SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, S_CERT)); // 証明書の登録
@@ -73,29 +79,19 @@ int main(void)
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
   SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
 
-  bzero(&server_addr, sizeof(server_addr));
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_addr.s_addr = INADDR_ANY;
-  server_addr.sin_port = htons(TLS_PORT);
-
 	SSL_CTX_set_read_ahead(ctx, 1);
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
-  LOGR(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
-#if (SETSOCKOPT == 1)
-  setsockopt(server, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
-  setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
-#endif
-  LOGR(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
-
+  server_fd = get_settings_fd(NULL, SOCK_DGRAM, TEST_RECEIVER, NULL);
+  
   BIO *bio;
   int ret;
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-    LOGR(bio = BIO_new_dgram(server, BIO_NOCLOSE));
+    LOGR(bio = BIO_new_dgram(server_fd, BIO_NOCLOSE));
     LOGR(ssl = SSL_new(ctx));
-    LOGR(SSL_set_fd(ssl, server));
+    LOGR(SSL_set_fd(ssl, server_fd));
     LOGR(SSL_set_bio(ssl, bio, bio));
     LOGR(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
@@ -107,7 +103,7 @@ int main(void)
     LOGE(DTLSv1_listen);
 
 #if (M_SERVER ==1)
-    sock_thread_post( th, server, ssl );
+    sock_thread_post( th, server_fd, ssl );
 #else //(M_SERVER ==1)
     int accept = 0;
     char buf[BUFSIZE];
@@ -145,7 +141,7 @@ int main(void)
 #endif // (M_SERVER ==1)
   }
   sock_thread_join( th );
-  close(server);
+  close(server_fd);
   SSL_CTX_free(ctx);
 
   return EXIT_SUCCESS;

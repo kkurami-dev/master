@@ -58,24 +58,32 @@ void connection_handle( int client, SSL *ssl ){
 #endif // (ONE_SEND == 0)
 }
 
+/* void sess_cache_init(); */
+/* void sess_cache_terminate(); */
+/* int sess_cache_new(SSL *ssl, SSL_SESSION *sess); */
+/* SSL_SESSION *sess_cache_get(SSL *ssl, unsigned char *key, int key_len, int *copy); */
+/* void sess_cache_remove(SSL_CTX *ctx, SSL_SESSION *sess); */
 
 int main(void)
 {
+  int server_fd, client_fd;
+
   SSL_CTX *ctx;
   SSL *ssl;
-
-  int server, client;
-  struct sockaddr_in addr;
-  const int on = 1;
-
   const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
-  //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
 
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
   ctx = SSL_CTX_new(TLS_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
 
+#if (TEST_SSL_SESSION == 1)
+  SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH );
+  //SSL_CTX_sess_set_new_cb(ctx, sess_cache_new);
+  //SSL_CTX_sess_set_get_cb(ctx, sess_cache_get);
+  //SSL_CTX_sess_set_remove_cb(ctx, sess_cache_remove);
+#endif // (TEST_SSL_SESSION == 1)
+  
   /* サーバ認証設定 */
   SSL_CTX_set_options(ctx, flags);
   SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, S_CERT)); // 証明書の登録
@@ -88,32 +96,21 @@ int main(void)
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
-  bzero(&addr, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = INADDR_ANY; // 全てのアドレスからの要求を受け付ける
-  addr.sin_port = htons( TLS_PORT );
-
-  server = socket(addr.sin_family, SOCK_STREAM, 0);
-#if (SETSOCKOPT == 1)
-  setsockopt(server, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
-  setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
-#endif
-  bind(server, (struct sockaddr*)&addr, sizeof(addr));
-  listen(server, 10);
+  server_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL);
 
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
     /* 接続と通信開始 */
-    LOG(client = accept(server, NULL, NULL));
+    LOG(client_fd = accept(server_fd, NULL, NULL));
     /* SSLオブジェクトを生成 */
     LOG(ssl = SSL_new(ctx));
-    /* メッセージ受信用のスレッドでジュ受信  */
-    sock_thread_post( th, client, ssl );
+    /* メッセージ受信用のスレッドで情報受信  */
+    sock_thread_post( th, client_fd, ssl );
   }
   sock_thread_join( th );
 
   SSL_CTX_free(ctx);
-  close(server);
+  close(server_fd);
   return EXIT_SUCCESS;
 }
 
