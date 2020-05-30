@@ -117,25 +117,25 @@ int get_data( int count, char *type, char *msg, char *log )
 
   /* 1つの送信データ送信完了 */
   //if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
-  if ( 0 != count && 0 == no ){
-    
-#if (KEY_WAIT == 1)
+  if (0 == no  && 0 != count){
     if(senddata_size[DATA_NUM] == size ){
       fprintf(stderr, "all end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
       return 0;
+    } else {
+      fprintf(stderr, "end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
     }
+#if (KEY_WAIT == 1)
     fprintf(stderr, "eny Enter key >");
     getchar();
     fflush(stdin);
 #endif
-    fprintf(stderr, "end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
   }
   /* 全ての計測用データ送信完了 */
-  if ( DATA_NUM <= idx){
+  if (DATA_NUM <= idx){
     return 0;
   }
 
-  memset( msg, 0x00, BUFSIZE);
+  //memset( msg, 0x00, BUFSIZE);
   memset( msg, 'A', senddata_size[idx] );
 
   /* 送信文字列の設定 */
@@ -244,69 +244,67 @@ int ssl_get_accept(SSL *ssl, int sslret){
 int ssl_check_read( SSL *ssl, char *buf){
   int len, ret;
   LOGS();
-  while (1)
-    {
-      LOGC();
-      /* SSLデータ受信 */
-      len  = SSL_read(ssl, buf, BUFSIZE);
-      if ( 0 < len ) break;
-      ret = SSL_get_error(ssl, len);
-      switch (ret)
-        {
-        case SSL_ERROR_NONE:
-          break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        case SSL_ERROR_SYSCALL:
-          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
-          perror("read");
-          continue;
-          //case SSL_ERROR_ZERO_RETURN:
-        case SSL_ERROR_SSL:
-          printf("SSL read error: %s (%d)\n", ERR_error_string(ERR_get_error(), buf), ret);
-          break;
-        default:
-          fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
-          perror("read");
-          return 1;
-          // エラー処理
-        }
-      break;
-    }
+  while (1) {
+    LOGC();
+    /* SSLデータ受信 */
+    len  = SSL_read(ssl, buf, BUFSIZE);
+    if ( 0 < len ) break;
+    ret = SSL_get_error(ssl, len);
+    switch (ret)
+      {
+      case SSL_ERROR_NONE:
+        break;
+      case SSL_ERROR_WANT_READ:
+      case SSL_ERROR_WANT_WRITE:
+      case SSL_ERROR_SYSCALL:
+        fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
+        perror("read");
+        continue;
+        //case SSL_ERROR_ZERO_RETURN:
+      case SSL_ERROR_SSL:
+        printf("SSL read error: %s (%d)\n", ERR_error_string(ERR_get_error(), buf), ret);
+        break;
+      default:
+        fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
+        perror("read");
+        return 1;
+        // エラー処理
+      }
+    break;
+  }
   LOGE(SSL_read);
   return 0;
 }
 int ssl_check_write( SSL *ssl, char *msg, int size){
   int ret, len;
   LOGS();
-  while (1)
-    {
-      LOGC();
-      /* SSLデータ送信 */
-      len  = SSL_write(ssl, msg, size);
-      if ( 0 < len ) break;
-      ret = SSL_get_error(ssl, ret);
-      switch (ret)
-        {
-        case SSL_ERROR_NONE:
-          break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        case SSL_ERROR_SYSCALL:
-          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
-          perror("write");
-          continue;
-        case SSL_ERROR_SSL:
-          printf("SSL write error: %s (%d)\n", ERR_error_string(ERR_get_error(), msg), ret);
-          break;
-        default:
-          fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
-          perror("write");
-          return 1;
-          // エラー処理
-        }
-      break;
-    }
+  while (1) {
+    LOGC();
+    /* SSLデータ送信 */
+    len  = SSL_write(ssl, msg, size);
+    if ( 0 < len ) break;
+    ret = SSL_get_error(ssl, ret);
+    switch (ret)
+      {
+      case SSL_ERROR_NONE:
+        break;
+      case SSL_ERROR_WANT_READ:
+      case SSL_ERROR_WANT_WRITE:
+      case SSL_ERROR_SYSCALL:
+        fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
+        perror("write():");
+        continue;
+      case SSL_ERROR_SSL:
+        printf("SSL write error: %s (%d)\n", ERR_error_string(ERR_get_error(), msg), ret);
+        break;
+      default:
+        fprintf(stderr, "SSL_write() ret:%d error:%d errno:%d ", len, ret, errno);
+        perror("write():");
+        return 1;
+        // エラー処理
+      }
+    break;
+  }
   LOGE(SSL_write);
   return 0;
 }
@@ -315,33 +313,31 @@ void ssl_check_shutdown( SSL *ssl ){
   int ret, len;
 
   LOGS();
-  while (1)
-    {
-      LOGC();
-      /* SSL通信の終了 */
-      len  = SSL_shutdown(ssl);
-      ret = SSL_get_error(ssl, len);
-      switch (ret)
-        {
-        case SSL_ERROR_NONE:
-          break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        case SSL_ERROR_SYSCALL:
-          //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
-          continue;
-        default:
-          fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
-          perror("write");
-          break;
-        }
-      break;
-    }
+  while (1){
+    LOGC();
+    /* SSL通信の終了 */
+    len  = SSL_shutdown(ssl);
+    ret = SSL_get_error(ssl, len);
+    switch (ret)
+      {
+      case SSL_ERROR_NONE:
+        break;
+      case SSL_ERROR_WANT_READ:
+      case SSL_ERROR_WANT_WRITE:
+      case SSL_ERROR_SYSCALL:
+        //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
+        continue;
+      default:
+        fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
+        perror("SSL_shutdown():");
+        break;
+      }
+    break;
+  }
   LOGE(SSL_shutdown);
 }
 
-int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
-{
+int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len) {
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length = 0, resultlength;
 	union {
@@ -351,15 +347,13 @@ int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 	} peer;
 
 	/* Initialize a random secret */
-	if (!cookie_initialized)
-		{
-      if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH))
-        {
-          printf("error setting random cookie secret\n");
-          return 0;
-        }
-      cookie_initialized = 1;
-		}
+	if (!cookie_initialized) {
+    if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH)){
+      printf("error setting random cookie secret\n");
+      return 0;
+    }
+    cookie_initialized = 1;
+  }
 
 	/* Read peer information */
 	(void) BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
@@ -370,11 +364,10 @@ int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 	length += sizeof(in_port_t);
 	buffer = (unsigned char*) OPENSSL_malloc(length);
 
-	if (buffer == NULL)
-		{
-      printf("out of memory\n");
-      return 0;
-		}
+	if (buffer == NULL) {
+    printf("out of memory\n");
+    return 0;
+  }
 
   memcpy(buffer,
          &peer.s4.sin_port,
@@ -394,8 +387,7 @@ int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 	return 1;
 }
 
-int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len)
-{
+int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len) {
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length = 0, resultlength;
 	union {
@@ -417,11 +409,10 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 	length += sizeof(in_port_t);
 	buffer = (unsigned char*) OPENSSL_malloc(length);
 
-	if (buffer == NULL)
-		{
-      printf("out of memory\n");
-      return 0;
-		}
+	if (buffer == NULL){
+    printf("out of memory\n");
+    return 0;
+  }
   memcpy(buffer,
          &peer.s4.sin_port,
          sizeof(in_port_t));
