@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/io.h>            /* for inb,outb */
 
 #include <semaphore.h>
 #include <pthread.h>
@@ -456,7 +457,7 @@ struct thdata {
                  void *
  ATTENTION   :
 *****************************************************************************/
-#define THREAD_MAX   10
+#define THREAD_MAX   ( QUEUELIMIT * 2)
 void *thread_function(void *thdata)
 {
   struct thdata       *priv = (struct thdata *)thdata;

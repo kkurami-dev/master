@@ -54,7 +54,7 @@ int main(void)
 {
   SSL_CTX *ctx;
   SSL *ssl;
-
+  const int on = 1;
   int server;
   struct sockaddr_in server_addr;
   struct sockaddr_storage client_addr;
@@ -83,6 +83,8 @@ int main(void)
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
   LOGR(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
+  setsockopt(server, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
+  setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
   LOGR(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
 
   BIO *bio;

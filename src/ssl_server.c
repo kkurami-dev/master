@@ -66,7 +66,7 @@ int main(void)
 
   int server, client;
   struct sockaddr_in addr;
-
+  const int on = 1;
 
   const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
   //const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
@@ -94,6 +94,8 @@ int main(void)
   addr.sin_port = htons( TLS_PORT );
 
   server = socket(addr.sin_family, SOCK_STREAM, 0);
+  setsockopt(server, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
+  setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
   bind(server, (struct sockaddr*)&addr, sizeof(addr));
   listen(server, 10);
 

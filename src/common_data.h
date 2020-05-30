@@ -65,6 +65,8 @@
 //#define NEXT_SEND_WAIT  10000
 #define NEXT_SEND_WAIT  0
 
+#define QUEUELIMIT 32
+
 struct timeval tv_s;
 int log_count;
 char log_msg[BUFSIZE];

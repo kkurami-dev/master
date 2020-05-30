@@ -27,6 +27,7 @@ int main(int argc, char** argv)
     addr.sin_addr.s_addr = INADDR_ANY; // すべてのアドレス宛のパケットを受信する
  
     // バインドする
+    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
     LOG(ret = bind(sd, (struct sockaddr *)&addr, sizeof(addr)) );
     if(ret < 0) {
         perror("bind");

@@ -5,8 +5,6 @@
 #include <string.h> //memset()
 #include <unistd.h> //close()
 
-#define QUEUELIMIT 5
-
 #include "common_data.h"
 
 void connection_handle( int clitSock, SSL *ssl ){
@@ -56,6 +54,8 @@ int main(int argc, char* argv[]) {
   struct sockaddr_in clitSockAddr; //client internet socket address
   unsigned short servPort; //server port number
   unsigned int clitLen; // client internet socket address length
+  //const int on = 1, off = 0;
+  const int on = 1;
 
   if ((servPort = TLS_PORT) == 0) {
     fprintf(stderr, "invalid port number.\n");
@@ -72,11 +72,13 @@ int main(int argc, char* argv[]) {
   servSockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servSockAddr.sin_port        = htons(servPort);
 
+  setsockopt(servSock, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
+  setsockopt(servSock, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
   if (bind(servSock, (struct sockaddr *) &servSockAddr, sizeof(servSockAddr) ) < 0 ) {
     perror("bind() failed.");
     exit(EXIT_FAILURE);
   }
-  LOGR(listen(servSock, 32));
+  LOGR(listen(servSock, QUEUELIMIT));
 
   clitLen = sizeof(clitSockAddr);
 
