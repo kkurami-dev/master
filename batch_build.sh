@@ -6,7 +6,7 @@ set -ue
 DEBUG_OPTE="-Wall -g -O0 -fstack-protector -fsanitize=address"
 #DEBUG_OPTE="-Wall"
 INC="-I ${HOME}/tools/include -L ${HOME}/tools/lib"
-LIB="-lssl -lcrypto"
+LIB="-lssl -lcrypto -lpthread"
 CLEN="rm -rf *.pem server* client* ca-* src/certs bin/*"
 REBULD=0
 
@@ -34,6 +34,7 @@ declare -a array=(
     "tcp_client"
     "udp_server"
     "udp_client"
+    "tcp_multi_server"
 )
 if [ ! -d bin ]; then
     mkdir bin

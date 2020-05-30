@@ -9,6 +9,45 @@
 
 #include "common_data.h"
 
+void connection_handle( int clitSock, SSL *ssl ){
+  char recvBuffer[BUFSIZE];//receive temporary buffer
+  int recvMsgSize; // recieve and send buffer size
+  int ret;
+
+  while(1) {
+    LOGR(recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0));
+    if (recvMsgSize < 0) {
+      perror("recv() failed.");
+      exit(EXIT_FAILURE);
+    } else if(recvMsgSize == 0){
+      break;
+    }
+
+#if (SERVER_REPLY == 1)
+    int sendMsgSize;
+    LOGR(sendMsgSize = send(clitSock, "ack", 4, 0));
+    if(sendMsgSize < 0){
+      perror("send() failed.");
+      exit(EXIT_FAILURE);
+    } else if(sendMsgSize == 0){
+      break;
+    }
+#endif // (SERVER_REPLY == 1)
+
+    ret = rcvprint( recvBuffer );
+    if( ret == 0 ) {
+      break;
+    }
+
+#if (ONE_SEND == 0)
+    break;
+#endif // (ONE_SEND == 0)
+  }
+
+  LOGR(shutdown(clitSock, 1));
+  LOGR(close(clitSock));
+}
+
 int main(int argc, char* argv[]) {
 
   int servSock; //server socket descriptor
@@ -17,14 +56,6 @@ int main(int argc, char* argv[]) {
   struct sockaddr_in clitSockAddr; //client internet socket address
   unsigned short servPort; //server port number
   unsigned int clitLen; // client internet socket address length
-  char recvBuffer[BUFSIZE];//receive temporary buffer
-  int recvMsgSize; // recieve and send buffer size
-  int ret;
-
-  /* if ( argc != 2) { */
-  /*     fprintf(stderr, "argument count mismatch error.\n"); */
-  /*     exit(EXIT_FAILURE); */
-  /* } */
 
   if ((servPort = TLS_PORT) == 0) {
     fprintf(stderr, "invalid port number.\n");
@@ -45,46 +76,16 @@ int main(int argc, char* argv[]) {
     perror("bind() failed.");
     exit(EXIT_FAILURE);
   }
+  LOGR(listen(servSock, 32));
 
-  LOG(listen(servSock, 10));
+  clitLen = sizeof(clitSockAddr);
 
+  struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-    clitLen = sizeof(clitSockAddr);
-    LOG(clitSock = accept(servSock, (struct sockaddr *) &clitSockAddr, &clitLen));
-
-    while(1) {
-      LOG(ret = (recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0)));
-      if (ret < 0) {
-        perror("recv() failed.");
-        exit(EXIT_FAILURE);
-      } else if(recvMsgSize == 0){
-        break;
-      }
-
-#if (SERVER_REPLY == 1)
-      int sendMsgSize;
-      LOG(sendMsgSize = send(clitSock, "ack", 4, 0));
-      if(sendMsgSize < 0){
-        perror("send() failed.");
-        exit(EXIT_FAILURE);
-      } else if(sendMsgSize == 0){
-        break;
-      }
-#endif // (SERVER_REPLY == 1)
-
-      ret = rcvprint( recvBuffer );
-      if( ret == 0 ) {
-        close(servSock);
-        return EXIT_SUCCESS;
-      }
-
-#if (ONE_SEND == 0)
-      break;
-#endif // (ONE_SEND == 0)
-    }
-
-    LOG(close(clitSock));
+    LOGR(clitSock = accept(servSock, (struct sockaddr *) &clitSockAddr, &clitLen));
+    sock_thread_post( th, clitSock, NULL );
   }
+  sock_thread_join( th );
 
   close(servSock);
   return EXIT_SUCCESS;

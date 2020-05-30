@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-28 21:42:10 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-30 10:12:37 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -44,6 +44,7 @@ OpenSSL と通常のソケット通信を行うサンプル
   APIの解説の日本語訳
 -TCP/UDP : [C言語-ソケットプログラミング](http://capm-network.com/?tag=C言語-ソケットプログラミング)
 - GDB : [gcc+gdbによるプログラムのデバッグ 第3回 gdbの便利な機能、デバッグの例](https://rat.cis.k.hosei.ac.jp/article/devel/debugongccgdb3.html)
+- LINUX：[10.3　メッセージに含まれるエラー情報](http://itdoc.hitachi.co.jp/manuals/3020/30203N6450/BJEX0275.HTM)
 
 ## 通信内容
 - [【図解】https(SSL/TLS)の仕組みとシーケンス,パケット構造 〜暗号化の範囲, Encrypted Alert, ヘッダやレイヤについて～](https://milestone-of-se.nesuke.com/nw-basic/tls/https-structure/)

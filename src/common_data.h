@@ -30,7 +30,7 @@
 #define SSL_RET1(x)		ssl_ret_check( (1 != x), __LINE__, #x );
 
 #define LOG_PRINT          1 /*  詳細にログを出力する     */
-#define TEST               2 /*  テストデータを少なく絞る  */
+#define TEST               0 /*  テストデータを少なく絞る  */
 #define ONE_SEND           0 /* データを全て1接続で送る    */
 #define KEY_WAIT           1 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 #define SERVER_REPLY       0 /* TPC/TLS の場合にサーバから応答を返すか  */
@@ -42,10 +42,13 @@
 #define LOGE(x)        sprintf(log_msg, "%s(%d)", #x, log_count );time_log(__LINE__, log_msg);
 #else
 #define LOG(x)        x
+#define LOGR(x)        x
 #define LOGS()
 #define LOGC()
 #define LOGE(x)
 #endif
+//#define LOGR(x)        LOG(x)
+#define LOGR(x)        x
 
 #if (TEST == 1)
 #define RE_TRY  10   /* 一つのサイズのメッセージ送信回数 */
@@ -54,12 +57,13 @@
 #elif (ONE_SEND == 1)
 #define RE_TRY  10000
 #else
-#define RE_TRY  100
+#define RE_TRY  10000
 #endif
 
 #define TIME_WAIT 0
 //#define NEXT_SEND_WAIT  30000
-#define NEXT_SEND_WAIT  10000
+//#define NEXT_SEND_WAIT  10000
+#define NEXT_SEND_WAIT  0
 
 struct timeval tv_s;
 int log_count;

@@ -14,6 +14,65 @@
 
 #define BUFFER_SIZE          (1<<16)
 
+void connection_handle( int clitSock, SSL *ssl ){
+  char buf[BUFSIZE];
+  int accept = 0;
+  int len;
+  int ret;
+
+  LOGS();
+  while(accept == 0) {
+    accept = SSL_accept(ssl);
+    LOGC();
+  }
+  LOGE(SSL_accept);
+
+  do {
+    if(ssl_check_read(ssl , buf)){
+      goto cleanup;
+    }
+#if (ONE_SEND == 1)
+    if (rcvprint( buf ) == 0){
+      break;
+    }
+#else // (ONE_SEND == 1)
+    break;
+#endif // (ONE_SEND == 1)
+  } while(1);
+
+  LOGS();
+  while (1)
+    {
+      LOGC();
+      /* SSL通信の終了 */
+      len  = SSL_shutdown(ssl);
+      ret = SSL_get_error(ssl, len);
+      switch (ret)
+        {
+        case SSL_ERROR_NONE:
+          break;
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_SYSCALL:
+          //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
+          continue;
+        default:
+          fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
+          perror("write");
+          break;
+        }
+      break;
+    }
+  LOGE(SSL_shutdown);
+    
+ cleanup:
+  LOG(SSL_free(ssl));
+
+#if (ONE_SEND == 0)
+  ret = rcvprint( buf );
+#endif// (ONE_SEND == 0)
+}
+
 int main(void)
 {
   SSL_CTX *ctx;
@@ -22,7 +81,6 @@ int main(void)
   int server;
   struct sockaddr_in server_addr;
   struct sockaddr_storage client_addr;
-  char buf[BUFSIZE];
   const long flags=(SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1);
 
   SSL_load_error_strings();
@@ -47,13 +105,12 @@ int main(void)
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
-  LOG(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
-  LOG(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
+  server = socket(server_addr.sin_family, SOCK_DGRAM, 0);
+  bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
   BIO *bio;
-  int accept = 0;
-  int len;
   int ret;
+  struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
     LOG(bio = BIO_new_dgram(server, BIO_NOCLOSE));
     LOG(ssl = SSL_new(ctx));
@@ -67,62 +124,10 @@ int main(void)
       LOGC()
     }while (ret <= 0);
     LOGE(DTLSv1_listen);
-
-    LOGS();
-    while(accept == 0) {
-      accept = SSL_accept(ssl);
-      LOGC();
-    }
-    LOGE(SSL_accept);
-
-    do {
-      if(ssl_check_read(ssl , buf)){
-        goto cleanup;
-      }
-#if (ONE_SEND == 1)
-      if (rcvprint( buf ) == 0){
-        break;
-      }
-#else // (ONE_SEND == 1)
-      break;
-#endif // (ONE_SEND == 1)
-    } while(1);
-
-    LOGS();
-    while (1)
-      {
-        LOGC();
-        /* SSL通信の終了 */
-        len  = SSL_shutdown(ssl);
-        ret = SSL_get_error(ssl, len);
-        switch (ret)
-          {
-          case SSL_ERROR_NONE:
-            break;
-          case SSL_ERROR_WANT_READ:
-          case SSL_ERROR_WANT_WRITE:
-          case SSL_ERROR_SYSCALL:
-            //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
-            continue;
-          default:
-            fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
-            perror("write");
-            break;
-          }
-        break;
-      }
-    LOGE(SSL_shutdown);
     
-  cleanup:
-    LOG(SSL_free(ssl));
-
-#if (ONE_SEND == 0)
-    ret = rcvprint( buf );
-    if( ret == 0 ) break;
-#else// (ONE_SEND == 0)
-    break;
-#endif// (ONE_SEND == 0)
+    sock_thread_post( th, 0, ssl );
   }
+  sock_thread_join( th );
 
   close(server);
   SSL_CTX_free(ctx);

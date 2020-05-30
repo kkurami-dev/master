@@ -5,6 +5,7 @@
 #include <stdlib.h> //atoi(), exit(), EXIT_FAILURE, EXIT_SUCCESS
 #include <string.h> //memset(), strcmp()
 #include <unistd.h> //close()
+#include <poll.h> /* poll */
 
 #include "common_data.h"
 
@@ -16,6 +17,8 @@ int main(int argc, char* argv[]) {
   char sendBuffer[BUFSIZE]; // send temporary buffer
   char log[128];
   int ret;
+
+  struct pollfd fds[1] = {0};
 
   /* 接続情報の作成 */
   memset(&servSockAddr, 0, sizeof(servSockAddr));
@@ -40,13 +43,16 @@ int main(int argc, char* argv[]) {
     }
 
     /* 接続 */
-    LOG(ret = (sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)));
+    LOG(sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
     if (sock < 0 ){
+      fprintf(stderr, "sock:%d error:%d ", sock, errno);
       perror("socket() failed.");
       exit(EXIT_FAILURE);
     }
+
     LOG(ret = connect(sock, (struct sockaddr*) &servSockAddr, sizeof(servSockAddr)));
     if (ret < 0) {
+      fprintf(stderr, "i:%d ret:%d error:%d ", i, ret, errno);
       perror("connect() failed.");
       exit(EXIT_FAILURE);
     }
@@ -55,12 +61,37 @@ int main(int argc, char* argv[]) {
   re_send:
 #endif // (ONE_SEND == 1)
 
+    /* 送信可能になるまでまつ */
+    LOGS();
+    fds[0].fd = sock;
+    fds[0].events = POLLOUT;                // 書き込み可能イベントを設定
+    while (1){
+      ret = poll(fds, 1, 10);
+      if (fds[0].revents & POLLERR){       // エラー発生
+        fprintf(stderr, "ret:%d error:%d ", ret, errno);
+        perror("poll() failed.");
+        exit(EXIT_FAILURE);
+      }
+      else if (fds[0].revents & POLLOUT){  // 送信可能ならsend実施
+        break;
+      } else {
+        fprintf(stderr, ".");
+      }
+    }
+    LOGE(poll());
+
     /* 送信 */
-    LOG(ret = send(sock, sendBuffer, size, 0));
-    if (ret <= 0) {
+    LOGS();
+    while( 1 ){
+      send(sock, sendBuffer, size, 0);
+      if( errno != EINTR ) break;
+    }
+    if (ret < 0) {
+      fprintf(stderr, "ret:%d error:%d ", ret, errno);
       perror("send() failed.");
       exit(EXIT_FAILURE);
     }
+    LOGE(send());
 
 #if (SERVER_REPLY == 1)
     /* 受信 */
@@ -82,10 +113,13 @@ int main(int argc, char* argv[]) {
     size = get_data(i++, " tcp", sendBuffer, log);
     /* 計測終了 */
     if( 0 == size ){
+      shutdown(sock, 1);
+      close(sock);
       break;
     }
     goto re_send;
 #else // (ONE_SEND == 1)
+    LOG(shutdown(sock, 1));
     LOG(close(sock));
     endprint(log);
 #endif // (ONE_SEND == 1)
@@ -93,3 +127,5 @@ int main(int argc, char* argv[]) {
 
   return EXIT_SUCCESS;
 }
+// SO_LINGER
+// SO_REUSEADDR

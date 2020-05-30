@@ -37,19 +37,6 @@ int main(void)
       break;
     }
 
-    LOG(mysocket = socket(AF_INET, SOCK_STREAM, 0)); 
-    if (mysocket < 0) {
-      perror("socket");
-      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, mysocket, errno );
-      exit(EXIT_FAILURE);
-    }
-    LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
-    if (retval){
-      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, retval, errno );
-      perror("connect");
-      exit(EXIT_FAILURE);
-    }
- 
     LOG(SSL_load_error_strings());
     LOG(SSL_library_init());
     LOG(ctx = SSL_CTX_new(TLS_client_method()));
@@ -65,6 +52,19 @@ int main(void)
     SSL_CTX_set_read_ahead(ctx, 1);
     LOGE(SSL_CTX_set());
 
+    LOG(mysocket = socket(AF_INET, SOCK_STREAM, 0)); 
+    if (mysocket < 0) {
+      perror("socket");
+      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, mysocket, errno );
+      exit(EXIT_FAILURE);
+    }
+    LOG(retval = connect(mysocket, (struct sockaddr*) &server, sizeof(server)));
+    if (retval){
+      fprintf(stderr, "\n%d :%d errno:%d\n\n", __LINE__, retval, errno );
+      perror("connect");
+      exit(EXIT_FAILURE);
+    }
+ 
     LOG(ssl = SSL_new(ctx));
     LOG(SSL_set_fd(ssl, mysocket));
 
