@@ -50,15 +50,13 @@ int main(void)
     LOG(ctx = SSL_CTX_new(DTLS_client_method()));
 
     /* 認証設定 */
-    LOGS();
-    SSL_CTX_set_options(ctx, flags);/* SSLv2はセキュリティ的にNGなので除く*/
+    LOG(SSL_CTX_set_options(ctx, flags));/* SSLv2はセキュリティ的にNGなので除く*/
     SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, C_CERT));// 証明書の登録
     SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
     SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
-    SSL_CTX_set_verify_depth (ctx, 2);// 証明書チェーンの深さ
-    SSL_CTX_set_read_ahead(ctx, 1);
-    LOGE(SSL_CTX_set());
+    LOG(SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback));// 証明書検証機能の有効化
+    LOG(SSL_CTX_set_verify_depth (ctx, 2));// 証明書チェーンの深さ
+    LOG(SSL_CTX_set_read_ahead(ctx, 1));
 
     /* 接続 */
     LOG(mysocket = socket(AF_INET, SOCK_DGRAM, 0));

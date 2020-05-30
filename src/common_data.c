@@ -30,6 +30,7 @@ const int senddata_size[ DATA_NUM + 1] =
 #define DATA_NUM  22
 const int senddata_size[ DATA_NUM + 1] =
   {
+   100	,
    /* 送信データ  */
    //35200	,
    16383	,
@@ -44,7 +45,6 @@ const int senddata_size[ DATA_NUM + 1] =
    8800	,
    //17600	,
    10100	,
-   101	,
    302	,
    503	,
    704	,

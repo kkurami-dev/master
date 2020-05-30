@@ -72,8 +72,10 @@ int main(int argc, char* argv[]) {
   servSockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servSockAddr.sin_port        = htons(servPort);
 
+#if (SETSOCKOPT == 1)
   setsockopt(servSock, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
   setsockopt(servSock, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
+#endif
   if (bind(servSock, (struct sockaddr *) &servSockAddr, sizeof(servSockAddr) ) < 0 ) {
     perror("bind() failed.");
     exit(EXIT_FAILURE);

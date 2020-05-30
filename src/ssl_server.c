@@ -94,8 +94,10 @@ int main(void)
   addr.sin_port = htons( TLS_PORT );
 
   server = socket(addr.sin_family, SOCK_STREAM, 0);
+#if (SETSOCKOPT == 1)
   setsockopt(server, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
   setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
+#endif
   bind(server, (struct sockaddr*)&addr, sizeof(addr));
   listen(server, 10);
 

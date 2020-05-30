@@ -83,8 +83,10 @@ int main(void)
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
   LOGR(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
+#if (SETSOCKOPT == 1)
   setsockopt(server, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
   setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
+#endif
   LOGR(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
 
   BIO *bio;

@@ -7,54 +7,55 @@
  
 int main(int argc, char** argv)
 {
-    int sd;
-    struct sockaddr_in addr;
+  int sd;
+  struct sockaddr_in addr;
+  const int on = 1;
+  socklen_t sin_size;
+  struct sockaddr_in from_addr;
+  int ret;
+  char buf[BUFSIZE]; // 受信バッファ
  
-    socklen_t sin_size;
-    struct sockaddr_in from_addr;
-    int ret;
-    char buf[BUFSIZE]; // 受信バッファ
+  // IPv4 UDP のソケットを作成
+  if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    perror("socket");
+    return -1;
+  }
  
-    // IPv4 UDP のソケットを作成
-    if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("socket");
-        return -1;
-    }
+  // 待ち受けるIPとポート番号を設定
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(TLS_PORT);
+  addr.sin_addr.s_addr = INADDR_ANY; // すべてのアドレス宛のパケットを受信する
  
-    // 待ち受けるIPとポート番号を設定
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(TLS_PORT);
-    addr.sin_addr.s_addr = INADDR_ANY; // すべてのアドレス宛のパケットを受信する
+  // バインドする
+#if (SETSOCKOPT == 1)
+  setsockopt(sd, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
+  setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
+#endif
+  LOG(ret = bind(sd, (struct sockaddr *)&addr, sizeof(addr)) );
+  if(ret < 0) {
+    perror("bind");
+    return -1;
+  }
  
-    // バインドする
-    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
-    LOG(ret = bind(sd, (struct sockaddr *)&addr, sizeof(addr)) );
-    if(ret < 0) {
-        perror("bind");
-        return -1;
-    }
- 
-    // 受信バッファの初期化
-    memset(buf, 0, sizeof(buf));
+  // 受信バッファの初期化
+  memset(buf, 0, sizeof(buf));
 
-    while(1){
-      // 受信 パケットが到着するまでブロック
-      // from_addr には、送信元アドレスが格納される
-      LOG( ret = recvfrom(sd, buf, sizeof(buf), 0,
-                          (struct sockaddr *)&from_addr, &sin_size));
-      if(ret < 0) {
-        perror("recvfrom");
-        return -1;
-      }
-      
-      // 受信データの出力
-      ret = rcvprint( buf );
-      if( ret == 0 ) break;
+  while(1){
+    // 受信 パケットが到着するまでブロック
+    // from_addr には、送信元アドレスが格納される
+    LOG( ret = recvfrom(sd, buf, sizeof(buf), 0,
+                        (struct sockaddr *)&from_addr, &sin_size));
+    if(ret < 0) {
+      perror("recvfrom");
+      return -1;
     }
+      
+    // 受信データの出力
+    ret = rcvprint( buf );
+    if( ret == 0 ) break;
+  }
  
-    // ソケットのクローズ
-    close(sd);
- 
- 
-    return 0;
+  // ソケットのクローズ
+  close(sd);
+  return 0;
 }
