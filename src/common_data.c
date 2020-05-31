@@ -73,9 +73,12 @@ int rcv_count = 0;
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized = 0;
 
-int get_settings_fd(char *host, int type, int cs, struct addrinfo* out_adr){
+int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
+  static struct addrinfo s_res = {0};
+  static struct sockaddr_in addr = {0};
   struct addrinfo hints;
-  struct addrinfo *res, *ai;
+  struct addrinfo *res = NULL;
+  struct addrinfo *ai = NULL;
   const int on = 1;
   int sockfd;
 
@@ -89,8 +92,13 @@ int get_settings_fd(char *host, int type, int cs, struct addrinfo* out_adr){
     hints.ai_family = AF_UNSPEC;
   }
 
-  getaddrinfo(host, TLS_PORT_W, &hints, &res);
-  ai = res;
+  if ( s_res.ai_addr ){
+    ai = &s_res;
+  } else {
+    getaddrinfo(host, TLS_PORT_W, &hints, &res);
+    ai = res;
+    s_res = *res;
+  }
 
   if ( cs == TEST_RECEIVER ){
     sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
@@ -104,16 +112,26 @@ int get_settings_fd(char *host, int type, int cs, struct addrinfo* out_adr){
       listen(sockfd, QUEUELIMIT);
 
   } else {
-    for(ai = res; ai; ai = ai->ai_next) {
+    int i = 0;
+    int ret;
+    for(; ai; ai = ai->ai_next) {
       sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-      if(!connect(sockfd, ai->ai_addr, ai->ai_addrlen))
+      //ret = connect(sockfd, ai->ai_addr, ai->ai_addrlen);
+      if( !addr.sin_port ){
+        addr.sin_family = ai->ai_family;
+        addr.sin_port = htons(TLS_PORT);
+        inet_aton(HOST_IP, &addr.sin_addr);
+      }
+      ret = connect(sockfd, (struct sockaddr*)&addr, sizeof(addr));
+      if(!ret)
         break;
       close(sockfd);
+      fprintf(stderr, "connect re try %d. ret:%d errno:%d\n", i++, ret, errno);
     }
+    if (out_adr) *out_adr = addr;
   }
-  if (!out_adr && !ai) *out_adr = *ai;
 
-  freeaddrinfo(res);
+  if(res) freeaddrinfo(res);
   return sockfd;
 }
 /*

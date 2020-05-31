@@ -17,21 +17,11 @@ int main(void)
 {
   int mysocket;
   struct sockaddr_in server;
-  //struct sockaddr_in local;
 
   SSL *ssl;
   SSL_CTX *ctx;
   char msg[BUFSIZE];
   char log[128];
-
-  memset(&server, 0, sizeof(server));
-  server.sin_family = AF_INET;
-  if (inet_aton(HOST_IP, &server.sin_addr) == 0) {
-    fprintf(stderr, "Invalid IP Address.\n");
-    exit(EXIT_FAILURE);
-  }
-  server.sin_port = htons( TLS_PORT );
-  //sockaddr_in server = SOCKADDR_IN_INIT( AF_INET, htons(port), InAddr(HOST_IP) );
 
   /* 前準備 */
   LOG(SSL_load_error_strings());
@@ -57,9 +47,7 @@ int main(void)
     }
 
     /* 接続 */
-    LOG(mysocket = socket(AF_INET, SOCK_DGRAM, 0));
-    //LOG(bind(mysocket, (struct sockaddr *)&server, sizeof(server))); // ?
-    LOG(connect(mysocket, (struct sockaddr*)&server, sizeof(server)));
+    LOG(mysocket = get_settings_fd( HOST, SOCK_DGRAM, TEST_SENDER, &server));
     LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
