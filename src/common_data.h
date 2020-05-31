@@ -44,13 +44,11 @@
 
 #if (LOG_PRINT == 1)
 #define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);
-#define LOGR(x)       LOG(x)
 #define LOGS()        {gettimeofday(&tv_s, NULL);log_count = 0;}
 #define LOGC()        log_count++;
 #define LOGE(x)       sprintf(log_msg, "%s(%d)", #x, log_count );time_log(__LINE__, log_msg);
 #else
 #define LOG(x)        x
-#define LOGR(x)       x
 #define LOGS()
 #define LOGC()
 #define LOGE(x)

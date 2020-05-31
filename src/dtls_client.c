@@ -62,7 +62,9 @@ int main(void)
     LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
-    if(ssl_session) LOG(SSL_set_session(ssl, ssl_session));
+    if(ssl_session) {
+      LOG(SSL_set_session(ssl, ssl_session));
+    }
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_connect(ssl));///
 
@@ -101,7 +103,9 @@ int main(void)
 #endif// (ONE_SEND == 0)
   }
 
-  if(ssl_session) LOG(SSL_SESSION_free(ssl_session));
+  if(ssl_session) {
+    LOG(SSL_SESSION_free(ssl_session));
+  }
   SSL_CTX_free(ctx);
   ERR_free_strings();
   return EXIT_SUCCESS;

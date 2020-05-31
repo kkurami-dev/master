@@ -25,7 +25,7 @@ int main(void)
   SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH );
 
   /* クライアント認証設定 (テストなのでエラー確認のを除く) */
-  LOG(SSL_CTX_set_options(ctx, flags));
+  SSL_CTX_set_options(ctx, flags);
   SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, C_CERT));// 証明書の登録
   SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, C_KEY, SSL_FILETYPE_PEM));// 秘密鍵の登録
   //SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録
@@ -45,7 +45,9 @@ int main(void)
     sockfd = get_settings_fd( HOST, SOCK_STREAM, TEST_SENDER, NULL);
  
     LOG(ssl = SSL_new(ctx));
-    if(ssl_session) LOG(SSL_set_session(ssl, ssl_session));
+    if(ssl_session) {
+      LOG(SSL_set_session(ssl, ssl_session));
+    }
     LOG(SSL_set_fd(ssl, sockfd));
 
     /* 接続 */
@@ -58,7 +60,9 @@ int main(void)
     LOGE( SSL_connect() );
 
 #if (TEST_SSL_SESSION == 1)
-    if(!ssl_session) LOG(ssl_session = SSL_get1_session(ssl));
+    if(!ssl_session) {
+      LOG(ssl_session = SSL_get1_session(ssl));
+    }
 #endif
     do {
       /*  受送信処理 */
@@ -94,7 +98,9 @@ int main(void)
 #endif
   }
 
-  if(ssl_session) LOG(SSL_SESSION_free(ssl_session));
+  if(ssl_session) {
+    LOG(SSL_SESSION_free(ssl_session));
+  }
   LOG(SSL_CTX_free(ctx));
   ERR_free_strings();
   return EXIT_SUCCESS;

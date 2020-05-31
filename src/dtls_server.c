@@ -43,7 +43,7 @@ void connection_handle( int clitSock, SSL *ssl ){
   ssl_check_shutdown( ssl );
 
  cleanup:
-  LOGR(SSL_free(ssl));
+  LOG(SSL_free(ssl));
 
 #if (ONE_SEND == 0)
   rcvprint( buf );
@@ -89,11 +89,11 @@ int main(void)
   int ret;
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-    LOGR(bio = BIO_new_dgram(server_fd, BIO_NOCLOSE));
-    LOGR(ssl = SSL_new(ctx));
-    LOGR(SSL_set_fd(ssl, server_fd));
-    LOGR(SSL_set_bio(ssl, bio, bio));
-    LOGR(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
+    LOG(bio = BIO_new_dgram(server_fd, BIO_NOCLOSE));
+    LOG(ssl = SSL_new(ctx));
+    LOG(SSL_set_fd(ssl, server_fd));
+    LOG(SSL_set_bio(ssl, bio, bio));
+    LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
     LOGS();
     do {
@@ -130,7 +130,7 @@ int main(void)
     ssl_check_shutdown( ssl );
     
   cleanup:
-    LOGR(SSL_free(ssl));
+    LOG(SSL_free(ssl));
 
 #if (ONE_SEND == 0)
     ret = rcvprint( buf );

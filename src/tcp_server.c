@@ -13,7 +13,7 @@ void connection_handle( int clitSock, SSL *ssl ){
   int ret;
 
   while(1) {
-    LOGR(recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0));
+    LOG(recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0));
     if (recvMsgSize < 0) {
       perror("recv() failed.");
       exit(EXIT_FAILURE);
@@ -23,7 +23,7 @@ void connection_handle( int clitSock, SSL *ssl ){
 
 #if (SERVER_REPLY == 1)
     int sendMsgSize;
-    LOGR(sendMsgSize = send(clitSock, "ack", 4, 0));
+    LOG(sendMsgSize = send(clitSock, "ack", 4, 0));
     if(sendMsgSize < 0){
       perror("send() failed.");
       exit(EXIT_FAILURE);
@@ -42,8 +42,8 @@ void connection_handle( int clitSock, SSL *ssl ){
 #endif // (ONE_SEND == 0)
   }
 
-  LOGR(shutdown(clitSock, 1));
-  LOGR(close(clitSock));
+  LOG(shutdown(clitSock, 1));
+  LOG(close(clitSock));
 }
 
 int main(int argc, char* argv[]) {
@@ -80,13 +80,13 @@ int main(int argc, char* argv[]) {
     perror("bind() failed.");
     exit(EXIT_FAILURE);
   }
-  LOGR(listen(servSock, QUEUELIMIT));
+  LOG(listen(servSock, QUEUELIMIT));
 
   clitLen = sizeof(clitSockAddr);
 
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-    LOGR(clitSock = accept(servSock, (struct sockaddr *) &clitSockAddr, &clitLen));
+    LOG(clitSock = accept(servSock, (struct sockaddr *) &clitSockAddr, &clitLen));
     sock_thread_post( th, clitSock, NULL );
   }
   sock_thread_join( th );
