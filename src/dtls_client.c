@@ -69,7 +69,9 @@ int main(void)
     LOG(SSL_connect(ssl));///
 
 #if (TEST_SSL_SESSION == 1)
-    //if(!ssl_session) LOG(ssl_session = SSL_get1_session(ssl));
+    if(!ssl_session) {
+      LOG(ssl_session = SSL_get1_session(ssl));
+    }
 #endif
 
     /* 通信 */
