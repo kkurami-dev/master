@@ -42,6 +42,9 @@ int main(int argc, char* argv[]) {
       break;
     }
 
+#if 0
+    sock = get_settings_fd( HOST, SOCK_STREAM, TEST_SENDER, NULL);
+#else
     /* 接続 */
     LOG(sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
     if (sock < 0 ){
@@ -56,11 +59,12 @@ int main(int argc, char* argv[]) {
       perror("connect() failed.");
       exit(EXIT_FAILURE);
     }
-
+#endif
 #if (ONE_SEND == 1)
   re_send:
 #endif // (ONE_SEND == 1)
 
+#if 1
     /* 送信可能になるまでまつ */
     LOGS();
     fds[0].fd = sock;
@@ -79,11 +83,11 @@ int main(int argc, char* argv[]) {
       }
     }
     LOGE(poll());
-
+#endif
     /* 送信 */
     LOGS();
     while( 1 ){
-      send(sock, sendBuffer, size, 0);
+      ret = send(sock, sendBuffer, size, 0);
       if( errno != EINTR ) break;
     }
     if (ret < 0) {
@@ -109,20 +113,16 @@ int main(int argc, char* argv[]) {
 #endif // (SERVER_REPLY == 1)
 
 #if (ONE_SEND == 1)
-    endprint(log);
-    size = get_data(i++, " tcp", sendBuffer, log);
-    /* 計測終了 */
-    if( 0 == size ){
-      shutdown(sock, 1);
-      close(sock);
-      break;
+    if(i % RE_TRY){
+      endprint(log);
+      size = get_data(i++, " tcp", sendBuffer, log);
+      goto re_send;
     }
-    goto re_send;
-#else // (ONE_SEND == 1)
+#endif // (ONE_SEND == 1)
+
     LOG(shutdown(sock, 1));
     LOG(close(sock));
     endprint(log);
-#endif // (ONE_SEND == 1)
   }
 
   return EXIT_SUCCESS;

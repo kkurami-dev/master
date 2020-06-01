@@ -10,7 +10,6 @@
 void connection_handle( int clitSock, SSL *ssl ){
   char recvBuffer[BUFSIZE];//receive temporary buffer
   int recvMsgSize; // recieve and send buffer size
-  int ret;
 
   while(1) {
     LOG(recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0));
@@ -32,18 +31,20 @@ void connection_handle( int clitSock, SSL *ssl ){
     }
 #endif // (SERVER_REPLY == 1)
 
+
+#if (ONE_SEND == 1)
     ret = rcvprint( recvBuffer );
-    if( ret == 0 ) {
+    if( 0 == (ret % RE_TRY)) {
       break;
     }
-
-#if (ONE_SEND == 0)
+#else
     break;
 #endif // (ONE_SEND == 0)
   }
 
   LOG(shutdown(clitSock, 1));
   LOG(close(clitSock));
+  rcvprint( recvBuffer );
 }
 
 int main(int argc, char* argv[]) {
@@ -57,6 +58,7 @@ int main(int argc, char* argv[]) {
   //const int on = 1, off = 0;
   const int on = 1;
 
+#if 1
   if ((servPort = TLS_PORT) == 0) {
     fprintf(stderr, "invalid port number.\n");
     exit(EXIT_FAILURE);
@@ -71,7 +73,6 @@ int main(int argc, char* argv[]) {
   servSockAddr.sin_family      = AF_INET;
   servSockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servSockAddr.sin_port        = htons(servPort);
-
 #if (SETSOCKOPT == 1)
   setsockopt(servSock, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
   setsockopt(servSock, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
@@ -81,12 +82,14 @@ int main(int argc, char* argv[]) {
     exit(EXIT_FAILURE);
   }
   LOG(listen(servSock, QUEUELIMIT));
-
+#else // 1
+  servSock = get_settings_fd( NULL, SOCK_STREAM, TEST_RECEIVER, NULL);
+#endif // 1
   clitLen = sizeof(clitSockAddr);
 
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-    LOG(clitSock = accept(servSock, (struct sockaddr *) &clitSockAddr, &clitLen));
+    LOG(clitSock = accept(servSock, NULL, NULL));
     sock_thread_post( th, clitSock, NULL );
   }
   sock_thread_join( th );

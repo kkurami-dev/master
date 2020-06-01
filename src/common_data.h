@@ -28,7 +28,7 @@
 #define LOG_PRINT              1 /* 詳細にログを出力する     */
 #define TEST                   0 /* テストデータを少なく絞る  */
 #define ONE_SEND               0 /* データを全て1接続で送る    */
-#define KEY_WAIT               1 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
+#define KEY_WAIT               0 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 #define SERVER_REPLY           0 /* TPC/TLS の場合にサーバから応答を返すか  */
 #define RE_TRY             10000 /* 一つのサイズのメッセージ送信回数 */
 #define TIME_WAIT              0 /* メッセージ送信全体の待ち時間  */

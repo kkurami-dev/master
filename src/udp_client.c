@@ -41,9 +41,10 @@ int main(int argc, char** argv)
         }
 
 #if (ONE_SEND == 1)
-        endprint(log);
-        size = get_data(i++, " udp", msg, log);
-        if( 0 == size ){
+        if (i & RE_TRY){
+          endprint(log);
+          size = get_data(i++, " udp", msg, log);
+        } else {
           break;
         }
 #else

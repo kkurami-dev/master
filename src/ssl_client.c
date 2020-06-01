@@ -75,8 +75,10 @@ int main(void)
 
 #if (ONE_SEND == 1)
       /* 接続をしたまま、再度メッセージを送る */
-      endprint(log);
-      if ( get_data(i++, " ssl", msg, log ) == 0){
+      if(count % RE_TRY){
+        endprint(log);
+        size = get_data(i++, " ssl", msg, log );
+      } else {
         break;
       }
 #else
@@ -90,12 +92,7 @@ int main(void)
   cleanup:
     LOG(SSL_free(ssl));
     LOG(close(sockfd));
-
-#if (ONE_SEND == 0)
     endprint(log);
-#else
-    break;
-#endif
   }
 
   if(ssl_session) {

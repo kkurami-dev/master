@@ -157,7 +157,6 @@ int main(void)
 
   BIO *bio;
   int accept = 0;
-  int len;
   int ret;
   while(1) {
     LOG(bio = BIO_new_dgram(server, BIO_NOCLOSE));
@@ -185,7 +184,7 @@ int main(void)
         goto cleanup;
       }
 #if (ONE_SEND == 1)
-      if (rcvprint( buf ) == 0){
+      if ((rcvprint( buf ) % RE_TRY) == 0){
         break;
       }
 #else // (ONE_SEND == 1)
@@ -198,15 +197,8 @@ int main(void)
     
   cleanup:
     LOG(SSL_free(ssl));
-
-#if (ONE_SEND == 0)
     ret = rcvprint( buf );
     if( ret == 0 ) break;
-    //fprintf(stderr, "%s\n", buf); // 通信内容全体の出力
-    memset(buf, 0x00, BUFSIZE);
-#else// (ONE_SEND == 0)
-    break;
-#endif// (ONE_SEND == 0)
   }
 
   close(server);

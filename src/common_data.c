@@ -197,6 +197,7 @@ static void time_log(int line, char *msg){
 /* 
  * 送信メッセージ作成と送信開始時間の記録
  */
+struct timeval tv_all;
 int get_data( int count, char *type, char *msg, char *log )
 {
   struct timeval tv;
@@ -209,18 +210,24 @@ int get_data( int count, char *type, char *msg, char *log )
 
   /* 1つの送信データ送信完了 */
   //if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
+  if ( 0 == count )   gettimeofday(&tv_all, NULL);
   if (0 == no  && 0 != count){
+    gettimeofday(&tv, NULL);
+    tv = diff_time( &tv_all, &tv );
     if(senddata_size[DATA_NUM] == size ){
-      fprintf(stderr, "all end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
+      fprintf(stderr, "all end, %s, %d snd:%d, % 2ld.%06lu\n",
+              type, senddata_size[idx - 1], snd_count, tv.tv_sec, tv.tv_usec);
       return 0;
     } else {
-      fprintf(stderr, "end : %s, %d snd:%d\n", type, senddata_size[idx - 1], snd_count);
+      fprintf(stderr, "end, %s, %d snd:%d, % 2ld.%06lu\n",
+              type, senddata_size[idx - 1], snd_count, tv.tv_sec, tv.tv_usec);
     }
 #if (KEY_WAIT == 1)
     fprintf(stderr, "eny Enter key >");
     getchar();
     fflush(stdin);
 #endif
+    gettimeofday(&tv_all, NULL);
   }
   /* 全ての計測用データ送信完了 */
   if (DATA_NUM <= idx){
@@ -236,7 +243,6 @@ int get_data( int count, char *type, char *msg, char *log )
   sprintf(buf, "%4d,%4s, %6d,"TIME_FMT , no, type, size, (tv.tv_sec % TIME_MAX), tv.tv_usec);
   sprintf(log, "%.31s", buf);
   strncpy(msg, buf, strlen(buf));
-
   return size;
 }
 
@@ -271,7 +277,7 @@ int rcvprint( char *msg ){
 #if ( TIME_WAIT > 0)
   usleep( TIME_WAIT );
 #endif
-  return 1;
+  return no + 1;
 }
 
 /* 

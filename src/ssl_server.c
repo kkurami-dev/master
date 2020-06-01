@@ -39,7 +39,7 @@ void connection_handle( int client, SSL *ssl ){
 #endif // (SERVER_REPLY == 1)
 
 #if (ONE_SEND == 1)
-    if (rcvprint( buf ) == 0){
+    if (0 == (rcvprint( buf ) % RE_TRY)){
       break;
     }
 #else
@@ -53,9 +53,7 @@ void connection_handle( int client, SSL *ssl ){
   LOG(SSL_free(ssl));
   LOG(close(sd));
 
-#if (ONE_SEND == 0)
   ret = rcvprint( buf );
-#endif // (ONE_SEND == 0)
 }
 
 /* void sess_cache_init(); */

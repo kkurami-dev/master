@@ -62,9 +62,10 @@ int main(void)
       }
 
 #if (ONE_SEND == 1)
-      endprint(log);
-      size = get_data(i++, "dtls", msg, log );
-      if (size == 0){
+      if (i & RE_TRY){
+        endprint(log);
+        size = get_data(i++, "dtls", msg, log );
+      } else {
         break;
       }
 #else // (ONE_SEND == 1)
@@ -78,12 +79,7 @@ int main(void)
   cleanup:
     LOG(close(mysocket));
     LOG(SSL_free(ssl));
-
-#if (ONE_SEND == 0)
     endprint(log);
-#else// (ONE_SEND == 0)
-    break;
-#endif// (ONE_SEND == 0)
   }
 
   LOG(SSL_CTX_free(ctx));
