@@ -5,7 +5,7 @@
 
 #include "common_data.h"
  
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
   int sd;
   struct sockaddr_in addr;
@@ -14,6 +14,8 @@ int main(int argc, char** argv)
   struct sockaddr_in from_addr;
   int ret;
   char buf[BUFSIZE]; // 受信バッファ
+
+  set_argument( argc, argv );
  
   // IPv4 UDP のソケットを作成
   if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {

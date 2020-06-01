@@ -20,6 +20,8 @@ int main(int argc, char* argv[]) {
 
   struct pollfd fds[1] = {0};
 
+  set_argument(argc, argv);
+
   /* 接続情報の作成 */
   memset(&servSockAddr, 0, sizeof(servSockAddr));
   servSockAddr.sin_family = AF_INET;
@@ -64,26 +66,6 @@ int main(int argc, char* argv[]) {
   re_send:
 #endif // (ONE_SEND == 1)
 
-#if 1
-    /* 送信可能になるまでまつ */
-    LOGS();
-    fds[0].fd = sock;
-    fds[0].events = POLLOUT;                // 書き込み可能イベントを設定
-    while (1){
-      ret = poll(fds, 1, 10);
-      if (fds[0].revents & POLLERR){       // エラー発生
-        fprintf(stderr, "ret:%d error:%d ", ret, errno);
-        perror("poll() failed.");
-        exit(EXIT_FAILURE);
-      }
-      else if (fds[0].revents & POLLOUT){  // 送信可能ならsend実施
-        break;
-      } else {
-        fprintf(stderr, ".");
-      }
-    }
-    LOGE(poll());
-#endif
     /* 送信 */
     LOGS();
     while( 1 ){
@@ -96,6 +78,27 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
     LOGE(send());
+
+#if 1
+    /* 再送信送信可能になるまでまつ(送信完了を待つ感じ) */
+    LOGS();
+    fds[0].fd = sock;
+    fds[0].events = POLLOUT;                // 書き込み可能イベントを設定
+    while (1){
+      ret = poll(fds, 1, 10);
+      if (fds[0].revents & POLLERR){       // エラー発生
+        fprintf(stderr, "ret:%d error:%d ", ret, errno);
+        perror("poll() failed.");
+        exit(EXIT_FAILURE);
+      }
+      else if (fds[0].revents & POLLOUT){  // 送信可能なら次の send 実施の為の準備に入る
+        break;
+      } else {
+        fprintf(stderr, ".");
+      }
+    }
+    LOGE(poll());
+#endif
 
 #if (SERVER_REPLY == 1)
     /* 受信 */
@@ -120,7 +123,7 @@ int main(int argc, char* argv[]) {
     }
 #endif // (ONE_SEND == 1)
 
-    LOG(shutdown(sock, 1));
+    //LOG(shutdown(sock, 1));
     LOG(close(sock));
     endprint(log);
   }

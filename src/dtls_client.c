@@ -13,7 +13,7 @@
 
 #include "common_data.h"
 
-int main(void)
+int main( int argc, char* argv[] )
 {
   int mysocket;
   struct sockaddr_in server;
@@ -22,6 +22,8 @@ int main(void)
   SSL_CTX *ctx;
   char msg[BUFSIZE];
   char log[128];
+
+  set_argument(argc, argv);
 
   /* 前準備 */
   LOG(SSL_load_error_strings());

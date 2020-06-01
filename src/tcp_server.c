@@ -12,12 +12,15 @@ void connection_handle( int clitSock, SSL *ssl ){
   int recvMsgSize; // recieve and send buffer size
 
   while(1) {
-    LOG(recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0));
-    if (recvMsgSize < 0) {
-      perror("recv() failed.");
-      exit(EXIT_FAILURE);
-    } else if(recvMsgSize == 0){
-      break;
+    while(1){
+      LOG(recvMsgSize = recv(clitSock, recvBuffer, BUFSIZE, 0));
+      if (recvMsgSize < 0) {
+        perror("recv() failed.");
+        exit(EXIT_FAILURE);
+      } else if(recvMsgSize > 0){
+        //fprintf(stderr, "ret:%d error:%d ", ret, errno);
+        break;
+      }
     }
 
 #if (SERVER_REPLY == 1)
@@ -42,7 +45,7 @@ void connection_handle( int clitSock, SSL *ssl ){
 #endif // (ONE_SEND == 0)
   }
 
-  LOG(shutdown(clitSock, 1));
+  //LOG(shutdown(clitSock, 1));
   LOG(close(clitSock));
   rcvprint( recvBuffer );
 }
@@ -52,11 +55,13 @@ int main(int argc, char* argv[]) {
   int servSock; //server socket descriptor
   int clitSock; //client socket descriptor
   struct sockaddr_in servSockAddr; //server internet socket address
-  struct sockaddr_in clitSockAddr; //client internet socket address
+  //struct sockaddr_in clitSockAddr; //client internet socket address
   unsigned short servPort; //server port number
-  unsigned int clitLen; // client internet socket address length
+  //unsigned int clitLen; // client internet socket address length
   //const int on = 1, off = 0;
   const int on = 1;
+
+  set_argument( argc, argv );
 
 #if 1
   if ((servPort = TLS_PORT) == 0) {
@@ -76,6 +81,7 @@ int main(int argc, char* argv[]) {
 #if (SETSOCKOPT == 1)
   setsockopt(servSock, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
   setsockopt(servSock, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
+  setsockopt(servSock, SOL_SOCKET, SO_REUSEPORT, (const void*) &on, (socklen_t) sizeof(on));
 #endif
   if (bind(servSock, (struct sockaddr *) &servSockAddr, sizeof(servSockAddr) ) < 0 ) {
     perror("bind() failed.");
@@ -85,7 +91,7 @@ int main(int argc, char* argv[]) {
 #else // 1
   servSock = get_settings_fd( NULL, SOCK_STREAM, TEST_RECEIVER, NULL);
 #endif // 1
-  clitLen = sizeof(clitSockAddr);
+  //clitLen = sizeof(clitSockAddr);
 
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {

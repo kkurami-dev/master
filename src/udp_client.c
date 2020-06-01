@@ -4,12 +4,14 @@
 
 #include "common_data.h"
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[] )
 {
   int sd, ret;
     char msg[BUFSIZE];
     char log[128];
     struct sockaddr_in addr;
+
+    set_argument( argc, argv );
  
     // 送信先アドレスとポート番号を設定する
     // 受信プログラムと異なるあて先を設定しても UDP の場合はエラーにはならない

@@ -120,7 +120,7 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 	return 0;
 }
 #endif
-int main(void)
+int main( int argc, char* argv[] )
 {
   SSL_CTX *ctx;
   SSL *ssl;
@@ -129,6 +129,8 @@ int main(void)
   struct sockaddr_in server_addr;
   struct sockaddr_storage client_addr;
   char buf[BUFSIZE];
+
+  set_argument( argc, argv );
 
   SSL_load_error_strings();
   SSL_library_init();

@@ -62,13 +62,15 @@ void connection_handle( int client, SSL *ssl ){
 /* SSL_SESSION *sess_cache_get(SSL *ssl, unsigned char *key, int key_len, int *copy); */
 /* void sess_cache_remove(SSL_CTX *ctx, SSL_SESSION *sess); */
 
-int main(void)
+int main( int argc, char* argv[] )
 {
   int server_fd, client_fd;
 
   SSL_CTX *ctx;
   SSL *ssl;
   const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+
+  set_argument( argc, argv );
 
   SSL_load_error_strings();
   SSL_library_init();

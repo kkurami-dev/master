@@ -194,12 +194,34 @@ static void time_log(int line, char *msg){
           (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv_e.tv_sec, tv_e.tv_usec, line, msg);
 }
 
+int OPT_START_NO  = -1;
+void set_argument( int argc, char* argv[] ){
+  char *word;
+  int  tmp_num;
+  
+  if ( argc < 2 ){
+    return;
+  }
+
+  if ( argc == 2 ){
+    word = argv[1];
+    tmp_num = -1;
+    sscanf( word, "%d", &tmp_num );
+    if (DATA_NUM < tmp_num){
+      fprintf( stderr, "error index %d( max : %d )", tmp_num, DATA_NUM);
+      exit(EXIT_FAILURE);
+    }
+    if (tmp_num > 0){
+      OPT_START_NO = tmp_num;
+    }
+  }
+}
+
 /* 
  * 送信メッセージ作成と送信開始時間の記録
  */
 struct timeval tv_all;
-int get_data( int count, char *type, char *msg, char *log )
-{
+int get_data( int count, char *type, char *msg, char *log ){
   struct timeval tv;
 
   /* 送信ダー他の決定  */
@@ -207,6 +229,10 @@ int get_data( int count, char *type, char *msg, char *log )
   int idx = (int)( count / RE_TRY );
   int size = senddata_size[idx];
   char buf[ 256 ];
+
+  if (OPT_START_NO > 0){
+    idx = OPT_START_NO;
+  }
 
   /* 1つの送信データ送信完了 */
   //if ( 0 == count ) printf("No.,type,msg size, start time, end time\n");
@@ -222,6 +248,12 @@ int get_data( int count, char *type, char *msg, char *log )
       fprintf(stderr, "end, %s, %d snd:%d, % 2ld.%06lu\n",
               type, senddata_size[idx - 1], snd_count, tv.tv_sec, tv.tv_usec);
     }
+
+    /* 開始位置の指定が有る場合はいつも1回で終了 */
+    if(OPT_START_NO > 0){
+      return 0;
+    }
+    
 #if (KEY_WAIT == 1)
     fprintf(stderr, "eny Enter key >");
     getchar();

@@ -7,7 +7,7 @@
 
 #include "common_data.h"
 
-int main(void)
+int main( int argc, char* argv[] )
 {
   int sockfd;
 
@@ -18,6 +18,8 @@ int main(void)
 
   char log[128];
   char msg[BUFSIZE];
+
+  set_argument( argc, argv );
 
   SSL_load_error_strings();
   SSL_library_init();
