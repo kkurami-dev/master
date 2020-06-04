@@ -24,19 +24,29 @@
 #define C_KEY  "client-key.pem"
 #define CA_PEM "ca.pem"
 
+#define DEBUG_ON               1
+
+#if (DEBUG_ON == 1)
+  #define RE_TRY                 3 /* 一つのサイズのメッセージ送信回数 */
+  #define DEBUG(x)               x
+#else // (DEBUG_ON == 1)
+  #define RE_TRY             10000 /* 一つのサイズのメッセージ送信回数 */
+  #define DEBUG(x)
+#endif // (DEBUG_ON == 1)
+
 /* 各種設定 */
 #define LOG_PRINT              1 /* 詳細にログを出力する     */
 #define TEST                   0 /* テストデータを少なく絞る  */
 #define ONE_SEND               0 /* データを全て1接続で送る    */
 #define KEY_WAIT               0 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 #define SERVER_REPLY           0 /* TPC/TLS の場合にサーバから応答を返すか  */
-#define RE_TRY             10000 /* 一つのサイズのメッセージ送信回数 */
 #define TIME_WAIT              0 /* メッセージ送信全体の待ち時間  */
 #define NEXT_SEND_WAIT         0 /* 上記に加えて、送信プロセスの待ち時間 */
 #define QUEUELIMIT             8 /* サーバの待ちキューの数（サーバのthreadプール数）  */
 #define SETSOCKOPT             1 /* サーバのソケットを再利用、クローズ待ちしない   */
                                  /* tcp で Connection refused で止まる   */
 #define TEST_SSL_SESSION       1 /* 暗号化のセッションを保存し、再開する */
+
 
 #define SSL_RET(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( (x), __LINE__, #x );time_log(__LINE__, #x);
 #define SSL_RETN(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( !(x), __LINE__, #x );time_log(__LINE__, #x);

@@ -107,9 +107,7 @@ int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
 #endif // (SETSOCKOPT == 1)
     bind(sockfd, ai->ai_addr, ai->ai_addrlen);
-
-    if ( type == SOCK_STREAM )
-      listen(sockfd, QUEUELIMIT);
+    listen(sockfd, QUEUELIMIT);
 
   } else {
     int i = 0;
@@ -231,7 +229,8 @@ int get_data( int count, char *type, char *msg, char *log ){
   char buf[ 256 ];
 
   if (OPT_START_NO > 0){
-    idx = OPT_START_NO;
+    idx = OPT_START_NO - 1;
+    size = senddata_size[idx];
   }
 
   /* 1つの送信データ送信完了 */
@@ -242,11 +241,11 @@ int get_data( int count, char *type, char *msg, char *log ){
     tv = diff_time( &tv_all, &tv );
     if(senddata_size[DATA_NUM] == size ){
       fprintf(stderr, "all end, %s, %d snd:%d, % 2ld.%06lu\n",
-              type, senddata_size[idx - 1], snd_count, tv.tv_sec, tv.tv_usec);
+              type, senddata_size[idx], snd_count, tv.tv_sec, tv.tv_usec);
       return 0;
     } else {
       fprintf(stderr, "end, %s, %d snd:%d, % 2ld.%06lu\n",
-              type, senddata_size[idx - 1], snd_count, tv.tv_sec, tv.tv_usec);
+              type, senddata_size[idx], snd_count, tv.tv_sec, tv.tv_usec);
     }
 
     /* 開始位置の指定が有る場合はいつも1回で終了 */
@@ -295,12 +294,16 @@ int rcvprint( char *msg ){
 
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
-  if((RE_TRY - 1) == no) {
+  if((RE_TRY - 1) <= no) {
     if(senddata_size[DATA_NUM - 1] == size ){
       fprintf(stderr, "all end : %s%d rcv:%d\n", type, size, rcv_count);
       return 0;
     } else {
       fprintf(stderr, "end : %s%d rcv:%d\n", type, size, rcv_count);
+    }
+    /* 開始位置の指定が有る場合はいつも1回で終了 */
+    if(OPT_START_NO > 0){
+      return 0;
     }
   }
 
@@ -415,7 +418,7 @@ int ssl_check_write( SSL *ssl, char *msg, int size){
     /* SSLデータ送信 */
     len  = SSL_write(ssl, msg, size);
     if ( 0 < len ) break;
-    ret = SSL_get_error(ssl, ret);
+    ret = SSL_get_error(ssl, len);
     switch (ret)
       {
       case SSL_ERROR_NONE:
@@ -570,6 +573,7 @@ struct thdata {
   int                 sock;
   SSL                 *ssl;
   void                (*func)( int sock, SSL *ssl );
+  int                 opt_start_no;
 
   pthread_t           th;
   sem_t               sync;
@@ -592,6 +596,7 @@ struct thdata {
 void *thread_function(void *thdata)
 {
   struct thdata       *priv = (struct thdata *)thdata;
+  OPT_START_NO = priv->opt_start_no;
 
   while(1){
     /* sync */
@@ -627,6 +632,7 @@ struct thdata *sock_thread_create( void (*func)(int sock, SSL *ssl) )
   }
 
   for (i = 0; i < THREAD_MAX; i++) {
+    thdata[i].opt_start_no = OPT_START_NO;
     thdata[i].sock = 0;
     thdata[i].ssl = NULL;
     thdata[i].end = 0;
@@ -659,6 +665,7 @@ struct thdata *sock_thread_create( void (*func)(int sock, SSL *ssl) )
     if( priv->sock == 0 && priv->ssl == NULL ){
       priv->sock = sock;
       priv->ssl = ssl;
+  
       sem_post(&priv->start);
       break;
     }

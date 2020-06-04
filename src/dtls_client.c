@@ -28,7 +28,11 @@ int main( int argc, char* argv[] )
   /* 前準備 */
   LOG(SSL_load_error_strings());
   LOG(SSL_library_init());
+  // DTLSv1_2_client_method
   LOG(ctx = SSL_CTX_new(DTLS_client_method()));
+  SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH);
+  DEBUG( fprintf(stderr, "session_cache_mode:0x%08lx\n", SSL_CTX_get_session_cache_mode(ctx)) );
+  DEBUG( fprintf(stderr, "client SSL session time out: %ld\n", SSL_CTX_get_timeout(ctx)) );
 
   /* 認証設定 */
   /* クライアント認証設定 (テストなのでエラー確認のを除く) */
@@ -42,6 +46,7 @@ int main( int argc, char* argv[] )
   int i = 0;
   BIO *bio;
   int size;
+  SSL_SESSION *ssl_session = NULL;
   while(1){
     size = get_data(i++, "dtls", msg, log );
     if ( 0 == size ){
@@ -53,9 +58,24 @@ int main( int argc, char* argv[] )
     LOG(bio = BIO_new_dgram(mysocket, BIO_NOCLOSE));
     LOG(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &server));
     LOG(ssl = SSL_new(ctx));
+    if(ssl_session) {
+      SSL_RET(SSL_set_session(ssl, ssl_session));
+    }
     //LOG(SSL_set_fd(ssl, mysocket));
     LOG(SSL_set_bio(ssl, bio, bio));
-    LOG(SSL_connect(ssl));///
+    LOG(SSL_connect(ssl));
+    /* ssl3_renegotiate_check ,
+       ossl_statem_connect, 
+        state_machine , ssl_security, ssl_security_default_callback
+         tls_setup_handshake,
+    */
+    DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
+
+#if (TEST_SSL_SESSION == 1)
+    if(!ssl_session) {
+      LOG(ssl_session = SSL_get1_session(ssl));
+    }
+#endif
 
     /* 通信 */
     do {
@@ -84,6 +104,9 @@ int main( int argc, char* argv[] )
     endprint(log);
   }
 
+  if(ssl_session) {
+    LOG(SSL_SESSION_free(ssl_session));
+  }
   LOG(SSL_CTX_free(ctx));
   return EXIT_SUCCESS;
 }

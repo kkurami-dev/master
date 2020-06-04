@@ -134,8 +134,13 @@ int main( int argc, char* argv[] )
 
   SSL_load_error_strings();
   SSL_library_init();
+  ERR_load_BIO_strings();
   OpenSSL_add_all_algorithms();
+  // DTLSv1_2_server_method
+  // DTLS_server_method
   ctx = SSL_CTX_new(DTLS_server_method());
+  SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH);
+  fprintf(stderr, "session_cache_mode:0x%08lx\n", SSL_CTX_get_session_cache_mode(ctx));
 
   /* サーバ認証設定 */
   SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
@@ -154,6 +159,9 @@ int main( int argc, char* argv[] )
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
 
+  const unsigned char session_id[] = "inspircd";
+  SSL_CTX_set_session_id_context(ctx, session_id, sizeof(session_id));
+
   LOG(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
   LOG(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
 
@@ -167,19 +175,20 @@ int main( int argc, char* argv[] )
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
-    LOGS();
-    do {
-      ret = DTLSv1_listen(ssl, (BIO_ADDR *)&client_addr);///
-      LOGC()
-    }while (ret <= 0);
-    LOGE(DTLSv1_listen);
+    /* LOGS(); */
+    /* do { */
+    /*   ret = DTLSv1_listen(ssl, (BIO_ADDR *)&client_addr);/// */
+    /*   LOGC() */
+    /* }while (ret <= 0); */
+    /* LOGE(DTLSv1_listen); */
 
     LOGS();
-    while(accept == 0) {
+    do {
       accept = SSL_accept(ssl);
       LOGC();
-    }
+    } while(accept == 0);
     LOGE(SSL_accept);
+    DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
 
     do {
       if(ssl_check_read(ssl , buf)){

@@ -4,16 +4,18 @@ set -ue
 #set -xv
 
 DEBUG_OPTE="-Wall -g -O0 -fstack-protector -fsanitize=address"
-#DEBUG_OPTE="-Wall"
+#DEBUG_OPTE="-Wall -Ofast"
+
 INC="-I ${HOME}/tools/include -L ${HOME}/tools/lib"
 LIB="-lssl -lcrypto -lpthread"
 CLEN="rm -rf *.pem server* client* ca-* src/certs bin/*"
 REBULD=0
+pushd /mnt/i/yoshimaru/linux_home/OpenSSL
 
 while getopts rch OPT
 do
     case $OPT in
-        d)  ${CLEN}
+        c)  ${CLEN}
             exit;
             ;;
         r)  REBULD=1
@@ -68,4 +70,6 @@ if [ ! -f bin/ca.pem ]; then
     cp src/ca.pem bin/ca.pem
     cert.sh
 fi
+
+popd
 exit
