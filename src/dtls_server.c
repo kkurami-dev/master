@@ -140,7 +140,7 @@ int main( int argc, char* argv[] )
   // DTLS_server_method
   ctx = SSL_CTX_new(DTLS_server_method());
   SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH);
-  fprintf(stderr, "session_cache_mode:0x%08lx\n", SSL_CTX_get_session_cache_mode(ctx));
+  DEBUG( fprintf(stderr, "session_cache_mode:0x%08lx\n", SSL_CTX_get_session_cache_mode(ctx)) );
 
   /* サーバ認証設定 */
   SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
@@ -188,7 +188,7 @@ int main( int argc, char* argv[] )
       LOGC();
     } while(accept == 0);
     LOGE(SSL_accept);
-    DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
+    DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
 
     do {
       if(ssl_check_read(ssl , buf)){

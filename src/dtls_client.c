@@ -71,11 +71,6 @@ int main( int argc, char* argv[] )
     */
     DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
 
-#if (TEST_SSL_SESSION == 1)
-    if(!ssl_session) {
-      LOG(ssl_session = SSL_get1_session(ssl));
-    }
-#endif
 
     /* 通信 */
     do {
@@ -97,7 +92,19 @@ int main( int argc, char* argv[] )
 
     /* 切断 */
     LOG(SSL_shutdown(ssl));
-    
+
+#if (TEST_SSL_SESSION == 1)
+    LOGS();
+    do {
+      if(!ssl_session) ssl_session = SSL_get1_session(ssl); /* セッションの取得 */
+      if (SSL_SESSION_is_resumable(ssl_session)) break;     /* 使えるセッションか確認 */
+      SSL_SESSION_free(ssl_session);                        /* 使えないセッションを開放 */
+      ssl_session = NULL;                                   /* 次のセッション取得のために開放 */
+      LOGC();
+    } while(1);
+    LOGE(SSL_get1_session);
+#endif
+
   cleanup:
     LOG(close(mysocket));
     LOG(SSL_free(ssl));

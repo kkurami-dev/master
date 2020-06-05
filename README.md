@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-31 10:16:11 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-04 22:06:51 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -163,3 +163,39 @@ Certificate Request メッセージ(msg_type=13) が追加で含まれるから�
 Client Key Exchange 手順の前に
 Certificate メッセージ(msg_type=11) と
 Certificate Verify メッセージ(msg_type=15) を返送します。
+
+## セッションの再開について
+1. SSL_new 後にあれば SSL_set_session(ssl, ssl_session);
+1. SSL_connect の後にあれば ssl_session = SSL_get1_session(ssl);
+1. 
+
+- SSL_CTX_get_timeout(ctx) で取得値以上で破棄される
+
+### 再利用が動作したかは（鯖、蔵）
+- SSL_session_reused(ssl) で確認できる
+
+### DTLSの基本は  
+1. サーバで SSL_CTX_set_session_id_context() で適当な文字設定が必要
+```
+  const unsigned char session_id[] = "inspircd";
+  SSL_CTX_set_session_id_context(ctx, session_id, sizeof(session_id));
+```
+
+
+### TLSの基本は  
+- TLS1.3 では SSL3_MT_NEWSESSION_TICKET でセッションが作成される
+  ssl_print_ticket()
+  ↑
+  TLS_ST_SW_SESSION_TICKET
+    ossl_statem_server_construct_message
+    ossl_statem_server13_write_transition
+  ↑
+  TLS_ST_SR_FINISHED / TLS_ST_SW_SRVR_HELLO
+  - TLS_ST_SR_FINISHED
+    x ossl_statem_server_read_transition
+    ossl_statem_server13_read_transition
+    ← TLS_ST_EARLY_DATA
+    
+    
+    
+ossl_statem_server_write_transition()

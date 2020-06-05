@@ -30,6 +30,16 @@ void connection_handle( int client, SSL *ssl ){
     //} while(ret > 0);
   } while(ret);
   LOGE( SSL_accept );
+  DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
+  /*
+    s->hit = 1 : がセッション再開された印
+    ssl_get_prev_session
+      tls_parse_extension
+
+    tls_parse_ctos_psk
+    ssl_print_cert_request
+    psk_server_cb
+   */
 
   do {
     ssl_check_read(ssl, buf);
@@ -77,8 +87,11 @@ int main( int argc, char* argv[] )
   OpenSSL_add_all_algorithms();
   ctx = SSL_CTX_new(TLS_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
 
-#if (TEST_SSL_SESSION == 1)
+  /* セッション関連の設定 */
+  const unsigned char session_id[] = "inspircd";
+  SSL_CTX_set_session_id_context(ctx, session_id, sizeof(session_id));
   SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH );
+#if (TEST_SSL_SESSION == 1)
   //SSL_CTX_sess_set_new_cb(ctx, sess_cache_new);
   //SSL_CTX_sess_set_get_cb(ctx, sess_cache_get);
   //SSL_CTX_sess_set_remove_cb(ctx, sess_cache_remove);
@@ -106,6 +119,7 @@ int main( int argc, char* argv[] )
     LOG(ssl = SSL_new(ctx));
     /* メッセージ受信用のスレッドで情報受信  */
     sock_thread_post( th, client_fd, ssl );
+
   }
   sock_thread_join( th );
 

@@ -71,5 +71,8 @@ if [ ! -f bin/ca.pem ]; then
     cert.sh
 fi
 
+# リンクされているものを表示
+ldd bin/ssl_server
+
 popd
 exit
