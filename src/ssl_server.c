@@ -13,21 +13,20 @@
 
 #define M_SERVER  1
 
-void connection_handle( int client, SSL *ssl ){
+int connection_handle( int client, SSL *ssl ){
   char buf[BUFSIZE];
   int ret;
   int sd;
 
   LOG(SSL_set_fd(ssl, client));/* SSLオブジェクトとファイルディスクリプタを接続 */
-  LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));//
+  LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));/* 証明書交換時のキー作成機能有効化 */
 
-  /* SSL通信の開始 */
+  /* SSL通信開始が正常終了するまでループ */
   LOGS();
   do{
     ret = SSL_accept(ssl);
     ret = ssl_get_accept( ssl, ret );
     LOGC();
-    //} while(ret > 0);
   } while(ret);
   LOGE( SSL_accept );
   DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
@@ -64,6 +63,11 @@ void connection_handle( int client, SSL *ssl ){
   LOG(close(sd));
 
   ret = rcvprint( buf );
+  fprintf(stderr, "%.32s : %d\n", buf, ret);
+  if ( ret )
+    return 0;
+  else
+    return 1;
 }
 
 /* void sess_cache_init(); */
@@ -111,15 +115,27 @@ int main( int argc, char* argv[] )
 
   server_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL);
 
+  fd_set ready;
+  struct timeval to;
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-    /* 接続と通信開始 */
-    LOG(client_fd = accept(server_fd, NULL, NULL));
-    /* SSLオブジェクトを生成 */
-    LOG(ssl = SSL_new(ctx));
-    /* メッセージ受信用のスレッドで情報受信  */
-    sock_thread_post( th, client_fd, ssl );
+    FD_ZERO(&ready);
+    FD_SET(server_fd, &ready);
+    to.tv_sec = 1;
+    to.tv_usec = 0;
+    if (select(server_fd + 1, &ready, (fd_set *)0, (fd_set *)0, &to) == -1) {
+      perror("select");
+      break;
+    }
 
+    if (FD_ISSET(server_fd, &ready)) {
+      /* 接続と通信開始 */
+      LOG(client_fd = accept(server_fd, NULL, NULL));
+      /* SSLオブジェクトを生成 */
+      LOG(ssl = SSL_new(ctx));
+      /* メッセージ受信用のスレッドで情報受信  */
+      if( sock_thread_post( th, client_fd, ssl ) ) break;
+    }
   }
   sock_thread_join( th );
 

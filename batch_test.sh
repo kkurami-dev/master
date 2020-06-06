@@ -6,8 +6,8 @@ set -ue
 export LD_LIBRARY_PATH=.:..:../tools/lib:./tools/lib:
 
 declare -a array=(
-    "dtls"
-#    "ssl"
+#    "dtls"
+    "ssl"
 #    "tcp"
 #    "udp"
 )
@@ -30,6 +30,7 @@ declare -a array_size=(
 #DEBUG=echo
 DEBUG=
 PROCES=
+CLIENT=1
 function prop_kill(){
     for var in ${array[@]} ; do
         pkill ${PROCES}_server &
@@ -37,22 +38,31 @@ function prop_kill(){
 }
 function exec_loop(){
     _log_file=""
-#    for i in {1..13} ; do
-    for i in 1 ; do
+    for i in {1..13} ; do
+#    for i in 1 ; do
         _size_key=${PROCES}_${array_size[$i - 1]}
         _log_base=../log/log_${_size_key}
         echo "### ${PROCES}_(server/client) $i > ${_log_base}_* "
 
-        _log_file=${_log_base}_cap.pcapng
+        #_log_file=${_log_base}_cap.pcapng
         #${DEBUG} sudo tshark -i lo -w ${_log_file} &
-        sleep 0.5
+        #sleep 0.5
 
         _log_file=${_log_base}_server.csv
-        ${DEBUG} ./${PROCES}_server $i > ${_log_file} &
+        echo "# ./${PROCES}_server $i ${CLIENT} > ${_log_file}"
+        ${DEBUG} ./${PROCES}_server $i ${CLIENT} 41> ${_log_file} &
         sleep 0.5
 
-        _log_file=${_log_base}_client.csv
-        ${DEBUG} ./${PROCES}_client $i > ${_log_file}
+        if [ 1 -lt ${CLIENT} ] ;then
+            for c_i in 2..${CLIENT} ; do
+                _log_file=${_log_base}_client_1.csv
+                echo "# ./${PROCES}_client $i 1 > ${_log_file}"
+                ${DEBUG} ./${PROCES}_client $i 1 > ${_log_file} &
+            done
+        fi
+        _log_file=${_log_base}_client_1.csv
+        echo "# ./${PROCES}_client $i 1 > ${_log_file}"
+        ${DEBUG} ./${PROCES}_client $i 1 > ${_log_file}
         sleep 1
 
         ls -lhF ${_log_base}_*
@@ -63,20 +73,20 @@ function exec_loop(){
             ${DEBUG} pkill ${PROCES}_server
             echo "server a."
         fi
-        ${DEBUG} pkill tshark
+        #${DEBUG} pkill tshark
         echo
 
-        #exit
+        exit
     done
 }
 
-while getopts krh OPT
+while getopts kc:h OPT
 do
     case $OPT in
         k)  prop_kill
             exit;
             ;;
-        r)  REBULD=1
+        c)  CLIENT=$OPTARG
             ;;
         h)  usage_exit
             ;;

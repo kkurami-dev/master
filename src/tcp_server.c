@@ -7,7 +7,7 @@
 
 #include "common_data.h"
 
-void connection_handle( int clitSock, SSL *ssl ){
+int connection_handle( int clitSock, SSL *ssl ){
   char recvBuffer[BUFSIZE];//receive temporary buffer
   int recvMsgSize; // recieve and send buffer size
 
@@ -47,7 +47,11 @@ void connection_handle( int clitSock, SSL *ssl ){
 
   //LOG(shutdown(clitSock, 1));
   LOG(close(clitSock));
-  rcvprint( recvBuffer );
+  int ret = rcvprint( recvBuffer );
+  if (ret)
+    return 0;
+  else
+    return 1;
 }
 
 int main(int argc, char* argv[]) {

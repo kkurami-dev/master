@@ -193,6 +193,7 @@ static void time_log(int line, char *msg){
 }
 
 int OPT_START_NO  = -1;
+int OPT_CLIENT_NUM  = 1;
 void set_argument( int argc, char* argv[] ){
   char *word;
   int  tmp_num;
@@ -201,7 +202,7 @@ void set_argument( int argc, char* argv[] ){
     return;
   }
 
-  if ( argc == 2 ){
+  if ( argc > 1 ){
     word = argv[1];
     tmp_num = -1;
     sscanf( word, "%d", &tmp_num );
@@ -212,6 +213,16 @@ void set_argument( int argc, char* argv[] ){
     if (tmp_num > 0){
       OPT_START_NO = tmp_num;
     }
+  }
+  if ( argc > 2 ){
+    word = argv[2];
+    tmp_num = -1;
+    sscanf( word, "%d", &tmp_num );
+    if (1 > tmp_num){
+      fprintf( stderr, "error client num %d( min : 1 )", tmp_num);
+      exit(EXIT_FAILURE);
+    }
+    OPT_CLIENT_NUM = tmp_num;
   }
 }
 
@@ -572,13 +583,12 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 struct thdata {
   int                 sock;
   SSL                 *ssl;
-  void                (*func)( int sock, SSL *ssl );
+  int                (*func)( int sock, SSL *ssl );
   int                 opt_start_no;
 
   pthread_t           th;
   sem_t               sync;
   sem_t               start;
-  int  end;
 };
 /* ------------------------------------------------------------------------- */
 
@@ -596,6 +606,8 @@ struct thdata {
 void *thread_function(void *thdata)
 {
   struct thdata       *priv = (struct thdata *)thdata;
+  int ret = 0;
+  
   OPT_START_NO = priv->opt_start_no;
 
   while(1){
@@ -604,22 +616,22 @@ void *thread_function(void *thdata)
     sem_wait(&priv->start);
 
     /* 実行 */
-    if ( !(priv->end) ){
-      priv->func( priv->sock, priv->ssl );
-      priv->sock = 0;
-      priv->ssl = NULL;
-    } else {
-      /* sync */
-      sem_post(&priv->sync);
-      break;
-    }
+    if (!priv->sock || !priv->ssl ) break;
+    ret = priv->func( priv->sock, priv->ssl );
+    priv->sock = 0;
+    priv->ssl = NULL;
+
+    /* sync */
+    if ( ret ) break;
   }
+  sem_post(&priv->sync);
 
   /* done */
+  fprintf(stderr, "thread_function end.\n");
   return (void *) NULL;
 }
 
-struct thdata *sock_thread_create( void (*func)(int sock, SSL *ssl) )
+struct thdata *sock_thread_create( int (*func)(int sock, SSL *ssl) )
 {
   struct thdata       *thdata;
   int i;
@@ -635,7 +647,6 @@ struct thdata *sock_thread_create( void (*func)(int sock, SSL *ssl) )
     thdata[i].opt_start_no = OPT_START_NO;
     thdata[i].sock = 0;
     thdata[i].ssl = NULL;
-    thdata[i].end = 0;
     thdata[i].func = func;
     sem_init(&thdata[i].sync, 0, 0);
     sem_init(&thdata[i].start, 0, 0);
@@ -657,24 +668,36 @@ struct thdata *sock_thread_create( void (*func)(int sock, SSL *ssl) )
   return thdata;
 }
 
- void  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
+int msg_count = 1;
+int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
 {
   int i = 0;
   for(i = 0; i < THREAD_MAX; i++){
     struct thdata *priv = thdata + i;
-    if( priv->sock == 0 && priv->ssl == NULL ){
+    if( !priv->sock && !priv->ssl ){
       priv->sock = sock;
       priv->ssl = ssl;
-  
       sem_post(&priv->start);
       break;
     }
   }
-  if( i < THREAD_MAX){
-  } else {
+
+  //fprintf(stderr, "count : %d > %d \n", msg_count, OPT_CLIENT_NUM * RE_TRY );
+  if(++msg_count > (OPT_CLIENT_NUM * RE_TRY)){
+    for(i = 0; i < THREAD_MAX; i++){
+      struct thdata *priv = thdata + i;
+      priv->sock = 0;
+      priv->ssl = NULL;
+      sem_post(&priv->start);
+    }
+    fprintf(stderr, "all end.\n");
+    return 1;
+  } else if( i >= THREAD_MAX ){
     fprintf(stderr, "ERROR: thread empty.\n");
-    exit(EXIT_FAILURE);
+    return 1;
   }
+
+  return 0;
 }
 
 void  sock_thread_join( struct thdata *thdata )
@@ -682,12 +705,6 @@ void  sock_thread_join( struct thdata *thdata )
   int i = 0;
   for(i = 0; i < THREAD_MAX; i++){
     struct thdata *priv = thdata + i;
-
-    /* スレッド終了を動作させる  */
-    sem_wait(&priv->sync);
-    priv->end = 1;
-    sem_post(&priv->start);
-    sem_wait(&priv->sync);
 
     /* スレッド終了待ち  */
     pthread_join(priv->th, NULL);
