@@ -29,7 +29,7 @@ int connection_handle( int client, SSL *ssl ){
     LOGC();
   } while(ret);
   LOGE( SSL_accept );
-  DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
+  //DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
   /*
     s->hit = 1 : がセッション再開された印
     ssl_get_prev_session
@@ -63,7 +63,7 @@ int connection_handle( int client, SSL *ssl ){
   LOG(close(sd));
 
   ret = rcvprint( buf );
-  fprintf(stderr, "%.32s : %d\n", buf, ret);
+  //fprintf(stderr, "%.32s : %d\n", buf, ret);
   if ( ret )
     return 0;
   else

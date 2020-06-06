@@ -302,6 +302,7 @@ int rcvprint( char *msg ){
   tv_s = diff_time( &tv_s, &tv );
   printf(TIME_FMT"% 2ld.%06lu,%.30s\n",
          (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
+  if(strlen(msg) > 20) ++rcv_count;
 
   msg[ size + 1] = '\n';
   //printf(":%d %s %d:", no, type, size);
@@ -317,8 +318,6 @@ int rcvprint( char *msg ){
       return 0;
     }
   }
-
-  if(strlen(msg) > 20) ++rcv_count;
 
 #if ( TIME_WAIT > 0)
   usleep( TIME_WAIT );
@@ -627,7 +626,7 @@ void *thread_function(void *thdata)
   sem_post(&priv->sync);
 
   /* done */
-  fprintf(stderr, "thread_function end.\n");
+  fprintf(stderr, "thread_function end. %ld\n", pthread_self());
   return (void *) NULL;
 }
 
@@ -686,15 +685,17 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
   if(++msg_count > (OPT_CLIENT_NUM * RE_TRY)){
     for(i = 0; i < THREAD_MAX; i++){
       struct thdata *priv = thdata + i;
-      priv->sock = 0;
-      priv->ssl = NULL;
-      sem_post(&priv->start);
+      if( !priv->sock && !priv->ssl ){
+        priv->sock = 0;
+        priv->ssl = NULL;
+        sem_post(&priv->start);
+      }
     }
     fprintf(stderr, "all end.\n");
     return 1;
-  } else if( i >= THREAD_MAX ){
+  } else if( i > THREAD_MAX ){
     fprintf(stderr, "ERROR: thread empty.\n");
-    return 1;
+    exit(EXIT_FAILURE);
   }
 
   return 0;

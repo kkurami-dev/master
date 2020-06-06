@@ -30,7 +30,7 @@ declare -a array_size=(
 #DEBUG=echo
 DEBUG=
 PROCES=
-CLIENT=1
+CLIENT=2
 function prop_kill(){
     for var in ${array[@]} ; do
         pkill ${PROCES}_server &
@@ -50,14 +50,14 @@ function exec_loop(){
 
         _log_file=${_log_base}_server.csv
         echo "# ./${PROCES}_server $i ${CLIENT} > ${_log_file}"
-        ${DEBUG} ./${PROCES}_server $i ${CLIENT} 41> ${_log_file} &
+        ${DEBUG} ./${PROCES}_server $i ${CLIENT} > ${_log_file} &
         sleep 0.5
 
         if [ 1 -lt ${CLIENT} ] ;then
             for c_i in 2..${CLIENT} ; do
                 _log_file=${_log_base}_client_1.csv
-                echo "# ./${PROCES}_client $i 1 > ${_log_file}"
-                ${DEBUG} ./${PROCES}_client $i 1 > ${_log_file} &
+                echo "# ./${PROCES}_client $i ${c_i} > ${_log_file}"
+                ${DEBUG} ./${PROCES}_client $i ${c_i} > ${_log_file} &
             done
         fi
         _log_file=${_log_base}_client_1.csv

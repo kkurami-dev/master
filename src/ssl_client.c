@@ -72,7 +72,7 @@ int main( int argc, char* argv[] )
         state_machine , ssl_security, ssl_security_default_callback
          tls_setup_handshake,
     */
-    DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
+    //DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
 
     do {
       /*  受送信処理 */
