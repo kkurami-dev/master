@@ -41,6 +41,7 @@ int main( int argc, char* argv[] )
 
   int i = 0;
   int size;
+  int ret;
   while(1){
     size = get_data(i++, " ssl", msg, log );
     if ( 0 == size ){
@@ -57,14 +58,8 @@ int main( int argc, char* argv[] )
     LOG(SSL_set_fd(ssl, sockfd));
 
     /* 接続 */
-    LOGS();
-    if( -1 == SSL_connect(ssl) ){
-      /* 接続失敗したら処理を最初からやり直す  */
-      fprintf(stderr, "SSL_connect failed with :%d errno:%d\n", SSL_get_error(ssl, -1), errno );
-      //exit(EXIT_FAILURE);
-      goto cleanup;
-    }
-    LOGE( SSL_connect() );
+    LOG(ret = SSL_connect(ssl) );
+    ssl_check_error( ssl, ret );
     /* ossl_statem_server13_write_transition
        write_state_machine
 
@@ -112,7 +107,6 @@ int main( int argc, char* argv[] )
     LOGE(SSL_get1_session);
 #endif
 
-  cleanup:
     LOG(SSL_free(ssl));
     LOG(close(sockfd));
     endprint(log);

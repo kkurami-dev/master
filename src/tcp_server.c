@@ -18,7 +18,6 @@ int connection_handle( int clitSock, SSL *ssl ){
         perror("recv() failed.");
         exit(EXIT_FAILURE);
       } else if(recvMsgSize > 0){
-        //fprintf(stderr, "ret:%d error:%d ", ret, errno);
         break;
       }
     }
@@ -30,6 +29,7 @@ int connection_handle( int clitSock, SSL *ssl ){
       perror("send() failed.");
       exit(EXIT_FAILURE);
     } else if(sendMsgSize == 0){
+      DEBUG( fprintf(stderr, "send error size:0 error:%d\n", errno) );
       break;
     }
 #endif // (SERVER_REPLY == 1)
@@ -48,6 +48,7 @@ int connection_handle( int clitSock, SSL *ssl ){
   //LOG(shutdown(clitSock, 1));
   LOG(close(clitSock));
   int ret = rcvprint( recvBuffer );
+  DEBUG0( fprintf(stderr, "end ret:%d errno:%d\n", ret, errno) );
   if (ret)
     return 0;
   else
@@ -98,9 +99,10 @@ int main(int argc, char* argv[]) {
   //clitLen = sizeof(clitSockAddr);
 
   struct thdata *th = sock_thread_create( connection_handle );
+  void *ssl; ssl = (void *)th;
   while(1) {
     LOG(clitSock = accept(servSock, NULL, NULL));
-    sock_thread_post( th, clitSock, NULL );
+    if( sock_thread_post( th, clitSock, (SSL *)ssl )  ) break;
   }
   sock_thread_join( th );
 

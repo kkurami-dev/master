@@ -22,13 +22,8 @@ int connection_handle( int client, SSL *ssl ){
   LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));/* 証明書交換時のキー作成機能有効化 */
 
   /* SSL通信開始が正常終了するまでループ */
-  LOGS();
-  do{
-    ret = SSL_accept(ssl);
-    ret = ssl_get_accept( ssl, ret );
-    LOGC();
-  } while(ret);
-  LOGE( SSL_accept );
+  LOG( ret = SSL_accept(ssl) );
+  ssl_check_error( ssl, ret );
   //DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
   /*
     s->hit = 1 : がセッション再開された印
@@ -119,7 +114,6 @@ int main( int argc, char* argv[] )
   struct timeval to;
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
-#if 0
     FD_ZERO(&ready);
     FD_SET(server_fd, &ready);
     to.tv_sec = 1;
@@ -130,7 +124,6 @@ int main( int argc, char* argv[] )
     }
 
     if (FD_ISSET(server_fd, &ready))
-#endif
     {
       /* 接続と通信開始 */
       LOG(client_fd = accept(server_fd, NULL, NULL));

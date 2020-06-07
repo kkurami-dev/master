@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+#set -x
 
 PROCES=ssl
 CLIENT=1
@@ -19,17 +19,17 @@ pkill ${PROCES}_client
 sleep 0.1
 
 _log_file=${_log_base}_server.csv
-./${PROCES}_server ${DATA_SIZE} 5 > ${_log_file} &
+./${PROCES}_server ${DATA_SIZE} 3 > ${_log_file} &
 sleep 1.5
 
-#for i in {2..4} ; do
-for i in 2 3 4 5 ; do
+#for i in 2 3 4 5 ; do
+for i in 2 3 ; do
     _log_file=${_log_base}_client_${i}.csv
     echo ${_log_file}
     ./${PROCES}_client ${DATA_SIZE} ${i} > ${_log_file} &
-    sleep 0.1
+    sleep 0.01
 done
 
-_log_file=${_log_base}_client_2.csv
+_log_file=${_log_base}_client_1.csv
 ./${PROCES}_client ${DATA_SIZE} 1 > ${_log_file}
 sleep 1.5

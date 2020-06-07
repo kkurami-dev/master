@@ -26,11 +26,17 @@
 
 #define DEBUG_ON               1
 
-#if (DEBUG_ON == 1)
+#if (DEBUG_ON == 2)
   #define RE_TRY              100 /* 一つのサイズのメッセージ送信回数 */
+  #define DEBUG0(x)              x
+  #define DEBUG(x)               x
+#elif (DEBUG_ON == 1)
+  #define RE_TRY              100 /* 一つのサイズのメッセージ送信回数 */
+  #define DEBUG0(x)              
   #define DEBUG(x)               x
 #else // (DEBUG_ON == 1)
   #define RE_TRY             10000 /* 一つのサイズのメッセージ送信回数 */
+  #define DEBUG0(x)
   #define DEBUG(x)
 #endif // (DEBUG_ON == 1)
 

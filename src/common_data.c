@@ -365,7 +365,7 @@ void ssl_ret_check( int ret, int line, const char *msg ){
   exit(EXIT_FAILURE);
 }
 
-int ssl_get_accept(SSL *ssl, int sslret){
+int ssl_check_error(SSL *ssl, int sslret){
   if(sslret >= 0){
     return 0;
   }
@@ -377,12 +377,11 @@ int ssl_get_accept(SSL *ssl, int sslret){
     case SSL_ERROR_WANT_READ:
     case SSL_ERROR_WANT_WRITE:
     case SSL_ERROR_SYSCALL:
-      return 1;
     default:
       // エラー処理
-      fprintf(stderr, "ssl_get_accept %ld (%d)\n", ERR_get_error(), ssl_eno );
-      perror("ssl_get_accept");
-      exit(1);
+      fprintf(stderr, "ssl_check_return %ld (%d) errno:%d\n", ERR_get_error(), ssl_eno, errno );
+      perror("SSL_accept");
+      exit(EXIT_FAILURE);
     }
 }
 
@@ -584,6 +583,7 @@ struct thdata {
   SSL                 *ssl;
   int                (*func)( int sock, SSL *ssl );
   int                 opt_start_no;
+  int                 no;
 
   pthread_t           th;
   sem_t               sync;
@@ -613,16 +613,22 @@ void *thread_function(void *thdata)
   sem_post(&priv->sync);
   while(1){
     sem_wait(&priv->start);
-    //fprintf(stderr, "sem_post(): exe: %d\n", priv->sock);
+    DEBUG0( fprintf(stderr, "thread_function exe: %d\n", priv->no ) );
 
     /* 実行 */
-    if (!priv->sock || !priv->ssl ) break;
+    if (!priv->sock || !priv->ssl ) {
+      DEBUG0( fprintf(stderr, "thread_function end rcv. \n") );
+      break;
+    }
     ret = priv->func( priv->sock, priv->ssl );
     priv->sock = 0;
     priv->ssl = NULL;
 
     /* sync */
-    if ( ret ) break;
+    if ( ret ) {
+      DEBUG0( fprintf(stderr, "thread_function ret:%d \n", ret) );
+      break;
+    }
   }
   /* sync */
   sem_post(&priv->sync);
@@ -645,6 +651,7 @@ struct thdata *sock_thread_create( int (*func)(int sock, SSL *ssl) )
   }
 
   for (i = 0; i < THREAD_MAX; i++) {
+    thdata[i].no = i;
     thdata[i].opt_start_no = OPT_START_NO;
     thdata[i].sock = 0;
     thdata[i].ssl = NULL;
@@ -677,7 +684,7 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
     if( !priv->sock && !priv->ssl ){
       priv->sock = sock;
       priv->ssl = ssl;
-      //fprintf(stderr, "sem_post(%d): rcv: %d\n", i, sock);
+      DEBUG0( fprintf(stderr, "sem_post(%d): rcv: %d\n", i, sock) );
       sem_post(&priv->start);
       break;
     }
@@ -690,11 +697,10 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
       if( !priv->sock && !priv->ssl ){
         //priv->sock = 0;
         //priv->ssl = NULL;
-        fprintf(stderr, "sem_post(%d): end : %d\n", i, sock);
+        DEBUG0( fprintf(stderr, "sem_post(%d): end : %d\n", i, sock) );
         sem_post(&priv->start);
       }
     }
-    fprintf(stderr, "all end.\n");
     return 1;
   } else if( i > THREAD_MAX ){
     fprintf(stderr, "ERROR: thread empty.\n");
@@ -706,7 +712,7 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
 
 void  sock_thread_join( struct thdata *thdata )
 {
-  fprintf(stderr, "pthread_join()\n");
+  DEBUG0( fprintf(stderr, "pthread_join()\n") );
   int i = 0;
   for(i = 0; i < THREAD_MAX; i++){
     struct thdata *priv = thdata + i;
@@ -717,5 +723,6 @@ void  sock_thread_join( struct thdata *thdata )
     sem_destroy(&priv->start);
   }
 
+  fprintf(stderr, "all end.\n");
   free(thdata);
 }
