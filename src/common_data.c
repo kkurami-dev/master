@@ -609,10 +609,11 @@ void *thread_function(void *thdata)
   
   OPT_START_NO = priv->opt_start_no;
 
+  /* sync */
+  sem_post(&priv->sync);
   while(1){
-    /* sync */
-    sem_post(&priv->sync);
     sem_wait(&priv->start);
+    //fprintf(stderr, "sem_post(): exe: %d\n", priv->sock);
 
     /* 実行 */
     if (!priv->sock || !priv->ssl ) break;
@@ -623,10 +624,11 @@ void *thread_function(void *thdata)
     /* sync */
     if ( ret ) break;
   }
+  /* sync */
   sem_post(&priv->sync);
 
   /* done */
-  fprintf(stderr, "thread_function end. %ld\n", pthread_self());
+  fprintf(stderr, "thread_function end. 0x%lx\n", pthread_self());
   return (void *) NULL;
 }
 
@@ -663,7 +665,6 @@ struct thdata *sock_thread_create( int (*func)(int sock, SSL *ssl) )
   for (i = 0; i < THREAD_MAX; i++) {
     sem_wait(&thdata[i].sync);
   }
-
   return thdata;
 }
 
@@ -676,6 +677,7 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
     if( !priv->sock && !priv->ssl ){
       priv->sock = sock;
       priv->ssl = ssl;
+      //fprintf(stderr, "sem_post(%d): rcv: %d\n", i, sock);
       sem_post(&priv->start);
       break;
     }
@@ -686,8 +688,9 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
     for(i = 0; i < THREAD_MAX; i++){
       struct thdata *priv = thdata + i;
       if( !priv->sock && !priv->ssl ){
-        priv->sock = 0;
-        priv->ssl = NULL;
+        //priv->sock = 0;
+        //priv->ssl = NULL;
+        fprintf(stderr, "sem_post(%d): end : %d\n", i, sock);
         sem_post(&priv->start);
       }
     }
@@ -695,7 +698,7 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
     return 1;
   } else if( i > THREAD_MAX ){
     fprintf(stderr, "ERROR: thread empty.\n");
-    exit(EXIT_FAILURE);
+    //exit(EXIT_FAILURE);
   }
 
   return 0;
@@ -703,6 +706,7 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
 
 void  sock_thread_join( struct thdata *thdata )
 {
+  fprintf(stderr, "pthread_join()\n");
   int i = 0;
   for(i = 0; i < THREAD_MAX; i++){
     struct thdata *priv = thdata + i;

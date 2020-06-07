@@ -60,7 +60,8 @@ int main( int argc, char* argv[] )
     LOGS();
     if( -1 == SSL_connect(ssl) ){
       /* 接続失敗したら処理を最初からやり直す  */
-      //fprintf(stderr, "\nSSL_connect failed with :%d errno:%d\n\n", SSL_get_error(ssl, -1), errno );
+      fprintf(stderr, "SSL_connect failed with :%d errno:%d\n", SSL_get_error(ssl, -1), errno );
+      //exit(EXIT_FAILURE);
       goto cleanup;
     }
     LOGE( SSL_connect() );

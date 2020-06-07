@@ -119,6 +119,7 @@ int main( int argc, char* argv[] )
   struct timeval to;
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
+#if 0
     FD_ZERO(&ready);
     FD_SET(server_fd, &ready);
     to.tv_sec = 1;
@@ -128,9 +129,12 @@ int main( int argc, char* argv[] )
       break;
     }
 
-    if (FD_ISSET(server_fd, &ready)) {
+    if (FD_ISSET(server_fd, &ready))
+#endif
+    {
       /* 接続と通信開始 */
       LOG(client_fd = accept(server_fd, NULL, NULL));
+      printf("sccept ok\n");
       /* SSLオブジェクトを生成 */
       LOG(ssl = SSL_new(ctx));
       /* メッセージ受信用のスレッドで情報受信  */
