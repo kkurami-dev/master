@@ -119,14 +119,15 @@ int main( int argc, char* argv[] )
 
 	SSL_CTX_set_read_ahead(ctx, 1);
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
-	SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie);
+	LOG(SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie));
 
-  server_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL);
+  LOG(server_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL));
 
   fd_set ready;
   struct timeval to;
   struct thdata *th = sock_thread_create( connection_handle );
   while(1) {
+    LOGS();
     FD_ZERO(&ready);
     FD_SET(server_fd, &ready);
     to.tv_sec = 100000;
@@ -135,6 +136,7 @@ int main( int argc, char* argv[] )
       perror("select");
       break;
     }
+    LOGE(select);
 
     if (FD_ISSET(server_fd, &ready))
     {
