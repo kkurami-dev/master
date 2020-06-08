@@ -42,6 +42,7 @@ int main( int argc, char* argv[] )
   int i = 0;
   int size;
   int ret;
+  const char ciphers[] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
   while(1){
     size = get_data(i++, " ssl", msg, log );
     if ( 0 == size ){
@@ -52,6 +53,7 @@ int main( int argc, char* argv[] )
     sockfd = get_settings_fd( HOST, SOCK_STREAM, TEST_SENDER, NULL);
  
     LOG(ssl = SSL_new(ctx));
+    //SSL_set_ciphersuites(ssl, ciphers);
     if(ssl_session) {
       LOG(SSL_set_session(ssl, ssl_session));
     }

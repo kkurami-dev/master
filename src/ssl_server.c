@@ -86,6 +86,19 @@ int main( int argc, char* argv[] )
   OpenSSL_add_all_algorithms();
   ctx = SSL_CTX_new(TLS_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
 
+  // openssl ciphers -s -v
+  /* ciphers
+    TLS_AES_256_GCM_SHA384       TLSv1.3 Kx=any   Au=any  Enc=AESGCM(256) Mac=AEAD
+    TLS_CHACHA20_POLY1305_SHA256 TLSv1.3 Kx=any   Au=any  Enc=CHACHA20/POLY1305(256) Mac=AEAD
+    TLS_AES_128_GCM_SHA256       TLSv1.3 Kx=any   Au=any  Enc=AESGCM(128) Mac=AEAD
+    https://wiki.openssl.org/index.php/TLS1.3
+
+    TLS1_3_VERSION_DRAFT_TXT
+  */
+  const char ciphers[] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
+  SSL_RET(SSL_CTX_set_ciphersuites(ctx, ciphers));
+  //SSL_set_ciphersuites();
+
   /* セッション関連の設定 */
   const unsigned char session_id[] = "inspircd";
   SSL_CTX_set_session_id_context(ctx, session_id, sizeof(session_id));
@@ -116,7 +129,7 @@ int main( int argc, char* argv[] )
   while(1) {
     FD_ZERO(&ready);
     FD_SET(server_fd, &ready);
-    to.tv_sec = 1;
+    to.tv_sec = 100000;
     to.tv_usec = 0;
     if (select(server_fd + 1, &ready, (fd_set *)0, (fd_set *)0, &to) == -1) {
       perror("select");
@@ -130,6 +143,7 @@ int main( int argc, char* argv[] )
       printf("sccept ok\n");
       /* SSLオブジェクトを生成 */
       LOG(ssl = SSL_new(ctx));
+      //SSL_set_ciphersuites(ssl, ciphers);
       /* メッセージ受信用のスレッドで情報受信  */
       if( sock_thread_post( th, client_fd, ssl ) ) break;
     }
