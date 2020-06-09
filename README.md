@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-04 22:06:51 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-10 05:55:02 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -164,6 +164,23 @@ Client Key Exchange 手順の前に
 Certificate メッセージ(msg_type=11) と
 Certificate Verify メッセージ(msg_type=15) を返送します。
 
+### OpenSSL の中身のチェック結果
+|送信側|受信側|
+|------------------|-------------------|
+|	TLS_ST_SR_CLNT_HELLO	|	＜－	|
+|	TLS_ST_SW_SRVR_HELLO	|	TLS_ST_CR_SRVR_HELLO	|
+|	TLS_ST_SW_CHANGE	|	－＞	|
+|	TLS_ST_SW_ENCRYPTED_EXTENSIONS	|	TLS_ST_CR_ENCRYPTED_EXTENSIONS	|
+|	TLS_ST_SW_CERT_REQ	|	TLS_ST_CR_CERT_REQ	|
+|	TLS_ST_SW_CERT	|	TLS_ST_CR_CERT	|
+|	TLS_ST_SW_CERT_VRFY	|	TLS_ST_CR_CERT_VRFY	|
+|	TLS_ST_SW_FINISHED	|	＜－	|
+|	TLS_ST_EARLY_DATA	|	＜－	|
+|	TLS_ST_SR_FINISHED	|	＜－	|
+|	TLS_ST_SW_SESSION_TICKET	|	＜－	|
+|	TLS_ST_SW_SESSION_TICKET	|	＜－	|
+
+
 ## セッションの再開について
 1. SSL_new 後にあれば SSL_set_session(ssl, ssl_session);
 1. SSL_connect の後にあれば ssl_session = SSL_get1_session(ssl);
@@ -183,6 +200,9 @@ Certificate Verify メッセージ(msg_type=15) を返送します。
 
 
 ### TLSの基本は  
+1. SSL_shutdown() 実行後に SSL_get1_session() でセッションIDを取得
+1. SSL_SESSION_is_resumable() で再開に使えるかチェック
+- 
 - TLS1.3 では SSL3_MT_NEWSESSION_TICKET でセッションが作成される
   ssl_print_ticket()
   ↑
@@ -196,6 +216,43 @@ Certificate Verify メッセージ(msg_type=15) を返送します。
     ossl_statem_server13_read_transition
     ← TLS_ST_EARLY_DATA
     
-    
-    
-ossl_statem_server_write_transition()
+### 証明書のリスト
+openssl ciphers -s -v
+- TLS_AES_256_GCM_SHA384       TLSv1.3 Kx=any   Au=any  Enc=AESGCM(256) Mac=AEAD
+- TLS_CHACHA20_POLY1305_SHA256 TLSv1.3 Kx=any   Au=any  Enc=CHACHA20/POLY1305(256) Mac=AEAD
+- TLS_AES_128_GCM_SHA256       TLSv1.3 Kx=any   Au=any  Enc=AESGCM(128) Mac=AEAD
+- https://wiki.openssl.org/index.php/TLS1.3
+- TLS1_3_VERSION_DRAFT_TXT
+- 設定
+```
+     const char ciphers[] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
+     SSL_RET(SSL_CTX_set_ciphersuites(ctx, ciphers));
+     //SSL_set_ciphersuites();
+```
+
+### TLS１．３を強制する
+```
+const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+SSL_CTX_set_options(ctx, flags);
+```
+
+### OpenSSL の中身
+- セッション再開 : s->hit ( SSL *ssl の事 )
+```
+    s->hit = 1 : がセッション再開された印
+    ssl_get_prev_session
+      tls_parse_extension
+
+    tls_parse_ctos_psk
+    ssl_print_cert_request
+    psk_server_cb
+```
+- TLS 1.3 の処理関数
+1. ossl_statem_server13_write_transition()
+1. ossl_statem_client13_read_transition()
+1. ssl3_renegotiate_check()
+1. ossl_statem_connect()
+1. tls_setup_handshake()
+
+
+
