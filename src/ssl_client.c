@@ -15,6 +15,8 @@ int main( int argc, char* argv[] )
   SSL_CTX *ctx;
   SSL_SESSION *ssl_session = NULL;
   const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  const unsigned char session_id[] = "inspircd";
+  const char ciphers[] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
 
   char log[128];
   char msg[BUFSIZE];
@@ -26,7 +28,6 @@ int main( int argc, char* argv[] )
   ctx = SSL_CTX_new(TLS_client_method());
 
   /* セッション関連の設定 */
-  const unsigned char session_id[] = "inspircd";
   SSL_CTX_set_session_id_context(ctx, session_id, sizeof(session_id));
   SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH );
 
@@ -42,7 +43,6 @@ int main( int argc, char* argv[] )
   int i = 0;
   int size;
   int ret;
-  const char ciphers[] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
   while(1){
     size = get_data(i++, " ssl", msg, log );
     if ( 0 == size ){
@@ -53,7 +53,7 @@ int main( int argc, char* argv[] )
     sockfd = get_settings_fd( HOST, SOCK_STREAM, TEST_SENDER, NULL);
  
     LOG(ssl = SSL_new(ctx));
-    //SSL_set_ciphersuites(ssl, ciphers);
+    SSL_set_ciphersuites(ssl, ciphers);
     if(ssl_session) {
       LOG(SSL_set_session(ssl, ssl_session));
     }
@@ -62,26 +62,12 @@ int main( int argc, char* argv[] )
     /* 接続 */
     LOG(ret = SSL_connect(ssl) );
     ssl_check_error( ssl, ret );
-    /* ossl_statem_server13_write_transition
-       write_state_machine
+    DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
 
-       ssl3_renegotiate_check ,
-       ossl_statem_connect, 
-        state_machine , ssl_security, ssl_security_default_callback
-         tls_setup_handshake,
-    */
-    //DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
-
+#if (ONE_SEND == 1)
     do {
       /*  受送信処理 */
       ssl_check_write(ssl, msg, size);
-
-#if (SERVER_REPLY == 1)
-      char buf[BUFSIZE];
-      ssl_check_read(ssl, buf);
-#endif
-
-#if (ONE_SEND == 1)
       /* 接続をしたまま、再度メッセージを送る */
       if(count % RE_TRY){
         endprint(log);
@@ -89,10 +75,11 @@ int main( int argc, char* argv[] )
       } else {
         break;
       }
+    } while(size);
 #else
-      break;
+    /*  送信処理 */
+    ssl_check_write(ssl, msg, size);
 #endif
-    } while(1);
 
     /* 切断 */
     ssl_check_shutdown( ssl );  /* 書き込み指示後、本当に書き込みが完了するまで shutdown() を複数回実施 */
@@ -103,7 +90,7 @@ int main( int argc, char* argv[] )
       if(!ssl_session) ssl_session = SSL_get1_session(ssl); /* セッションの取得 */
       if (SSL_SESSION_is_resumable(ssl_session)) break;     /* 使えるセッションか確認 */
       SSL_SESSION_free(ssl_session);                        /* 使えないセッションを開放 */
-      ssl_session = NULL;                                   /* 次のセッション取得のために開放 */
+      ssl_session = NULL;                                   /* 次のセッション取得のために初期化 */
       LOGC();
     } while(1);
     LOGE(SSL_get1_session);
@@ -112,6 +99,7 @@ int main( int argc, char* argv[] )
     LOG(SSL_free(ssl));
     LOG(close(sockfd));
     endprint(log);
+    if ( size == 0 ) break;
   }
 
   if(ssl_session) {

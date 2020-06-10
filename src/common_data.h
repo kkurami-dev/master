@@ -15,8 +15,8 @@
 #define BUFSIZE (MSGSIZE + 1)
 #define HOST    "localhost"
 #define HOST_IP "127.0.0.1"
-#define TLS_PORT 1443
-#define TLS_PORT_W "1443"
+#define TLS_PORT 2443
+#define TLS_PORT_W "2443"
 
 #define S_CERT "server-cert.pem"
 #define S_KEY  "server-key.pem"
@@ -24,10 +24,10 @@
 #define C_KEY  "client-key.pem"
 #define CA_PEM "ca.pem"
 
-#define DEBUG_ON               1
+#define DEBUG_ON               2
 
 #if (DEBUG_ON == 2)
-  #define RE_TRY              100 /* 一つのサイズのメッセージ送信回数 */
+  #define RE_TRY                 2 /* 一つのサイズのメッセージ送信回数 */
   #define DEBUG0(x)              x
   #define DEBUG(x)               x
 #elif (DEBUG_ON == 1)

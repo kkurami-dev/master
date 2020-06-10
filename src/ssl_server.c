@@ -18,38 +18,22 @@ int connection_handle( int client, SSL *ssl ){
   int ret;
   int sd;
 
-  LOG(SSL_set_fd(ssl, client));/* SSLオブジェクトとファイルディスクリプタを接続 */
   LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));/* 証明書交換時のキー作成機能有効化 */
 
-  /* SSL通信開始が正常終了するまでループ */
-  LOG( ret = SSL_accept(ssl) );
+  LOG( ret = SSL_accept(ssl) );/* SSL通信接続 */
   ssl_check_error( ssl, ret );
-  //DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
-  /*
-    s->hit = 1 : がセッション再開された印
-    ssl_get_prev_session
-      tls_parse_extension
+  DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "server SSL_session_reused\n") );
 
-    tls_parse_ctos_psk
-    ssl_print_cert_request
-    psk_server_cb
-   */
-
+#if (ONE_SEND == 1)
   do {
     ssl_check_read(ssl, buf);
-
+  } while((rcvprint( buf ) % RE_TRY));
+#else
+  ssl_check_read(ssl, buf);
+#endif
 #if (SERVER_REPLY == 1)
     ssl_check_write( ssl, "ack", 4);
 #endif // (SERVER_REPLY == 1)
-
-#if (ONE_SEND == 1)
-    if (0 == (rcvprint( buf ) % RE_TRY)){
-      break;
-    }
-#else
-    break;
-#endif
-  } while(1);
 
   ssl_check_shutdown( ssl );
 
@@ -58,7 +42,6 @@ int connection_handle( int client, SSL *ssl ){
   LOG(close(sd));
 
   ret = rcvprint( buf );
-  //fprintf(stderr, "%.32s : %d\n", buf, ret);
   if ( ret )
     return 0;
   else
@@ -73,11 +56,11 @@ int connection_handle( int client, SSL *ssl ){
 
 int main( int argc, char* argv[] )
 {
-  int server_fd, client_fd;
-
   SSL_CTX *ctx;
   SSL *ssl;
   const long flags=SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+  const char ciphers[] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
+  const unsigned char session_id[] = "inspircd";
 
   set_argument( argc, argv );
 
@@ -86,21 +69,9 @@ int main( int argc, char* argv[] )
   OpenSSL_add_all_algorithms();
   ctx = SSL_CTX_new(TLS_server_method()); // SSL or TLS汎用でSSL_CTXオブジェクトを生成
 
-  // openssl ciphers -s -v
-  /* ciphers
-    TLS_AES_256_GCM_SHA384       TLSv1.3 Kx=any   Au=any  Enc=AESGCM(256) Mac=AEAD
-    TLS_CHACHA20_POLY1305_SHA256 TLSv1.3 Kx=any   Au=any  Enc=CHACHA20/POLY1305(256) Mac=AEAD
-    TLS_AES_128_GCM_SHA256       TLSv1.3 Kx=any   Au=any  Enc=AESGCM(128) Mac=AEAD
-    https://wiki.openssl.org/index.php/TLS1.3
-
-    TLS1_3_VERSION_DRAFT_TXT
-  */
-  const char ciphers[] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
   SSL_RET(SSL_CTX_set_ciphersuites(ctx, ciphers));
-  //SSL_set_ciphersuites();
 
   /* セッション関連の設定 */
-  const unsigned char session_id[] = "inspircd";
   SSL_CTX_set_session_id_context(ctx, session_id, sizeof(session_id));
   SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH );
 #if (TEST_SSL_SESSION == 1)
@@ -116,22 +87,24 @@ int main( int argc, char* argv[] )
   SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録とクライアント証明書の要求
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
   SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
-
 	SSL_CTX_set_read_ahead(ctx, 1);
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	LOG(SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie));
 
+  int server_fd, client_fd, fd_max, fds[THREAD_MAX * 2];
   LOG(server_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL));
 
+  int size;
+  static struct sockaddr_in client_addr = {0};
   fd_set ready;
   struct timeval to;
   struct thdata *th = sock_thread_create( connection_handle );
+  to.tv_sec  = 3;
+  to.tv_usec = 0;
   while(1) {
     LOGS();
     FD_ZERO(&ready);
     FD_SET(server_fd, &ready);
-    to.tv_sec = 100000;
-    to.tv_usec = 0;
     if (select(server_fd + 1, &ready, (fd_set *)0, (fd_set *)0, &to) == -1) {
       perror("select");
       break;
@@ -141,11 +114,12 @@ int main( int argc, char* argv[] )
     if (FD_ISSET(server_fd, &ready))
     {
       /* 接続と通信開始 */
-      LOG(client_fd = accept(server_fd, NULL, NULL));
-      printf("sccept ok\n");
+      LOG(client_fd = accept(server_fd, &client_addr, &size));
+      DEBUG(fprintf(stderr, "accept family:0x%08X data:%.14s size:%d\n",
+                    client_addr.sa_family, client_addr.sa_data, size));
       /* SSLオブジェクトを生成 */
       LOG(ssl = SSL_new(ctx));
-      //SSL_set_ciphersuites(ssl, ciphers);
+      LOG(SSL_set_fd(ssl, client_fd));/* SSLオブジェクトとファイルディスクリプタを接続 */
       /* メッセージ受信用のスレッドで情報受信  */
       if( sock_thread_post( th, client_fd, ssl ) ) break;
     }
