@@ -13,7 +13,8 @@
 
 #define M_SERVER  1
 
-int connection_handle( int client, SSL *ssl ){
+int connection_handle( void * priv ){
+  SSL * ssl = ((struct thdata*)priv)->ssl;
   char buf[BUFSIZE];
   int ret;
   int sd;
@@ -32,7 +33,7 @@ int connection_handle( int client, SSL *ssl ){
   ssl_check_read(ssl, buf);
 #endif
 #if (SERVER_REPLY == 1)
-    ssl_check_write( ssl, "ack", 4);
+  ssl_check_write( ssl, "ack", 4);
 #endif // (SERVER_REPLY == 1)
 
   ssl_check_shutdown( ssl );
@@ -91,43 +92,68 @@ int main( int argc, char* argv[] )
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	LOG(SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie));
 
-  int server_fd, client_fd, fd_max, fds[THREAD_MAX * 2];
-  LOG(server_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL));
+  socklen_t addrlen;
+  struct sockaddr_in client_addr;
+  int listener_fd, client_fd;
+  LOG(listener_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL));
 
-  int size;
-  static struct sockaddr_in client_addr = {0};
-  fd_set ready;
-  struct timeval to;
-  struct thdata *th = sock_thread_create( connection_handle );
-  to.tv_sec  = 3;
-  to.tv_usec = 0;
-  while(1) {
-    LOGS();
-    FD_ZERO(&ready);
-    FD_SET(server_fd, &ready);
-    if (select(server_fd + 1, &ready, (fd_set *)0, (fd_set *)0, &to) == -1) {
-      perror("select");
-      break;
+  //////////////////////////////////////// epoll
+  /* ソケットをepollに追加 */
+  int epfd, nfd;
+  struct epoll_event event;
+  struct epoll_event events[ CLIENT_MAX ];
+  if((epfd = epoll_create( CLIENT_MAX )) < 0) {
+    fprintf(stderr, "epoll_create()\\n");
+    exit(1);
+  }
+  memset(&event, 0, sizeof(event));
+  event.events  = EPOLLIN | EPOLLET; /* "man epoll" から拝借 */
+  event.data.fd = listener_fd;
+  if (epoll_ctl(epfd, EPOLL_CTL_ADD, listener_fd, &event) < 0) {
+    fprintf(stderr, "epoll_ctl()\\n");
+    exit(1);
+  }
+  DEBUG(fprintf(stderr, "epoll listener_fd:%d epfd:%d\n", listener_fd, epfd ));
+  //////////////////////////////////////// epoll
+  
+  struct thdata *ths = sock_thread_create( connection_handle );
+  for(;;){
+    LOG( nfd = epoll_wait(epfd, events, CLIENT_MAX, -1) );
+    if(nfd < 0) {
+        fprintf(stderr, "epoll_wait()\\n");
+        exit(1);
     }
-    LOGE(select);
 
-    if (FD_ISSET(server_fd, &ready))
-    {
+    for(int i = 0; i < nfd; ++i) {
+      DEBUG(fprintf(stderr, "epoll listener_fd:%d epfd:%d\n", listener_fd, epfd ));
+      if(events[i].data.fd != listener_fd) {
+        /* スレッドで処理するのでここでは何もしなくて良いかも */
+        continue;
+      }
+
       /* 接続と通信開始 */
-      LOG(client_fd = accept(server_fd, &client_addr, &size));
-      DEBUG(fprintf(stderr, "accept family:0x%08X data:%.14s size:%d\n",
-                    client_addr.sa_family, client_addr.sa_data, size));
+      bzero( &client_addr, sizeof(client_addr) );
+      LOG(client_fd = accept(listener_fd, (struct sockaddr *)&client_addr, &addrlen ) );
+      DEBUG(fprintf(stderr, "accept, client_fd:%d, family:0x%08X, port:%d, size:%d\n",
+                    client_fd, client_addr.sin_family, client_addr.sin_port, addrlen));
+
       /* SSLオブジェクトを生成 */
       LOG(ssl = SSL_new(ctx));
       LOG(SSL_set_fd(ssl, client_fd));/* SSLオブジェクトとファイルディスクリプタを接続 */
+
       /* メッセージ受信用のスレッドで情報受信  */
-      if( sock_thread_post( th, client_fd, ssl ) ) break;
+      if( sock_thread_post( ths, client_fd, ssl ) ) break;
+
+      /* */
+      memset(&event, 0, sizeof(event));
+      event.events  = EPOLLIN | EPOLLET; /* "man epoll" から拝借 */
+      epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &event);
     }
   }
-  sock_thread_join( th );
+  sock_thread_join( ths );
 
   SSL_CTX_free(ctx);
-  close(server_fd);
+  close(listener_fd);
   return EXIT_SUCCESS;
 }
 

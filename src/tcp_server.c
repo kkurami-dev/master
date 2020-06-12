@@ -7,7 +7,8 @@
 
 #include "common_data.h"
 
-int connection_handle( int clitSock, SSL *ssl ){
+int connection_handle( struct thdata * priv ){
+  int clitSock = priv->sock;
   char recvBuffer[BUFSIZE];//receive temporary buffer
   int recvMsgSize; // recieve and send buffer size
 

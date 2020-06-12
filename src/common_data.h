@@ -15,8 +15,8 @@
 #define BUFSIZE (MSGSIZE + 1)
 #define HOST    "localhost"
 #define HOST_IP "127.0.0.1"
-#define TLS_PORT 2443
-#define TLS_PORT_W "2443"
+#define TLS_PORT 4443
+#define TLS_PORT_W "4443"
 
 #define S_CERT "server-cert.pem"
 #define S_KEY  "server-key.pem"
@@ -27,7 +27,7 @@
 #define DEBUG_ON               2
 
 #if (DEBUG_ON == 2)
-  #define RE_TRY                 2 /* 一つのサイズのメッセージ送信回数 */
+  #define RE_TRY             10000 /* 一つのサイズのメッセージ送信回数 */
   #define DEBUG0(x)              x
   #define DEBUG(x)               x
 #elif (DEBUG_ON == 1)
@@ -43,16 +43,16 @@
 /* 各種設定 */
 #define LOG_PRINT              1 /* 詳細にログを出力する     */
 #define TEST                   0 /* テストデータを少なく絞る  */
-#define ONE_SEND               0 /* データを全て1接続で送る    */
+#define ONE_SEND               1 /* データを全て1接続で送る    */
 #define KEY_WAIT               0 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 #define SERVER_REPLY           0 /* TPC/TLS の場合にサーバから応答を返すか  */
 #define TIME_WAIT              0 /* メッセージ送信全体の待ち時間  */
-#define NEXT_SEND_WAIT         0 /* 上記に加えて、送信プロセスの待ち時間 */
+#define NEXT_SEND_WAIT    100000 /* 上記に加えて、送信プロセスの待ち時間 */
 #define QUEUELIMIT             8 /* サーバの待ちキューの数（サーバのthreadプール数）  */
 #define SETSOCKOPT             1 /* サーバのソケットを再利用、クローズ待ちしない   */
                                  /* tcp で Connection refused で止まる   */
 #define TEST_SSL_SESSION       1 /* 暗号化のセッションを保存し、再開する */
-
+#define CLIENT_MAX            10
 
 #define SSL_RET(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( (x), __LINE__, #x );time_log(__LINE__, #x);
 #define SSL_RETN(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( !(x), __LINE__, #x );time_log(__LINE__, #x);
@@ -72,6 +72,10 @@
 
 #define TEST_SENDER               0
 #define TEST_RECEIVER             1
+
+#define TP_CONNECT                1
+#define TP_SEND                   2
+#define TP_CLOSE                  3
 
 struct timeval tv_s;
 int log_count;

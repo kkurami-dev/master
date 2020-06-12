@@ -13,7 +13,9 @@
 
 #include "common_data.h"
 
-int connection_handle( int client, SSL *ssl ){
+int connection_handle( struct thdata * priv ){
+
+  return 0;
 }
 
 int main( int argc, char* argv[] )
@@ -21,10 +23,10 @@ int main( int argc, char* argv[] )
   SSL_CTX *ctx;
   SSL *ssl;
 
-  int server, client;
+  int server;
   struct sockaddr_in server_addr;
-  struct sockaddr_storage client_addr;
   char buf[BUFSIZE];
+  int ret;
 
   set_argument( argc, argv );
 
@@ -37,6 +39,7 @@ int main( int argc, char* argv[] )
   ctx = SSL_CTX_new(DTLS_server_method());
   SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH);
   DEBUG( fprintf(stderr, "session_cache_mode:0x%08lx\n", SSL_CTX_get_session_cache_mode(ctx)) );
+  //fprintf(stderr, "size SSL:%ld SSL_CTX:%ld\n", sizeof(*ssl), sizeof(*ctx) );
 
   /* サーバ認証設定 */
   SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);/* SSLv2はセキュリティ的にNGなので除く*/
@@ -58,25 +61,50 @@ int main( int argc, char* argv[] )
   const unsigned char session_id[] = "inspircd";
   SSL_CTX_set_session_id_context(ctx, session_id, sizeof(session_id));
 
+  const int on = 1;
   LOG(server = socket(server_addr.sin_family, SOCK_DGRAM, 0));
-  LOG(bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
+  LOG(setsockopt(server, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on)));
+  LOG(setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on)));
+  DEBUG(fprintf(stderr, "socket() server: %d\n", server));
+  LOG(ret = bind(server, (struct sockaddr*)&server_addr, sizeof(server_addr)));
+  DEBUG(fprintf(stderr, "bind() server: %d\n", ret));
 
   BIO *bio;
   int accept = 0;
-  int ret;
   while(1) {
     LOG(bio = BIO_new_dgram(server, BIO_NOCLOSE));
     LOG(ssl = SSL_new(ctx));
-    LOG(SSL_set_fd(ssl, server));
     LOG(SSL_set_bio(ssl, bio, bio));
     LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));
 
     LOGS();
+    BIO_ADDR *client = BIO_ADDR_new();
     do {
-      ret = DTLSv1_listen(ssl, (BIO_ADDR *)&client_addr);///
-      LOGC()
-    }while (ret <= 0);
+      ret = DTLSv1_listen(ssl, client);///
+      LOGC();
+    } while (ret <= 0);
     LOGE(DTLSv1_listen);
+
+    int fd = -1;
+    BIO *wbio = SSL_get_wbio(ssl);
+    BIO_get_fd(wbio, &fd);
+    if (!wbio || BIO_connect(fd, client, 0) == 0) {
+      fprintf(stderr, "ERROR - unable to connect\n");
+      BIO_ADDR_free(client);
+      goto cleanup;
+    }
+    (void)BIO_ctrl_set_connected(wbio, client);
+    BIO_ADDR_free(client);
+
+//    /* Handle client connection */
+//    int client_fd = socket(AF_INET6, SOCK_DGRAM, 0);
+//    LOG(ret = bind(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)));
+//    connect(client_fd, (struct sockaddr*)&client_addr, sizeof(struct sockaddr));
+//
+//    /* Set new fd and set BIO to connected */
+//    BIO *cbio = SSL_get_wbio(ssl);
+//    BIO_set_fd(cbio, client_fd, BIO_NOCLOSE);
+//    (void)BIO_ctrl_set_connected(cbio, client_addr);
 
     LOGS();
     do {
@@ -103,6 +131,7 @@ int main( int argc, char* argv[] )
     ssl_check_shutdown( ssl );
     
   cleanup:
+    BIO_closesocket(fd);
     LOG(SSL_free(ssl));
     ret = rcvprint( buf );
     if( ret == 0 ) break;

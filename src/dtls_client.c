@@ -71,7 +71,6 @@ int main( int argc, char* argv[] )
     */
     DEBUG( if(SSL_session_reused(ssl)) fprintf(stderr, "client SSL_session_reused\n") );
 
-
     /* 通信 */
     do {
       if(ssl_check_write(ssl, msg, size)){

@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-10 05:55:02 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-12 18:46:42 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -59,6 +59,11 @@ OpenSSL と通常のソケット通信を行うサンプル
 - GDB : [gcc+gdbによるプログラムのデバッグ 第3回 gdbの便利な機能、デバッグの例](https://rat.cis.k.hosei.ac.jp/article/devel/debugongccgdb3.html)
 - LINUX：[10.3　メッセージに含まれるエラー情報](http://itdoc.hitachi.co.jp/manuals/3020/30203N6450/BJEX0275.HTM)
 
+### epoll ( 1ポート複数接続待ち）
+- [epoll - 約束事その他の説明 - Linux コマンド集 一覧表](https://kazmax.zpp.jp/cmd/e/epoll.7.html)
+
+
+
 ## 通信内容
 - [【図解】https(SSL/TLS)の仕組みとシーケンス,パケット構造 〜暗号化の範囲, Encrypted Alert, ヘッダやレイヤについて～](https://milestone-of-se.nesuke.com/nw-basic/tls/https-structure/)
   
@@ -71,7 +76,9 @@ OpenSSL と通常のソケット通信を行うサンプル
 
 
 - 通信内容を ワイヤーシャークでキャプチャした結果  
-![DTLSの通信内容](https://github.com/kkurami-dev/master/blob/Openssl-Examples/image/DTLSの通信内容.png "通信内容")
+- [DTLSの通信内容](https://github.com/kkurami-dev/master/blob/Openssl-Examples/image/DTLSの通信内容.png "通信内容")
+- [Epollについて](http://etc2myday.jugem.jp/?eid=199)
+
 
 # SSL
 SSL/TLS で通信を行い、その時間を計測する
@@ -256,3 +263,7 @@ SSL_CTX_set_options(ctx, flags);
 
 
 
+## TLS での複数接続
+https://www.cs.odu.edu/~cs472/fall03/lectures/ssl_programming.html
+
+## DTLS での複数接続

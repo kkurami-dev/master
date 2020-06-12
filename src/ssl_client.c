@@ -51,6 +51,7 @@ int main( int argc, char* argv[] )
     }
 
     sockfd = get_settings_fd( HOST, SOCK_STREAM, TEST_SENDER, NULL);
+    DEBUG( fprintf(stderr, "socket:%d\n", sockfd) );
  
     LOG(ssl = SSL_new(ctx));
     SSL_set_ciphersuites(ssl, ciphers);
@@ -68,13 +69,10 @@ int main( int argc, char* argv[] )
     do {
       /*  受送信処理 */
       ssl_check_write(ssl, msg, size);
+
       /* 接続をしたまま、再度メッセージを送る */
-      if(count % RE_TRY){
-        endprint(log);
-        size = get_data(i++, " ssl", msg, log );
-      } else {
-        break;
-      }
+      endprint(log);
+      size = get_data(i++, " ssl", msg, log );
     } while(size);
 #else
     /*  送信処理 */

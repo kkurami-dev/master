@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/io.h>            /* for inb,outb */
-
+#include <sys/epoll.h>
+#include <netinet/in.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <openssl/evp.h>
@@ -114,6 +116,10 @@ int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
     int ret;
     for(; ai; ai = ai->ai_next) {
       sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+/* #if (SETSOCKOPT == 1) */
+/*     setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on)); */
+/*     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on)); */
+/* #endif // (SETSOCKOPT == 1) */
       //ret = connect(sockfd, ai->ai_addr, ai->ai_addrlen);
       if( !addr.sin_port ){
         addr.sin_family = ai->ai_family;
@@ -121,10 +127,10 @@ int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
         inet_aton(HOST_IP, &addr.sin_addr);
       }
       ret = connect(sockfd, (struct sockaddr*)&addr, sizeof(addr));
-      if(!ret)
+      fprintf( stderr, "connect sockfd:%d, i:%d, ret:%d, errno:%d\n", sockfd, i++, ret, errno);
+      if(ret == 0)
         break;
-      close(sockfd);
-      fprintf(stderr, "connect re try %d. ret:%d errno:%d\n", i++, ret, errno);
+      close( sockfd );
     }
     if (out_adr) *out_adr = addr;
   }
@@ -263,6 +269,12 @@ int get_data( int count, char *type, char *msg, char *log ){
     if(OPT_START_NO > 0){
       return 0;
     }
+
+    /* 終了専用ファイル */
+    struct stat st;
+    if (!stat("send_end", &st)){
+      return 0;
+    }
     
 #if (KEY_WAIT == 1)
     fprintf(stderr, "eny Enter key >");
@@ -380,13 +392,15 @@ int ssl_check_error(SSL *ssl, int sslret){
     default:
       // エラー処理
       fprintf(stderr, "ssl_check_return %ld (%d) errno:%d\n", ERR_get_error(), ssl_eno, errno );
-      perror("SSL_accept");
+      perror("ssl_check_error");
       exit(EXIT_FAILURE);
     }
 }
 
+static int err_num = 0;
 int ssl_check_read( SSL *ssl, char *buf){
-  int len, ret;
+  int len, ret = 1;
+  char err_buf[ 256];
   LOGS();
   while (1) {
     LOGC();
@@ -397,27 +411,34 @@ int ssl_check_read( SSL *ssl, char *buf){
     switch (ret)
       {
       case SSL_ERROR_NONE:
+        err_num = 0;
+        ret = 0;
         break;
       case SSL_ERROR_WANT_READ:
       case SSL_ERROR_WANT_WRITE:
       case SSL_ERROR_SYSCALL:
-        fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
+        fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d : %s ",
+                len, ret, errno, ERR_error_string(ret, err_buf));
         perror("read");
+        if ( ++err_num > 5 )
+          exit(EXIT_FAILURE);
+        else
+          usleep( 10000 );
         continue;
         //case SSL_ERROR_ZERO_RETURN:
       case SSL_ERROR_SSL:
-        printf("SSL read error: %s (%d)\n", ERR_error_string(ERR_get_error(), buf), ret);
+        printf("SSL_read() error: %s (%d)\n", ERR_error_string(ERR_get_error(), buf), ret);
         break;
       default:
         fprintf(stderr, "SSL_read() ret=%d error:%d errno:%d ", len, ret, errno);
         perror("read");
-        return 1;
+        break;
         // エラー処理
       }
     break;
   }
   LOGE(SSL_read);
-  return 0;
+  return ret;
 }
 int ssl_check_write( SSL *ssl, char *msg, int size){
   int ret, len;
@@ -581,9 +602,11 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 struct thdata {
   int                 sock;
   SSL                 *ssl;
-  int                (*func)( int sock, SSL *ssl );
+  int                (*func)( void* thdata );
   int                 opt_start_no;
   int                 no;
+  SSL_CTX *ctx;
+  struct sockaddr_storage ss;
 
   pthread_t           th;
   sem_t               sync;
@@ -620,7 +643,7 @@ void *thread_function(void *thdata)
       DEBUG0( fprintf(stderr, "thread_function end rcv. \n") );
       break;
     }
-    ret = priv->func( priv->sock, priv->ssl );
+    ret = priv->func( priv );
     priv->sock = 0;
     priv->ssl = NULL;
 
@@ -638,7 +661,7 @@ void *thread_function(void *thdata)
   return (void *) NULL;
 }
 
-struct thdata *sock_thread_create( int (*func)(int sock, SSL *ssl) )
+struct thdata *sock_thread_create( int (*func)(void * thdata) )
 {
   struct thdata       *thdata;
   int i;
@@ -684,7 +707,7 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
     if( !priv->sock && !priv->ssl ){
       priv->sock = sock;
       priv->ssl = ssl;
-      DEBUG0( fprintf(stderr, "sem_post(%d): rcv: %d\n", i, sock) );
+      DEBUG0( fprintf(stderr, "sem_post(%d): ssl:%p rcv:%d\n", i, ssl, sock) );
       sem_post(&priv->start);
       break;
     }
@@ -697,7 +720,7 @@ int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
       if( !priv->sock && !priv->ssl ){
         //priv->sock = 0;
         //priv->ssl = NULL;
-        DEBUG0( fprintf(stderr, "sem_post(%d): end : %d\n", i, sock) );
+        DEBUG0( fprintf(stderr, "sem_post(%d): end\n", i) );
         sem_post(&priv->start);
       }
     }
