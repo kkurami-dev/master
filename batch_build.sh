@@ -30,13 +30,13 @@ done
 declare -a array=(
     "ssl_server"
     "ssl_client"
-    "dtls_server"
-    "dtls_client"
-    "tcp_server"
-    "tcp_client"
-    "udp_server"
-    "udp_client"
-    "tcp_multi_server"
+#    "dtls_server"
+#    "dtls_client"
+#    "tcp_server"
+#    "tcp_client"
+#    "udp_server"
+#    "udp_client"
+#    "tcp_multi_server"
 )
 if [ ! -d bin ]; then
     mkdir bin
@@ -72,7 +72,7 @@ if [ ! -f bin/ca.pem ]; then
 fi
 
 # リンクされているものを表示
-ldd bin/ssl_server
+ldd bin/dtls_server
 
 popd
 exit
