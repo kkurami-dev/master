@@ -198,7 +198,7 @@ static void time_log(int line, char *msg){
           (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv_e.tv_sec, tv_e.tv_usec, line, msg);
 }
 
-int OPT_START_NO  = -1;
+int OPT_START_NO  = 1;
 int OPT_CLIENT_NUM  = 1;
 void set_argument( int argc, char* argv[] ){
   char *word;
@@ -294,7 +294,7 @@ int get_data( int count, char *type, char *msg, char *log ){
   /* 送信文字列の設定 */
   /* https://www.mm2d.net/main/prog/c/time-04.html  */
   gettimeofday(&tv, NULL);
-  sprintf(buf, "%4d,%4s, %6d,"TIME_FMT , no, type, size, (tv.tv_sec % TIME_MAX), tv.tv_usec);
+  sprintf(buf, "%5d,%4s, %6d,"TIME_FMT , no, type, size, (tv.tv_sec % TIME_MAX), tv.tv_usec);
   sprintf(log, "%.31s", buf);
   strncpy(msg, buf, strlen(buf));
   return size;
@@ -310,9 +310,9 @@ int rcvprint( char *msg ){
   int size = 0;
 
   gettimeofday(&tv, NULL);
-  sscanf( msg, "%4d,%s%d,%ld.%06lu", &no, type, &size, &(tv_s.tv_sec), &(tv_s.tv_usec));
+  sscanf( msg, "%5d,%s%d,%ld.%06lu", &no, type, &size, &(tv_s.tv_sec), &(tv_s.tv_usec));
   tv_s = diff_time( &tv_s, &tv );
-  printf(TIME_FMT"% 2ld.%06lu,%.30s\n",
+  printf(TIME_FMT"% 2ld.%06lu,%.31s\n",
          (tv.tv_sec % TIME_MAX), tv.tv_usec, tv_s.tv_sec, tv_s.tv_usec, msg);
   if(strlen(msg) > 20) ++rcv_count;
 
@@ -600,15 +600,16 @@ int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len
 ////////////////////////////////////////////////////////////////////////////////
 /* --------------------------------- DEFS ---------------------------------- */
 struct thdata {
+  int                 opt_start_no;
+  int                 no;
+  pthread_t           th;
+  int                act;
+
   int                 sock;
   SSL                 *ssl;
   int                (*func)( void* thdata );
-  int                 opt_start_no;
-  int                 no;
-  SSL_CTX *ctx;
-  struct sockaddr_storage ss;
 
-  pthread_t           th;
+  int                 end;
   sem_t               sync;
   sem_t               start;
 };
@@ -635,29 +636,30 @@ void *thread_function(void *thdata)
   /* sync */
   sem_post(&priv->sync);
   while(1){
+    DEBUG1( fprintf(stderr, "thread_function(%d) wait: start \n", priv->no ) );
+    /* sync */
     sem_wait(&priv->start);
-    DEBUG0( fprintf(stderr, "thread_function exe: %d\n", priv->no ) );
 
     /* 実行 */
-    if (!priv->sock || !priv->ssl ) {
-      DEBUG0( fprintf(stderr, "thread_function end rcv. \n") );
+    if (!priv->sock || !priv->ssl || priv->end ) {
+      sem_post(&priv->sync);
+      DEBUG1( fprintf(stderr, "thread_function end rcv. \n") );
       break;
     }
+    DEBUG1( fprintf(stderr, "thread_function(%d) exe \n", priv->no) );
     ret = priv->func( priv );
-    priv->sock = 0;
+    priv->sock = -1;
     priv->ssl = NULL;
 
     /* sync */
+    sem_post(&priv->sync);
     if ( ret ) {
-      DEBUG0( fprintf(stderr, "thread_function ret:%d \n", ret) );
       break;
     }
   }
-  /* sync */
-  sem_post(&priv->sync);
 
   /* done */
-  fprintf(stderr, "thread_function end. 0x%lx\n", pthread_self());
+  DEBUG1( fprintf(stderr, "thread_function(%d) end.\n", priv->no) );
   return (void *) NULL;
 }
 
@@ -676,7 +678,8 @@ struct thdata *sock_thread_create( int (*func)(void * thdata) )
   for (i = 0; i < THREAD_MAX; i++) {
     thdata[i].no = i;
     thdata[i].opt_start_no = OPT_START_NO;
-    thdata[i].sock = 0;
+    thdata[i].sock = -1;
+    thdata[i].end = 0;
     thdata[i].ssl = NULL;
     thdata[i].func = func;
     sem_init(&thdata[i].sync, 0, 0);
@@ -699,53 +702,59 @@ struct thdata *sock_thread_create( int (*func)(void * thdata) )
 }
 
 int msg_count = 1;
-int  sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
+int sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
 {
   int i = 0;
   for(i = 0; i < THREAD_MAX; i++){
     struct thdata *priv = thdata + i;
-    if( !priv->sock && !priv->ssl ){
+    if( priv->sock == -1 && !priv->ssl ){
       priv->sock = sock;
       priv->ssl = ssl;
-      DEBUG0( fprintf(stderr, "sem_post(%d): ssl:%p rcv:%d\n", i, ssl, sock) );
+      DEBUG1( fprintf(stderr, "sock_thread_post() sem_post(%d): ssl:%p rcv:%d\n", i, ssl, sock) );
       sem_post(&priv->start);
       break;
     }
   }
-
-  //fprintf(stderr, "count : %d > %d \n", msg_count, OPT_CLIENT_NUM * RE_TRY );
-  if(++msg_count > (OPT_CLIENT_NUM * RE_TRY)){
-    for(i = 0; i < THREAD_MAX; i++){
-      struct thdata *priv = thdata + i;
-      if( !priv->sock && !priv->ssl ){
-        //priv->sock = 0;
-        //priv->ssl = NULL;
-        DEBUG0( fprintf(stderr, "sem_post(%d): end\n", i) );
-        sem_post(&priv->start);
-      }
-    }
-    return 1;
-  } else if( i > THREAD_MAX ){
+  
+  if( i >= THREAD_MAX ){
     fprintf(stderr, "ERROR: thread empty.\n");
     //exit(EXIT_FAILURE);
   }
-
+ 
+  /* DEBUG0(fprintf(stderr, "count : %d > %d \n", msg_count, OPT_CLIENT_NUM * RE_TRY )); */
+  /* if(++msg_count > (OPT_CLIENT_NUM * RE_TRY)){ */
+  /*   for(i = 0; i < THREAD_MAX; i++){ */
+  /*     struct thdata *priv = thdata + i; */
+  /*     if( !priv->sock && !priv->ssl ){ */
+  /*       //priv->sock = 0; */
+  /*       //priv->ssl = NULL; */
+  /*       DEBUG0( fprintf(stderr, "sock_thread_post() sem_post(%d): end\n", i) ); */
+  /*       sem_post(&priv->start); */
+  /*     } */
+  /*   } */
+  /*   return 1; */
+  /* } */
   return 0;
 }
 
-void  sock_thread_join( struct thdata *thdata )
+void sock_thread_join( struct thdata *thdata )
 {
-  DEBUG0( fprintf(stderr, "pthread_join()\n") );
+  DEBUG1( fprintf(stderr, "sock_thread_join()\n") );
   int i = 0;
   for(i = 0; i < THREAD_MAX; i++){
     struct thdata *priv = thdata + i;
 
+    DEBUG1( fprintf(stderr, "sock_thread_join(%d) sem_post start: end\n", i) );
+    priv->end = 1;
+    sem_post(&priv->start);
+    
     /* スレッド終了待ち  */
+    DEBUG1( fprintf(stderr, "pthread_join() i:%d end\n", i) );
     pthread_join(priv->th, NULL);
     sem_destroy(&priv->sync);
     sem_destroy(&priv->start);
   }
 
-  fprintf(stderr, "all end.\n");
+  DEBUG( fprintf(stderr, "all end.\n") );
   free(thdata);
 }

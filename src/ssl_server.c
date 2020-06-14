@@ -13,11 +13,11 @@
 
 #define M_SERVER  1
 
-int connection_handle( void * priv ){
-  SSL * ssl = ((struct thdata*)priv)->ssl;
+int connection_handle( void * th ){
+  struct thdata* priv = (struct thdata*)th;
+  SSL * ssl = priv->ssl;
   char buf[BUFSIZE];
   int ret;
-  int sd;
 
   LOG(SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE));/* 証明書交換時のキー作成機能有効化 */
 
@@ -36,17 +36,22 @@ int connection_handle( void * priv ){
   ssl_check_write( ssl, "ack", 4);
 #endif // (SERVER_REPLY == 1)
 
-  ssl_check_shutdown( ssl );
-
-  LOG(sd = SSL_get_fd(ssl));
+  LOG(ssl_check_shutdown( ssl ));
+  
+  LOG( ret = SSL_get_shutdown( ssl ) );
+  DEBUG0(fprintf(stderr, "SSL_get_shutdown():%d\n", ret));
+  LOG(int sd = SSL_get_fd(ssl));
+  LOG( SSL_clear(ssl) );
   LOG(SSL_free(ssl));
   LOG(close(sd));
 
   ret = rcvprint( buf );
   if ( ret )
     return 0;
-  else
+  else {
+    priv->end = 1;
     return 1;
+  }
 }
 
 /* void sess_cache_init(); */
@@ -93,7 +98,7 @@ int main( int argc, char* argv[] )
 	LOG(SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie));
 
   socklen_t addrlen;
-  struct sockaddr_in client_addr;
+  struct sockaddr_storage client_addr;
   int listener_fd, client_fd;
   LOG(listener_fd = get_settings_fd(NULL, SOCK_STREAM, TEST_RECEIVER, NULL));
 
@@ -115,7 +120,9 @@ int main( int argc, char* argv[] )
   }
   DEBUG(fprintf(stderr, "epoll listener_fd:%d epfd:%d\n", listener_fd, epfd ));
   //////////////////////////////////////// epoll
-  
+
+  int ret;
+  int client_end = 0;
   struct thdata *ths = sock_thread_create( connection_handle );
   for(;;){
     LOG( nfd = epoll_wait(epfd, events, CLIENT_MAX, -1) );
@@ -125,17 +132,38 @@ int main( int argc, char* argv[] )
     }
 
     for(int i = 0; i < nfd; ++i) {
-      DEBUG(fprintf(stderr, "epoll listener_fd:%d epfd:%d\n", listener_fd, epfd ));
-      if(events[i].data.fd != listener_fd) {
+      epoll_data_t *ev_data = &events[i].data;
+      if(ev_data->fd != listener_fd) {
+        ssl = (SSL *)(ev_data->ptr);
         /* スレッドで処理するのでここでは何もしなくて良いかも */
+        DEBUG0(fprintf(stderr, "epoll %d  fd:%d  ev:%#x\n", i, ev_data->fd, events[i].events));
+        if( events[i].events & EPOLLIN ){
+          LOG( ret = SSL_get_shutdown( ssl ) );
+          fprintf(stderr, "epoll %d IN SSL_get_shutdown():%d\n", i, ret);
+          if ( ret ){
+            if (epoll_ctl(epfd, EPOLL_CTL_DEL, ev_data->fd, &events[i]) != 0) PERROR("epoll_ctl");
+            client_end++;
+            break;
+          }
+        } else if( events[i].events & EPOLLOUT ) {
+        } else {
+          if (epoll_ctl(epfd, EPOLL_CTL_DEL, ev_data->fd, &events[i]) != 0) PERROR("epoll_ctl");
+          client_end++;
+          break;
+        }
         continue;
       }
+      DEBUG0(fprintf(stderr, "epoll i:%d listener_fd:%d epfd:%d\n", i, listener_fd, epfd));
 
       /* 接続と通信開始 */
       bzero( &client_addr, sizeof(client_addr) );
       LOG(client_fd = accept(listener_fd, (struct sockaddr *)&client_addr, &addrlen ) );
-      DEBUG(fprintf(stderr, "accept, client_fd:%d, family:0x%08X, port:%d, size:%d\n",
-                    client_fd, client_addr.sin_family, client_addr.sin_port, addrlen));
+      DEBUG(fprintf(stderr, "accept, client_fd:%d, family:0x%08X, size:%d\n",
+                    client_fd, client_addr.ss_family, addrlen));
+      if(client_fd < 0){
+        PERROR("accept");
+        goto errend;
+      }
 
       /* SSLオブジェクトを生成 */
       LOG(ssl = SSL_new(ctx));
@@ -147,11 +175,19 @@ int main( int argc, char* argv[] )
       /* */
       memset(&event, 0, sizeof(event));
       event.events  = EPOLLIN | EPOLLET; /* "man epoll" から拝借 */
+      event.data.ptr = (void *)ssl;
+      event.data.fd = client_fd;
       epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &event);
+    }
+
+    if( client_end < THREAD_NUM){
+    } else {
+      break;
     }
   }
   sock_thread_join( ths );
 
+ errend:
   SSL_CTX_free(ctx);
   close(listener_fd);
   return EXIT_SUCCESS;

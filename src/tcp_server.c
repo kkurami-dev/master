@@ -7,10 +7,12 @@
 
 #include "common_data.h"
 
-int connection_handle( struct thdata * priv ){
+int connection_handle( void * thd ){
+  struct thdata * priv = (struct thdata *)thd;
   int clitSock = priv->sock;
   char recvBuffer[BUFSIZE];//receive temporary buffer
   int recvMsgSize; // recieve and send buffer size
+  int ret;
 
   while(1) {
     while(1){
@@ -35,7 +37,6 @@ int connection_handle( struct thdata * priv ){
     }
 #endif // (SERVER_REPLY == 1)
 
-
 #if (ONE_SEND == 1)
     ret = rcvprint( recvBuffer );
     if( 0 == (ret % RE_TRY)) {
@@ -48,8 +49,8 @@ int connection_handle( struct thdata * priv ){
 
   //LOG(shutdown(clitSock, 1));
   LOG(close(clitSock));
-  int ret = rcvprint( recvBuffer );
-  DEBUG0( fprintf(stderr, "end ret:%d errno:%d\n", ret, errno) );
+  ret = rcvprint( recvBuffer );
+  DEBUG0( fprintf(stderr, "connection_handle() end ret:%d errno:%d\n", ret, errno) );
   if (ret)
     return 0;
   else
@@ -101,9 +102,11 @@ int main(int argc, char* argv[]) {
 
   struct thdata *th = sock_thread_create( connection_handle );
   void *ssl; ssl = (void *)th;
-  while(1) {
+  //while(1) {
+  for(int i = 0; i < THREAD_NUM; i++ ) {
     LOG(clitSock = accept(servSock, NULL, NULL));
-    if( sock_thread_post( th, clitSock, (SSL *)ssl )  ) break;
+    DEBUG0( fprintf(stderr, "main() accept(): sock s:%d c:%d\n" , servSock, clitSock) );
+    if( sock_thread_post( th, clitSock, (SSL *)ssl ) ) break;
   }
   sock_thread_join( th );
 

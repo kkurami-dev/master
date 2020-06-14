@@ -26,13 +26,15 @@
 
 #define DEBUG_ON               2
 
+#define DEBUG1(x)
+
 #if (DEBUG_ON == 2)
-  #define RE_TRY             10000 /* 一つのサイズのメッセージ送信回数 */
+  #define RE_TRY             10 /* 一つのサイズのメッセージ送信回数 */
   #define DEBUG0(x)              x
   #define DEBUG(x)               x
 #elif (DEBUG_ON == 1)
   #define RE_TRY              100 /* 一つのサイズのメッセージ送信回数 */
-  #define DEBUG0(x)              
+  #define DEBUG0(x)
   #define DEBUG(x)               x
 #else // (DEBUG_ON == 1)
   #define RE_TRY             10000 /* 一つのサイズのメッセージ送信回数 */
@@ -47,12 +49,13 @@
 #define KEY_WAIT               0 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 #define SERVER_REPLY           0 /* TPC/TLS の場合にサーバから応答を返すか  */
 #define TIME_WAIT              0 /* メッセージ送信全体の待ち時間  */
-#define NEXT_SEND_WAIT    100000 /* 上記に加えて、送信プロセスの待ち時間 */
+#define NEXT_SEND_WAIT         0 /* 上記に加えて、送信プロセスの待ち時間 */
 #define QUEUELIMIT             8 /* サーバの待ちキューの数（サーバのthreadプール数）  */
 #define SETSOCKOPT             1 /* サーバのソケットを再利用、クローズ待ちしない   */
                                  /* tcp で Connection refused で止まる   */
 #define TEST_SSL_SESSION       1 /* 暗号化のセッションを保存し、再開する */
 #define CLIENT_MAX            10
+#define THREAD_NUM             1
 
 #define SSL_RET(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( (x), __LINE__, #x );time_log(__LINE__, #x);
 #define SSL_RETN(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( !(x), __LINE__, #x );time_log(__LINE__, #x);
@@ -70,12 +73,14 @@
 #define LOGE(x)
 #endif
 
+#define PERROR(x)            if(errno != 0){char tmp[128];sprintf(tmp, "# perror %d err(%d):%s", __LINE__, errno, x);perror(tmp);}
+
 #define TEST_SENDER               0
 #define TEST_RECEIVER             1
 
-#define TP_CONNECT                1
-#define TP_SEND                   2
-#define TP_CLOSE                  3
+#define TP_CONNECT             0x01
+#define TP_SEND                0x02
+#define TP_CLOSE               0x04
 
 struct timeval tv_s;
 int log_count;

@@ -5,9 +5,10 @@
 PROCES=ssl
 CLIENT=1
 DATA_SIZE=1
-_log_base=../log/log_${_size_key}
 
-cd bin
+_log_base=../log/log_400
+
+cd ~/OpenSSL/bin
 export LD_LIBRARY_PATH=/mnt/i/yoshimaru/linux_home/openssl-1.1.1g.BACK
 export PATH=/mnt/i/yoshimaru/linux_home/openssl-1.1.1g.BACK:$PATH
 #ldd ./${PROCES}_server
