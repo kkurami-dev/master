@@ -49,13 +49,12 @@
 #define KEY_WAIT               0 /* 1つのデータサイズのデータを送信完了するとキー入力待ちになる    */
 #define SERVER_REPLY           0 /* TPC/TLS の場合にサーバから応答を返すか  */
 #define TIME_WAIT              0 /* メッセージ送信全体の待ち時間  */
-#define NEXT_SEND_WAIT         0 /* 上記に加えて、送信プロセスの待ち時間 */
+#define NEXT_SEND_WAIT   1000000 /* 上記に加えて、送信プロセスの待ち時間 */
 #define QUEUELIMIT             8 /* サーバの待ちキューの数（サーバのthreadプール数）  */
 #define SETSOCKOPT             1 /* サーバのソケットを再利用、クローズ待ちしない   */
                                  /* tcp で Connection refused で止まる   */
 #define TEST_SSL_SESSION       1 /* 暗号化のセッションを保存し、再開する */
-#define CLIENT_MAX            10
-#define THREAD_NUM             1
+#define CLIENT_NUM_MAX         3
 
 #define SSL_RET(x)		gettimeofday(&tv_s, NULL);errno=0;ssl_ret_check( (x), __LINE__, #x );time_log(__LINE__, #x);PERROR(#x);
 #define SSL_RETN(x)		gettimeofday(&tv_s, NULL);errno=0;ssl_ret_check( !(x), __LINE__, #x );time_log(__LINE__, #x);PERROR(#x);
@@ -73,7 +72,7 @@
 #define LOGE(x)
 #endif
 
-#define PERROR(x)            if(errno != 0){char tmp[128];sprintf(tmp, "■ perror %d err(%d):%s", __LINE__, errno, x);perror(tmp);}
+#define PERROR(x)    if(errno != 0){char tmp[128];sprintf(tmp, "■ %s(%d) perror no:%d %s", __func__, __LINE__, errno, x);perror(tmp);}
 
 #define TEST_SENDER               0
 #define TEST_RECEIVER             1

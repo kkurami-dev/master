@@ -105,6 +105,7 @@ int main( int argc, char* argv[] )
   }
   LOG(SSL_CTX_free(ctx));
   ERR_free_strings();
+  sleep(1);
   return EXIT_SUCCESS;
 }
 

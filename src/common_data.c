@@ -75,6 +75,8 @@ int rcv_count = 0;
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized = 0;
 
+static void time_log(int line, char *msg);
+
 int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
   static struct addrinfo s_res = {0};
   static struct sockaddr_in addr = {0};
@@ -97,40 +99,40 @@ int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
   if ( s_res.ai_addr ){
     ai = &s_res;
   } else {
-    getaddrinfo(host, TLS_PORT_W, &hints, &res);
+    LOG( getaddrinfo(host, TLS_PORT_W, &hints, &res) );
+    PERROR("getaddrinfo");
     ai = res;
     s_res = *res;
   }
 
   if ( cs == TEST_RECEIVER ){
-    sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    LOG( sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol) );
 #if (SETSOCKOPT == 1)
-    setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
+    //LOG( setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on)) );
+    LOG( setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on)) );
 #endif // (SETSOCKOPT == 1)
-    bind(sockfd, ai->ai_addr, ai->ai_addrlen);
-    listen(sockfd, QUEUELIMIT);
+    LOG( bind(sockfd, ai->ai_addr, ai->ai_addrlen) );
+    LOG( listen(sockfd, QUEUELIMIT) );
 
   } else {
     int i = 0;
     int ret;
     for(; ai; ai = ai->ai_next) {
-      sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-/* #if (SETSOCKOPT == 1) */
-/*     setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on)); */
-/*     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on)); */
-/* #endif // (SETSOCKOPT == 1) */
+      LOG( sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol) );
+#if (SETSOCKOPT == 1)
+      LOG( setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on)) );
+#endif // (SETSOCKOPT == 1)
       //ret = connect(sockfd, ai->ai_addr, ai->ai_addrlen);
       if( !addr.sin_port ){
         addr.sin_family = ai->ai_family;
         addr.sin_port = htons(TLS_PORT);
         inet_aton(HOST_IP, &addr.sin_addr);
       }
-      ret = connect(sockfd, (struct sockaddr*)&addr, sizeof(addr));
+      LOG( ret = connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) );
       fprintf( stderr, "connect sockfd:%d, i:%d, ret:%d, errno:%d\n", sockfd, i++, ret, errno);
       if(ret == 0)
         break;
-      close( sockfd );
+      LOG( close( sockfd ) );
     }
     if (out_adr) *out_adr = addr;
   }
@@ -139,6 +141,34 @@ int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
   return sockfd;
 }
 /*
+<https://www.danga.com/memcached/dist/epoll.h>
+enum EPOLL_EVENTS
+  {
+    EPOLLIN = 0x001,
+#define EPOLLIN EPOLLIN
+    EPOLLPRI = 0x002,
+#define EPOLLPRI EPOLLPRI
+    EPOLLOUT = 0x004,
+#define EPOLLOUT EPOLLOUT
+    EPOLLRDNORM = 0x040,
+#define EPOLLRDNORM EPOLLRDNORM
+    EPOLLRDBAND = 0x080,
+#define EPOLLRDBAND EPOLLRDBAND
+    EPOLLWRNORM = 0x100,
+#define EPOLLWRNORM EPOLLWRNORM
+    EPOLLWRBAND = 0x200,
+#define EPOLLWRBAND EPOLLWRBAND
+    EPOLLMSG = 0x400,
+#define EPOLLMSG EPOLLMSG
+    EPOLLERR = 0x008,
+#define EPOLLERR EPOLLERR
+    EPOLLHUP = 0x010,
+#define EPOLLHUP EPOLLHUP
+    EPOLLET = (1 << 31)
+#define EPOLLET EPOLLET
+  };
+
+
 struct addrinfo {
     int              ai_flags;
     int              ai_family;

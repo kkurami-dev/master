@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-12 18:46:42 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-14 09:40:49 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -78,7 +78,10 @@ OpenSSL と通常のソケット通信を行うサンプル
 - 通信内容を ワイヤーシャークでキャプチャした結果  
 - [DTLSの通信内容](https://github.com/kkurami-dev/master/blob/Openssl-Examples/image/DTLSの通信内容.png "通信内容")
 - [Epollについて](http://etc2myday.jugem.jp/?eid=199)
+- [拙著「Linuxネットワークプログラミング」の紹介](https://www.geekpage.jp/programming/linux-network/book/)
+  epoll など最も詳しそう(サンプル有り)
 
+- [errnoの値の定義を探す](https://qiita.com/h2suzuki/items/0cc924cdd9d5c6d47448)
 
 # SSL
 SSL/TLS で通信を行い、その時間を計測する

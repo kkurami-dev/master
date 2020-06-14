@@ -106,8 +106,8 @@ int main( int argc, char* argv[] )
   /* ソケットをepollに追加 */
   int epfd, nfd;
   struct epoll_event event;
-  struct epoll_event events[ CLIENT_MAX ];
-  if((epfd = epoll_create( CLIENT_MAX )) < 0) {
+  struct epoll_event events[ CLIENT_NUM_MAX ];
+  if((epfd = epoll_create( CLIENT_NUM_MAX )) < 0) {
     fprintf(stderr, "epoll_create()\\n");
     exit(1);
   }
@@ -125,7 +125,7 @@ int main( int argc, char* argv[] )
   int client_end = 0;
   struct thdata *ths = sock_thread_create( connection_handle );
   for(;;){
-    LOG( nfd = epoll_wait(epfd, events, CLIENT_MAX, -1) );
+    LOG( nfd = epoll_wait(epfd, events, CLIENT_NUM_MAX, -1) );
     if(nfd < 0) {
         fprintf(stderr, "epoll_wait()\\n");
         exit(1);
@@ -180,7 +180,7 @@ int main( int argc, char* argv[] )
       epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &event);
     }
 
-    if( client_end < THREAD_NUM){
+    if( client_end < CLIENT_NUM_MAX){
     } else {
       break;
     }

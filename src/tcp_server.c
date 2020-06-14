@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
   }
 
   if ((servSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ){
-    perror("socket() failed.");
+    PERROR("socket");
     exit(EXIT_FAILURE);
   }
 
@@ -86,12 +86,12 @@ int main(int argc, char* argv[]) {
   servSockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servSockAddr.sin_port        = htons(servPort);
 #if (SETSOCKOPT == 1)
-  setsockopt(servSock, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on));
-  setsockopt(servSock, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on));
-  setsockopt(servSock, SOL_SOCKET, SO_REUSEPORT, (const void*) &on, (socklen_t) sizeof(on));
+  LOG( setsockopt(servSock, SOL_SOCKET, SO_LINGER, (const void*) &on, (socklen_t) sizeof(on)) );
+  LOG( setsockopt(servSock, SOL_SOCKET, SO_REUSEADDR, (const void*) &on, (socklen_t) sizeof(on)) );
+  LOG( setsockopt(servSock, SOL_SOCKET, SO_REUSEPORT, (const void*) &on, (socklen_t) sizeof(on)) );
 #endif
   if (bind(servSock, (struct sockaddr *) &servSockAddr, sizeof(servSockAddr) ) < 0 ) {
-    perror("bind() failed.");
+    PERROR("bind");
     exit(EXIT_FAILURE);
   }
   LOG(listen(servSock, QUEUELIMIT));
@@ -103,13 +103,13 @@ int main(int argc, char* argv[]) {
   struct thdata *th = sock_thread_create( connection_handle );
   void *ssl; ssl = (void *)th;
   //while(1) {
-  for(int i = 0; i < THREAD_NUM; i++ ) {
+  for(int i = 0; i < CLIENT_NUM_MAX; i++ ) {
     LOG(clitSock = accept(servSock, NULL, NULL));
     DEBUG0( fprintf(stderr, "main() accept(): sock s:%d c:%d\n" , servSock, clitSock) );
     if( sock_thread_post( th, clitSock, (SSL *)ssl ) ) break;
   }
   sock_thread_join( th );
 
-  close(servSock);
+  LOG( close(servSock) );
   return EXIT_SUCCESS;
 }
