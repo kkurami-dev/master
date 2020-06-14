@@ -57,15 +57,15 @@
 #define CLIENT_MAX            10
 #define THREAD_NUM             1
 
-#define SSL_RET(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( (x), __LINE__, #x );time_log(__LINE__, #x);
-#define SSL_RETN(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( !(x), __LINE__, #x );time_log(__LINE__, #x);
-#define SSL_RET1(x)		gettimeofday(&tv_s, NULL);ssl_ret_check( (1 != x), __LINE__, #x );time_log(__LINE__, #x);
+#define SSL_RET(x)		gettimeofday(&tv_s, NULL);errno=0;ssl_ret_check( (x), __LINE__, #x );time_log(__LINE__, #x);PERROR(#x);
+#define SSL_RETN(x)		gettimeofday(&tv_s, NULL);errno=0;ssl_ret_check( !(x), __LINE__, #x );time_log(__LINE__, #x);PERROR(#x);
+#define SSL_RET1(x)		gettimeofday(&tv_s, NULL);errno=0;;ssl_ret_check( (1 != x), __LINE__, #x );time_log(__LINE__, #x);PERROR(#x);
 
 #if (LOG_PRINT == 1)
-#define LOG(x)        {gettimeofday(&tv_s, NULL);};x;time_log(__LINE__, #x);
+#define LOG(x)        {gettimeofday(&tv_s, NULL);}; errno=0; x; PERROR(#x); time_log(__LINE__, #x);
 #define LOGS()        {gettimeofday(&tv_s, NULL);log_count = 0;}
 #define LOGC()        log_count++;
-#define LOGE(x)       sprintf(log_msg, "%s(%d)", #x, log_count );time_log(__LINE__, log_msg);
+#define LOGE(x)       sprintf(log_msg, "%s(%d)", #x, log_count );time_log(__LINE__, log_msg);PERROR(#x);
 #else
 #define LOG(x)        x
 #define LOGS()
@@ -73,7 +73,7 @@
 #define LOGE(x)
 #endif
 
-#define PERROR(x)            if(errno != 0){char tmp[128];sprintf(tmp, "# perror %d err(%d):%s", __LINE__, errno, x);perror(tmp);}
+#define PERROR(x)            if(errno != 0){char tmp[128];sprintf(tmp, "■ perror %d err(%d):%s", __LINE__, errno, x);perror(tmp);}
 
 #define TEST_SENDER               0
 #define TEST_RECEIVER             1
