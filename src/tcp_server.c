@@ -103,10 +103,10 @@ int main(int argc, char* argv[]) {
   struct thdata *th = sock_thread_create( connection_handle );
   void *ssl; ssl = (void *)th;
   //while(1) {
-  for(int i = 0; i < CLIENT_NUM_MAX; i++ ) {
+  for(int i = 0; i < OPT_CLIENT_NUM; i++ ) {
     LOG(clitSock = accept(servSock, NULL, NULL));
     DEBUG0( fprintf(stderr, "main() accept(): sock s:%d c:%d\n" , servSock, clitSock) );
-    if( sock_thread_post( th, clitSock, (SSL *)ssl ) ) break;
+    if( sock_thread_post( th, clitSock, (SSL *)ssl, 0 ) ) break;
   }
   sock_thread_join( th );
 

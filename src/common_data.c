@@ -69,6 +69,59 @@ const int senddata_size[ DATA_NUM + 1] =
   };
 #endif // (TEST == 1)
 
+const char * tls_log_w[] = {
+    "TLS_ST_BEFORE",
+    "TLS_ST_OK",
+    "DTLS_ST_CR_HELLO_VERIFY_REQUEST",
+    "TLS_ST_CR_SRVR_HELLO",
+    "TLS_ST_CR_CERT",
+    "TLS_ST_CR_CERT_STATUS",
+    "TLS_ST_CR_KEY_EXCH",
+    "TLS_ST_CR_CERT_REQ",
+    "TLS_ST_CR_SRVR_DONE",
+    "TLS_ST_CR_SESSION_TICKET",
+    "TLS_ST_CR_CHANGE",
+    "TLS_ST_CR_FINISHED",
+    "TLS_ST_CW_CLNT_HELLO",
+    "TLS_ST_CW_CERT",
+    "TLS_ST_CW_KEY_EXCH",
+    "TLS_ST_CW_CERT_VRFY",
+    "TLS_ST_CW_CHANGE",
+    "TLS_ST_CW_NEXT_PROTO",
+    "TLS_ST_CW_FINISHED",
+    "TLS_ST_SW_HELLO_REQ",
+    "TLS_ST_SR_CLNT_HELLO",
+    "DTLS_ST_SW_HELLO_VERIFY_REQUEST",
+    "TLS_ST_SW_SRVR_HELLO",
+    "TLS_ST_SW_CERT",
+    "TLS_ST_SW_KEY_EXCH",
+    "TLS_ST_SW_CERT_REQ",
+    "TLS_ST_SW_SRVR_DONE",
+    "TLS_ST_SR_CERT",
+    "TLS_ST_SR_KEY_EXCH",
+    "TLS_ST_SR_CERT_VRFY",
+    "TLS_ST_SR_NEXT_PROTO",
+    "TLS_ST_SR_CHANGE",
+    "TLS_ST_SR_FINISHED",
+    "TLS_ST_SW_SESSION_TICKET",
+    "TLS_ST_SW_CERT_STATUS",
+    "TLS_ST_SW_CHANGE",
+    "TLS_ST_SW_FINISHED",
+    "TLS_ST_SW_ENCRYPTED_EXTENSIONS",
+    "TLS_ST_CR_ENCRYPTED_EXTENSIONS",
+    "TLS_ST_CR_CERT_VRFY",
+    "TLS_ST_SW_CERT_VRFY",
+    "TLS_ST_CR_HELLO_REQ",
+    "TLS_ST_SW_KEY_UPDATE",
+    "TLS_ST_CW_KEY_UPDATE",
+    "TLS_ST_SR_KEY_UPDATE",
+    "TLS_ST_CR_KEY_UPDATE",
+    "TLS_ST_EARLY_DATA",
+    "TLS_ST_PENDING_EARLY_DATA_END",
+    "TLS_ST_CW_END_OF_EARLY_DATA",
+    "TLS_ST_SR_END_OF_EARLY_DATA"
+};
+
 int snd_count = 0;
 int rcv_count = 0;
 
@@ -100,7 +153,6 @@ int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
     ai = &s_res;
   } else {
     LOG( getaddrinfo(host, TLS_PORT_W, &hints, &res) );
-    PERROR("getaddrinfo");
     ai = res;
     s_res = *res;
   }
@@ -137,7 +189,9 @@ int get_settings_fd(char *host, int type, int cs, struct sockaddr_in* out_adr){
     if (out_adr) *out_adr = addr;
   }
 
-  if(res) freeaddrinfo(res);
+  if(res) {
+    LOG(freeaddrinfo(res));
+  }
   return sockfd;
 }
 /*
@@ -266,7 +320,7 @@ void set_argument( int argc, char* argv[] ){
  * 送信メッセージ作成と送信開始時間の記録
  */
 struct timeval tv_all;
-int get_data( int count, char *type, char *msg, char *log ){
+int get_data( const int count, const char *type, char *msg, char *log ){
   struct timeval tv;
 
   /* 送信ダー他の決定  */
@@ -274,6 +328,8 @@ int get_data( int count, char *type, char *msg, char *log ){
   int idx = (int)( count / RE_TRY );
   int size = senddata_size[idx];
   char buf[ 256 ];
+
+  DEBUG(fprintf(stderr, "get_data: %d, %s\n", count, type));
 
   if (OPT_START_NO > 0){
     idx = OPT_START_NO - 1;
@@ -291,8 +347,8 @@ int get_data( int count, char *type, char *msg, char *log ){
               type, senddata_size[idx], snd_count, tv.tv_sec, tv.tv_usec);
       return 0;
     } else {
-      fprintf(stderr, "end, %s, %d snd:%d, % 2ld.%06lu\n",
-              type, senddata_size[idx], snd_count, tv.tv_sec, tv.tv_usec);
+      fprintf(stderr, "end, %s, %d, c:%d, snd:%d, % 2ld.%06lu\n",
+              type, senddata_size[idx], count, snd_count, tv.tv_sec, tv.tv_usec);
     }
 
     /* 開始位置の指定が有る場合はいつも1回で終了 */
@@ -508,11 +564,11 @@ void ssl_check_shutdown( SSL *ssl ){
   int ret, len;
 
   LOGS();
-  while (1){
+  for( int i = 0; i < 10; i++ ){
     LOGC();
     /* SSL通信の終了 */
-    len  = SSL_shutdown(ssl);
-    ret = SSL_get_error(ssl, len);
+    LOG(len  = SSL_shutdown(ssl));
+    LOG(ret = SSL_get_error(ssl, len));
     switch (ret)
       {
       case SSL_ERROR_NONE:
@@ -520,7 +576,7 @@ void ssl_check_shutdown( SSL *ssl ){
       case SSL_ERROR_WANT_READ:
       case SSL_ERROR_WANT_WRITE:
       case SSL_ERROR_SYSCALL:
-        //fprintf(stderr, "SSL_shutdown() re try (len:%d ret:%d errno:%d\n", len, ret, errno);
+        DEBUG1( fprintf(stderr, "SSL_shutdown() re try len:%d ret:%d errno:%d\n", len, ret, errno) );
         continue;
       default:
         fprintf(stderr, "SSL_shutdown() ret:%d error:%d errno:%d ", len, ret, errno);
@@ -663,33 +719,35 @@ void *thread_function(void *thdata)
   
   OPT_START_NO = priv->opt_start_no;
 
-  /* sync */
-  sem_post(&priv->sync);
   while(1){
-    DEBUG1( fprintf(stderr, "thread_function(%d) wait: start \n", priv->no ) );
-    /* sync */
-    sem_wait(&priv->start);
-
-    /* 実行 */
-    if (!priv->sock || !priv->ssl || priv->end ) {
-      sem_post(&priv->sync);
-      DEBUG1( fprintf(stderr, "thread_function end rcv. \n") );
-      break;
-    }
-    DEBUG1( fprintf(stderr, "thread_function(%d) exe \n", priv->no) );
-    ret = priv->func( priv );
-    priv->sock = -1;
-    priv->ssl = NULL;
-
+    DEBUG2( fprintf(stderr, "thread_function(%d) wait: start \n", priv->no ) );
     /* sync */
     sem_post(&priv->sync);
+    sem_wait(&priv->start);
+
+    /* 終了済確認 */
+    if (!priv->sock || !priv->ssl || priv->end ) {
+      priv->end = 0;
+      sem_post(&priv->sync);
+      DEBUG2( fprintf(stderr, "thread_function(%d) end rcv. \n", priv->no) );
+      break;
+    }
+
+    /* 実行 */
+    DEBUG( fprintf(stderr, "thread_function(%d) exe \n", priv->no) );
+    ret = priv->func( priv );
+    priv->sock = -1;
+    //priv->ssl = NULL;
+
     if ( ret ) {
+      /* sync */
+      sem_post(&priv->sync);
       break;
     }
   }
 
   /* done */
-  DEBUG1( fprintf(stderr, "thread_function(%d) end.\n", priv->no) );
+  DEBUG2( fprintf(stderr, "thread_function(%d) end.\n", priv->no) );
   return (void *) NULL;
 }
 
@@ -731,39 +789,51 @@ struct thdata *sock_thread_create( int (*func)(void * thdata) )
   return thdata;
 }
 
-int msg_count = 1;
-int sock_thread_post( struct thdata *thdata, int sock, SSL *ssl )
+int sock_thread_post( struct thdata *thdata, const int sock, SSL *ssl, int act )
 {
-  int i = 0;
-  for(i = 0; i < THREAD_MAX; i++){
-    struct thdata *priv = thdata + i;
-    if( priv->sock == -1 && !priv->ssl ){
-      priv->sock = sock;
-      priv->ssl = ssl;
-      DEBUG1( fprintf(stderr, "sock_thread_post() sem_post(%d): ssl:%p rcv:%d\n", i, ssl, sock) );
-      sem_post(&priv->start);
-      break;
+  int check_remit = 0;
+  if( act == 0 ) act = ( TP_CONNECT | TP_MSG | TP_CLOSE );
+
+  for( check_remit = 0; check_remit < 10; check_remit++ ){
+    DEBUG2( fprintf(stderr, "sock_thread_post() 1 sem_wait(%d): ssl:%p sock:%d\n", check_remit, ssl, sock) );
+    struct thdata *priv_null = NULL;
+    int i = 0;
+
+    for(i = 0; i < THREAD_MAX; i++){
+      struct thdata *priv = thdata + i;
+      if( priv->sock == -1 && priv_null == NULL){
+        priv_null = priv;
+      }
+      if( priv->ssl == ssl ){
+        DEBUG2( fprintf(stderr, "sock_thread_post() 2 sem_wait(%d):sync ssl:%p sock:%d\n", i, ssl, sock) );
+        sem_wait(&priv->sync);
+        priv->sock = sock;
+        priv->act = act;
+        DEBUG1( fprintf(stderr, "sock_thread_post() 3 sem_post(%d):start ssl:%p sock:%d\n", i, ssl, sock) );
+        sem_post(&priv->start);
+        return 0;
+      }
+    }
+
+    if(priv_null){
+      priv_null->ssl = ssl;
+      priv_null->sock = sock;
+      priv_null->act = act;
+      DEBUG1( fprintf(stderr, "sock_thread_post() 4 sem_post():start ssl:%p sock:%d\n", ssl, sock) );
+      sem_post(&priv_null->start);
+      if(act == TP_CONNECT){
+        sem_wait(&priv_null->sync);
+        sem_post(&priv_null->sync);
+      }
+      return 0;
+    }
+  
+    if( i >= THREAD_MAX ){
+      fprintf(stderr, "ERROR: thread empty.(re %d)\n", check_remit);
+      usleep( 2000 );
     }
   }
-  
-  if( i >= THREAD_MAX ){
-    fprintf(stderr, "ERROR: thread empty.\n");
-    //exit(EXIT_FAILURE);
-  }
- 
-  /* DEBUG0(fprintf(stderr, "count : %d > %d \n", msg_count, OPT_CLIENT_NUM * RE_TRY )); */
-  /* if(++msg_count > (OPT_CLIENT_NUM * RE_TRY)){ */
-  /*   for(i = 0; i < THREAD_MAX; i++){ */
-  /*     struct thdata *priv = thdata + i; */
-  /*     if( !priv->sock && !priv->ssl ){ */
-  /*       //priv->sock = 0; */
-  /*       //priv->ssl = NULL; */
-  /*       DEBUG0( fprintf(stderr, "sock_thread_post() sem_post(%d): end\n", i) ); */
-  /*       sem_post(&priv->start); */
-  /*     } */
-  /*   } */
-  /*   return 1; */
-  /* } */
+  exit(EXIT_FAILURE);
   return 0;
 }
 

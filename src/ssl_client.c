@@ -40,11 +40,11 @@ int main( int argc, char* argv[] )
   LOG(SSL_CTX_set_verify_depth (ctx, 2));// 証明書チェーンの深さ
   LOG(SSL_CTX_set_read_ahead(ctx, 1));
 
-  int i = 0;
+  int data_c = 0;
   int size;
   int ret;
   while(1){
-    size = get_data(i++, " ssl", msg, log );
+    size = get_data(data_c++, " ssl", msg, log );
     if ( 0 == size ){
       fprintf(stderr, "end\n\n");
       break;
@@ -54,7 +54,7 @@ int main( int argc, char* argv[] )
     DEBUG( fprintf(stderr, "socket:%d\n", sockfd) );
  
     LOG(ssl = SSL_new(ctx));
-    SSL_set_ciphersuites(ssl, ciphers);
+    LOG(SSL_set_ciphersuites(ssl, ciphers));
     if(ssl_session) {
       LOG(SSL_set_session(ssl, ssl_session));
     }
@@ -72,7 +72,7 @@ int main( int argc, char* argv[] )
 
       /* 接続をしたまま、再度メッセージを送る */
       endprint(log);
-      size = get_data(i++, " ssl", msg, log );
+      size = get_data(data_c++, " ssl", msg, log );
     } while(size);
 #else
     /*  送信処理 */
@@ -85,9 +85,11 @@ int main( int argc, char* argv[] )
 #if (TEST_SSL_SESSION == 1)
     LOGS();
     do {
-      if(!ssl_session) ssl_session = SSL_get1_session(ssl); /* セッションの取得 */
+      if(!ssl_session) {/* セッションの取得 */
+        LOG( ssl_session = SSL_get1_session(ssl) );
+      }
       if (SSL_SESSION_is_resumable(ssl_session)) break;     /* 使えるセッションか確認 */
-      SSL_SESSION_free(ssl_session);                        /* 使えないセッションを開放 */
+      LOG( SSL_SESSION_free(ssl_session) );                 /* 使えないセッションを開放 */
       ssl_session = NULL;                                   /* 次のセッション取得のために初期化 */
       LOGC();
     } while(1);
@@ -104,7 +106,7 @@ int main( int argc, char* argv[] )
     LOG(SSL_SESSION_free(ssl_session));
   }
   LOG(SSL_CTX_free(ctx));
-  ERR_free_strings();
+  LOG(ERR_free_strings());
   sleep(1);
   return EXIT_SUCCESS;
 }

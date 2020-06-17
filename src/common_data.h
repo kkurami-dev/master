@@ -26,7 +26,10 @@
 
 #define DEBUG_ON               2
 
-#define DEBUG1(x)
+//#define DEBUG2(x)                x
+#define DEBUG2(x)
+#define DEBUG1(x)                x
+//#define DEBUG1(x)
 
 #if (DEBUG_ON == 2)
   #define RE_TRY             10 /* 一つのサイズのメッセージ送信回数 */
@@ -53,8 +56,7 @@
 #define QUEUELIMIT             8 /* サーバの待ちキューの数（サーバのthreadプール数）  */
 #define SETSOCKOPT             1 /* サーバのソケットを再利用、クローズ待ちしない   */
                                  /* tcp で Connection refused で止まる   */
-#define TEST_SSL_SESSION       1 /* 暗号化のセッションを保存し、再開する */
-#define CLIENT_NUM_MAX         3
+#define TEST_SSL_SESSION       0 /* 暗号化のセッションを保存し、再開する */
 
 #define SSL_RET(x)		gettimeofday(&tv_s, NULL);errno=0;ssl_ret_check( (x), __LINE__, #x );time_log(__LINE__, #x);PERROR(#x);
 #define SSL_RETN(x)		gettimeofday(&tv_s, NULL);errno=0;ssl_ret_check( !(x), __LINE__, #x );time_log(__LINE__, #x);PERROR(#x);
@@ -78,7 +80,7 @@
 #define TEST_RECEIVER             1
 
 #define TP_CONNECT             0x01
-#define TP_SEND                0x02
+#define TP_MSG                 0x02
 #define TP_CLOSE               0x04
 
 struct timeval tv_s;

@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-14 09:40:49 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-16 06:55:49 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -58,6 +58,7 @@ OpenSSL と通常のソケット通信を行うサンプル
 - TCP/UDP : [C言語-ソケットプログラミング](http://capm-network.com/?tag=C言語-ソケットプログラミング)
 - GDB : [gcc+gdbによるプログラムのデバッグ 第3回 gdbの便利な機能、デバッグの例](https://rat.cis.k.hosei.ac.jp/article/devel/debugongccgdb3.html)
 - LINUX：[10.3　メッセージに含まれるエラー情報](http://itdoc.hitachi.co.jp/manuals/3020/30203N6450/BJEX0275.HTM)
+- [Linux におけるソケット数 (TCP のコネクション数) の上限](https://www.yunabe.jp/docs/maximum_number_of_sockets.html)
 
 ### epoll ( 1ポート複数接続待ち）
 - [epoll - 約束事その他の説明 - Linux コマンド集 一覧表](https://kazmax.zpp.jp/cmd/e/epoll.7.html)
@@ -129,6 +130,20 @@ udp_client.c
 ```
 - SOCK_DGRAM
 - sendto() -> recvfrom()
+
+# socket
+## ソケットの数
+```
+$ cat /proc/sys/fs/file-max
+$ ulimit -n
+```
+
+## select
+
+
+## epoll
+
+
 
 # その他他のファイル
 - common_data.c : 共通処理ファイル
@@ -265,8 +280,11 @@ SSL_CTX_set_options(ctx, flags);
 1. tls_setup_handshake()
 
 
-
 ## TLS での複数接続
 https://www.cs.odu.edu/~cs472/fall03/lectures/ssl_programming.html
 
 ## DTLS での複数接続
+
+
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_tw_recycle = 1
