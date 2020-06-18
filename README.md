@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-05-13 06:59:22 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-18 20:48:53 kuramitu"
 --------------------------------------------------------------------------------
 
 # Hyperledger Fabric
@@ -55,6 +55,27 @@
 
 --------------------------------------------------------------------------------
 # AWS
+  ## CloudWatch
+  - [EC2 Linux インスタンスから CloudWatch にカスタムメトリクスをプッシュするにはどうすればよいですか ?](https://aws.amazon.com/jp/premiumsupport/knowledge-center/cloudwatch-custom-metrics/)
+  
+  - [Linux での AWS CLI バージョン 2 のインストール](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html)
+```
+$ aws --version
+$ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+$ unzip awscliv2.zip
+$ sudo ./aws/install
+$ aws --version
+```
+  - [AWS CLI の設定](https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/cli-chap-configure.html)
+   1. AWS CLI のかんたん設定
+```
+$ aws configure
+   AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+   AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+   Default region name [None]: us-west-2
+   Default output format [None]: json
+```
+
   ## AWS を CloudMapper で視覚か
     VPC とサブネット(https://docs.aws.amazon.com/ja_jp/vpc/latest/userguide/VPC_Subnets.html)
     これだけ押さえておけば大丈夫！Webサービス向けVPCネットワークの設計指針
