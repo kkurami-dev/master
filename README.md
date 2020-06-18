@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-16 06:55:49 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-18 17:42:41 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -142,7 +142,37 @@ $ ulimit -n
 
 
 ## epoll
-
+``` https://sites.uclouvain.be/SystInfo/usr/include/sys/epoll.h.html
+enum EPOLL_EVENTS
+  {
+    EPOLLIN = 0x001,
+#define EPOLLIN EPOLLIN
+    EPOLLPRI = 0x002,
+#define EPOLLPRI EPOLLPRI
+    EPOLLOUT = 0x004,
+#define EPOLLOUT EPOLLOUT
+    EPOLLRDNORM = 0x040,
+#define EPOLLRDNORM EPOLLRDNORM
+    EPOLLRDBAND = 0x080,
+#define EPOLLRDBAND EPOLLRDBAND
+    EPOLLWRNORM = 0x100,
+#define EPOLLWRNORM EPOLLWRNORM
+    EPOLLWRBAND = 0x200,
+#define EPOLLWRBAND EPOLLWRBAND
+    EPOLLMSG = 0x400,
+#define EPOLLMSG EPOLLMSG
+    EPOLLERR = 0x008,
+#define EPOLLERR EPOLLERR
+    EPOLLHUP = 0x010,
+#define EPOLLHUP EPOLLHUP
+    EPOLLRDHUP = 0x2000,
+#define EPOLLRDHUP EPOLLRDHUP
+    EPOLLONESHOT = (1 << 30),
+#define EPOLLONESHOT EPOLLONESHOT
+    EPOLLET = (1 << 31)
+#define EPOLLET EPOLLET
+  };
+```
 
 
 # その他他のファイル
