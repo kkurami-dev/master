@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-18 20:52:41 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-19 07:44:41 kuramitu"
 --------------------------------------------------------------------------------
 
 # Hyperledger Fabric
@@ -61,7 +61,7 @@
     
 
   - [Linux での AWS CLI バージョン 2 のインストール](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html)
-```
+``` shell
 $ aws --version
 $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 $ unzip awscliv2.zip
@@ -70,19 +70,22 @@ $ aws --version
 ```
   - [AWS CLI の設定](https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/cli-chap-configure.html)
    1. AWS CLI のかんたん設定
-```
+``` shell
 $ aws configure
    AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
    AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-   Default region name [None]: us-west-2
+   Default region name [None]: ap-northeast-1
    Default output format [None]: json
 ```
+com.amazonaws.ap-northeast-1.monitoring
+*エンドポイント monitoring のセキュリティグループにインバウンドルール
+で送信元を許可していないと遅れない*
 
   ## AWS を CloudMapper で視覚か
     VPC とサブネット(https://docs.aws.amazon.com/ja_jp/vpc/latest/userguide/VPC_Subnets.html)
     これだけ押さえておけば大丈夫！Webサービス向けVPCネットワークの設計指針
 
-```
+``` shell
     $ sudo apt install -y autoconf automake libtool python3.7-dev python3-tk jq awscli python3.7-distutils
     $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     $ python3.7 get-pip.py --user
