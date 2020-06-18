@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-18 20:48:53 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-18 20:52:41 kuramitu"
 --------------------------------------------------------------------------------
 
 # Hyperledger Fabric
@@ -57,7 +57,9 @@
 # AWS
   ## CloudWatch
   - [EC2 Linux インスタンスから CloudWatch にカスタムメトリクスをプッシュするにはどうすればよいですか ?](https://aws.amazon.com/jp/premiumsupport/knowledge-center/cloudwatch-custom-metrics/)
-  
+  - [カスタムメトリクスを発行する](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/publishingMetrics.html)
+    
+
   - [Linux での AWS CLI バージョン 2 のインストール](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html)
 ```
 $ aws --version
