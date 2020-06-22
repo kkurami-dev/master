@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-22 19:34:37 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-22 20:26:27 kuramitu"
 --------------------------------------------------------------------------------
 
 # Hyperledger Fabric
@@ -52,6 +52,7 @@
 --------------------------------------------------------------------------------
 
 # OpenSSL
+別リポジトリにある 
 
 --------------------------------------------------------------------------------
 # AWS
@@ -83,20 +84,51 @@ com.amazonaws.ap-northeast-1.monitoring
   - エンドポイントとの疎通確認
   `dig monitoring.ap-northeast-1.amazonaws.com`
 
-### CloudWatch エージョント
-  EC2のロールに CloudWatch への書き込み権限を許可
+## CloudWatch エージョント
   - [CloudWatch エージェントで使用する IAM ロールおよびユーザーを作成する](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/create-iam-roles-for-cloudwatch-agent.html)
-  設定ファイル作成
+  EC2のロールに CloudWatch への書き込み権限を許可
+  *CloudWatchAgentServerPolicy* のポリシーを付けるを付ける
+  
   - [CloudWatch エージェント設定ファイルを手動で作成または編集する](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
-  -[設定ファイル](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
-  - CloudWatch エージョントの状態確認
+  設定ファイル作成
+  
+  - [設定ファイル](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+  - CloudWatch エージョントの状態確認__
   `$ amazon-cloudwatch-agent-ctl -m ec2 -a status`
-  - 設定ファイル名
+  - 設定ファイル名  
   `amazon-cloudwatch-agent.json`
-  - 設定ファイルの場所
+  - 設定ファイルの場所  
   `/opt/aws/amazon-cloudwatch-agent/etc/`
-  
-  
+
+## AWS Certificate Manager
+- [AWS Certificate Manager とは](https://docs.aws.amazon.com/ja_jp/acm/latest/userguide/acm-overview.html)
+- [証明書発行コマンドリファレンス](https://docs.aws.amazon.com/cli/latest/reference/acm/request-certificate.html)
+
+コマンド
+```
+#!/bin/bash
+
+# https://docs.aws.amazon.com/cli/latest/reference/acm/request-certificate.html
+
+aws acm request-certificate \
+--domain-name www.example.com \
+--idempotency-token 12563 \
+--options CertificateTransparencyLoggingPreference=DISABLED \
+--certificate-authority-arn arn:aws:acm-pca:region:account:\
+certificate-authority/12345678-1234-1234-1234-123456789012
+
+# 
+# {
+#     "CertificateArn": "arn:aws:acm:region:account:certificate/12345678-1234-1234-1234-123456789012"
+# }
+```
+  - --domain-name : 
+  - --idempotency-token : 
+  - --options : 
+  - --certificate-authority-arn : プライベート認証局（CA）のAmazonリソースネーム（ARN
+  - --tags : 
+
+
 ### StatsD, collectd 収集した内容も記録可能
 
 
