@@ -66,3 +66,5 @@ src/certs
 /log*
 /src_lts
 *.BACK/
+
+/.*

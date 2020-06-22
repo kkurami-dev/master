@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-19 07:44:41 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-22 19:34:37 kuramitu"
 --------------------------------------------------------------------------------
 
 # Hyperledger Fabric
@@ -55,10 +55,9 @@
 
 --------------------------------------------------------------------------------
 # AWS
-  ## CloudWatch
+## CloudWatch
   - [EC2 Linux インスタンスから CloudWatch にカスタムメトリクスをプッシュするにはどうすればよいですか ?](https://aws.amazon.com/jp/premiumsupport/knowledge-center/cloudwatch-custom-metrics/)
   - [カスタムメトリクスを発行する](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/publishingMetrics.html)
-    
 
   - [Linux での AWS CLI バージョン 2 のインストール](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html)
 ``` shell
@@ -81,7 +80,27 @@ com.amazonaws.ap-northeast-1.monitoring
 *エンドポイント monitoring のセキュリティグループにインバウンドルール
 で送信元を許可していないと遅れない*
 
-  ## AWS を CloudMapper で視覚か
+  - エンドポイントとの疎通確認
+  `dig monitoring.ap-northeast-1.amazonaws.com`
+
+### CloudWatch エージョント
+  EC2のロールに CloudWatch への書き込み権限を許可
+  - [CloudWatch エージェントで使用する IAM ロールおよびユーザーを作成する](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/create-iam-roles-for-cloudwatch-agent.html)
+  設定ファイル作成
+  - [CloudWatch エージェント設定ファイルを手動で作成または編集する](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+  -[設定ファイル](https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+  - CloudWatch エージョントの状態確認
+  `$ amazon-cloudwatch-agent-ctl -m ec2 -a status`
+  - 設定ファイル名
+  `amazon-cloudwatch-agent.json`
+  - 設定ファイルの場所
+  `/opt/aws/amazon-cloudwatch-agent/etc/`
+  
+  
+### StatsD, collectd 収集した内容も記録可能
+
+
+## AWS を CloudMapper で視覚か
     VPC とサブネット(https://docs.aws.amazon.com/ja_jp/vpc/latest/userguide/VPC_Subnets.html)
     これだけ押さえておけば大丈夫！Webサービス向けVPCネットワークの設計指針
 
