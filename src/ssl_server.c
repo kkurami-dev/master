@@ -17,12 +17,6 @@
 
 #define M_SERVER  1
 
-static void setnonblocking(int sock)
-{
-    int flag = fcntl(sock, F_GETFL, 0);
-    fcntl(sock, F_SETFL, flag | O_NONBLOCK);
-}
-
 int connection_handle( void * th ){
   struct thdata* priv = (struct thdata*)th;
   SSL * ssl = priv->ssl;
@@ -117,12 +111,17 @@ int main( int argc, char* argv[] )
   SSL_CTX_set_options(ctx, flags);
   SSL_RET(SSL_CTX_use_certificate_chain_file(ctx, S_CERT)); // 証明書の登録
   SSL_RET(SSL_CTX_use_PrivateKey_file(ctx, S_KEY, SSL_FILETYPE_PEM)); // 秘密鍵の登録
-  SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, NULL));// CA証明書の登録とクライアント証明書の要求
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);// 証明書検証機能の有効化
+  SSL_RET(SSL_CTX_load_verify_locations(ctx, CA_PEM, "."));// CA証明書の登録とクライアント証明書の要求
   SSL_CTX_set_verify_depth(ctx,9); // 証明書チェーンの深さ
 	SSL_CTX_set_read_ahead(ctx, 1);
 	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie);
 	LOG(SSL_CTX_set_cookie_verify_cb(ctx, &verify_cookie));
+  SSL_CTX_set_verify(ctx,
+                     (SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE),
+                     verify_callback);// 証明書検証機能の有効化
+  
+  //SSL_CTX_set_cert_verify_callback(ctx, NULL, NULL);
+  //   s->ctx->app_verify_callback
 
   socklen_t addrlen;
   struct sockaddr_storage client_addr;

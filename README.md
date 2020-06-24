@@ -1,4 +1,4 @@
--*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-18 17:42:41 kuramitu"
+-*- mode: markdown  coding: utf-8-unix; -*- Time-stamp: "2020-06-24 20:24:13 kuramitu"
 --------------------------------------------------------------------------------
 OpenSSL と通常のソケット通信を行うサンプル
 
@@ -59,6 +59,13 @@ OpenSSL と通常のソケット通信を行うサンプル
 - GDB : [gcc+gdbによるプログラムのデバッグ 第3回 gdbの便利な機能、デバッグの例](https://rat.cis.k.hosei.ac.jp/article/devel/debugongccgdb3.html)
 - LINUX：[10.3　メッセージに含まれるエラー情報](http://itdoc.hitachi.co.jp/manuals/3020/30203N6450/BJEX0275.HTM)
 - [Linux におけるソケット数 (TCP のコネクション数) の上限](https://www.yunabe.jp/docs/maximum_number_of_sockets.html)
+
+### OpenSSL API によるセキュア・プログラミング
+- [第 1 回 API の概要 基本的なセキュア接続と非セキュア接続を作成する](https://www.ibm.com/developerworks/jp/linux/library/l-openssl/index.html)
+- [第 2 回 セキュアなハンドシェーク 中間者 (MITM) 攻撃を回避する](https://www.ibm.com/developerworks/jp/linux/library/l-openssl2/index.html)
+- [第 3 回 セキュアなサービスを提供する OpenSSL で必要な機能を追加する](https://www.ibm.com/developerworks/jp/linux/library/l-openssl3.html)
+
+
 
 ### epoll ( 1ポート複数接続待ち）
 - [epoll - 約束事その他の説明 - Linux コマンド集 一覧表](https://kazmax.zpp.jp/cmd/e/epoll.7.html)
@@ -174,6 +181,17 @@ enum EPOLL_EVENTS
   };
 ```
 
+## 証明書の subject 取得
+1. SSL_CTX_set_verify() に検証の関数を登録
+  `SSL_CTX_set_verify(ssl, SSL_VERIFY_PEER, verify_callback ) `
+1. 検証の関数(verify_callback)にて証明書取得
+  `err_cert = X509_STORE_CTX_get_current_cert(ctx);`
+1. 証明書から subject を取得
+  `X509_NAME * name = X509_get_subject_name(err_cert)`
+1. subject
+  `X509_NAME_get_text_by_NID(name, NID_commonName, commonName, 512)`
+  
+  commonName の char 配列に文字列が入る
 
 # その他他のファイル
 - common_data.c : 共通処理ファイル

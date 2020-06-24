@@ -282,11 +282,14 @@ static void time_log(int line, char *msg){
           (tv_s.tv_sec % TIME_MAX), tv_s.tv_usec, tv_e.tv_sec, tv_e.tv_usec, line, msg);
 }
 
+char HOST_NAME[ 512 ] = {0};
 int OPT_START_NO  = 1;
 int OPT_CLIENT_NUM  = 1;
 void set_argument( int argc, char* argv[] ){
   char *word;
   int  tmp_num;
+
+  strcpy( HOST_NAME, argv[0] );
   
   if ( argc < 2 ){
     return;
@@ -448,10 +451,22 @@ void endprint( char *log ){
  * SSL通信時認証判定関数(常にOKを出している)
  */
 int verify_callback(int ok, X509_STORE_CTX *ctx) {
+  X509 *err_cert;
+  //int err, depth;
+  char commonName[ 512 ];
 	/* This function should ask the user if he trusts the received certificate. Here we always trust.
    * この関数は、ユーザーが受信した証明書を信頼しているかどうかをユーザーに確認する必要があります。
    * ここでは常に信頼しています。
    */
+  err_cert = X509_STORE_CTX_get_current_cert(ctx);
+  //err = X509_STORE_CTX_get_error(ctx);
+  //depth = X509_STORE_CTX_get_error_depth(ctx);
+
+  // コモン・ネームを取得して検証するとき
+  X509_NAME * name = X509_get_subject_name(err_cert);
+  X509_NAME_get_text_by_NID(name, NID_commonName, commonName, 512);
+  fprintf(stderr, "# %s :commonName: %s\n", HOST_NAME, commonName );
+
 	return 1;
 }
 
