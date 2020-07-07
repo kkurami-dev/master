@@ -1,12 +1,15 @@
 // -*- coding: utf-8-unix -*-
-const VERSION='Time-stamp: "2020-05-05 17:49:22 kuramitu"';
+const VERSION='Time-stamp: "2020-07-07 22:24:19 kuramitu"';
 
 import Storage from 'react-native-storage';
 import React, { Component, useCallback, useEffect, useState, AsyncStorage } from 'react';
 import {
-  Text, Button, TouchableOpacity,
+  Text, TouchableOpacity,
   Animated, View, Easing,
 } from 'react-native';
+import { Card, Button, FormLabel, FormInput } from "react-native-elements";
+import axios from 'axios';
+
 const ConfigJson = require('../env.json');
 
 import { mystyle } from './Common';
@@ -75,6 +78,28 @@ export default class Page1Screen extends Component {
       easing: Easing.linear,
     }).start(() => this.StartImageRotateFunction());
   }
+
+  authPost = () => {
+
+    //受け取り側が素のPHP($_POST['']なのでstringifyする)
+    //Laravelとかならいらない
+    var qs = require('qs');
+
+    axios
+      .post('http://localhost/auth/api.php',
+            qs.stringify({
+              email: this.state.email,
+              password: this.state.password
+            }))
+      .then((res) => {
+        if(res.data.auth){
+          alert('認証OK');
+        }else{
+          alert('認証NG');
+        }
+      })
+      .catch(error => console.log(error));
+  }
   
   render() {
     console.log("Page1Screen.js render ----------------------------------------");
@@ -108,6 +133,13 @@ export default class Page1Screen extends Component {
                     this.props.navigation.navigate('Page1Detail')
                   }}
           />
+          <View style={ mystyle.button }>
+            <Button title="go to Page1Spinner"
+                    onPress={() => {
+                      this.props.navigation.navigate('Page1Spinner')
+                    }}
+            />
+          </View>
           <View style={ mystyle.button }>
             <Button title="go to Page1Spinner"
                     onPress={() => {

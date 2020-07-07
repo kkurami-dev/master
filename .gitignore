@@ -53,3 +53,5 @@ packages/
 /dist/
 *.apk
 /package-lock.json
+
+/geth/geth

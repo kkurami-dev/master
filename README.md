@@ -1,6 +1,7 @@
 -*- coding: utf-8-unix -*-
 
-# バージョン
+# React Native のもろもろ
+## バージョン
   | soft | version |
   | --- | --- |
   | react-native | 0.61.4 |
@@ -25,7 +26,7 @@ $ npm version
   zlib: '1.2.11' }
 ```
 
-# バージョン情報の自動挿入と表示
+## バージョン情報の自動挿入と表示
 - コミットするたびに .env の VERSION が自動で書き換わる
   v0.1.0-1-g4c048192 -> v0.1.0-6-g7ce81a1c
 - 事前に v?.?.? のタグが入っている必要が有る
@@ -33,17 +34,17 @@ $ npm version
 - 自動生成ファイルは git のリポジトリから作成する為、
   commit や push は不要(必ず衝突してしまう)
 
-## git のコマンドでクローンしたディレクトリで１回だけ実行する
+### git のコマンドでクローンしたディレクトリで１回だけ実行する
       $ git config --local core.hooksPath .githooks
       $ chmod -R +x .githooks/
 
-## 【自動挿入される文字列の意味】
+### 【自動挿入される文字列の意味】
         v0.1.0 : バージョン情報として記載された git tag の番号
            -1- : タグを設定してからのコミット回数
      g4c048192 : g + ??? ( ??? の部分は git のコミットハッシュの先頭9文字 )
 
 
-# 環境設定
+## 環境設定
 ```
 expo start --tunnel
 
@@ -82,7 +83,7 @@ exp build:android
 'expo'.
 
 ----------------------------------------
-# 画面
+## 画面
 
 01. App.js : 最初に読み込まれるファイル
 01. Page1DetailScreen.js
@@ -125,7 +126,7 @@ https://expo.io/builds/019411b9-092b-4f9e-8c4c-7422f764fca2
 
 ----------------------------------------
 
-# ローカルPCで APK を作成する（できなかった）
+## ローカルPCで APK を作成する（できなかった）
 [手順](https://www.robincussol.com/build-standalone-expo-apk-ipa-with-turtle-cli/)
 
 1. (コンソール１)コンパイル  
@@ -150,7 +151,7 @@ https://expo.io/builds/019411b9-092b-4f9e-8c4c-7422f764fca2
              --keystore-alias "keyalias" \
              --public-url http://127.0.0.1:8000/dist/android-index.json
  
-# エラーとその対応
+## エラーとその対応
 ---
 Some of your project's dependencies are not compatible with currently installed expo package version
 :
@@ -185,7 +186,7 @@ const LeftDrawer1 = createDrawerNavigator(
 CustomSidebarMenu.js
 
 ----------------------------------------
-# 画像に回転するようなアニメーションを行う
+## 画像に回転するようなアニメーションを行う
 ``` nodejs
 // 必要となるモジュール
 import {
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-# ボタンを押して、文字列反映
+## ボタンを押して、文字列反映
 ```
 import Child from './Child';
 
@@ -273,7 +274,7 @@ export default class Parent extends Component {
 }
 ```
 
-# Android のBACKキーを無効化する方法
+## Android のBACKキーを無効化する方法
 
 1. DidMount で設定を行う場合
 StatusBar が有効なバージョンで動くかも
@@ -321,13 +322,58 @@ StatusBar が有効なバージョンで動くかも
   
 1. 
 
-# 端末のBACKキーを無効化する場合
-## iOS
+## 端末のBACKキーを無効化する場合
+### iOS
 
 navigationOptions: {
   gesturesEnabled: false,
 },
 
-# Android でデバッグ
+## Android でデバッグ
 1. adb start-server
 1. adb devices
+
+
+# Ethereum との連携
+1. [geth 1.9.1アップデート](https://qiita.com/murata-tomohide/items/d16042536b661a22ca73)
+1. 
+
+
+## Golang 
+   - Windows に開発環境を入れる(Chocolatey でインストールする)
+   [WindowsにGo言語をインストールする方法まとめ](https://qiita.com/yoskeoka/items/0dcc62a07bf5eb48dc4b)
+     1. 管理者権限でコマンドプロンプトの起動
+     1. Chocolateyのインストール
+       > @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+
+     1. Go言語のインストール
+       > choco install golang
+       
+     1. 開発ツールをインストール( 無くてもよい )
+       > go get -u github.com/stamblerre/gocode
+       > go get -u github.com/rogpeppe/godef
+       
+   - ubuntu で
+     1. git clone か zip ファイルを取得
+       wget https://github.com/ethereum/go-ethereum/archive/v1.9.15.zip
+     1. 環境を揃える  
+        <https://github.com/golang/go/wiki/Ubuntu>
+       $ sudo add-apt-repository ppa:longsleep/golang-backports
+       $ sudo apt update
+       $ sudo apt install golang-go
+       $ sudo apt install -y bzr subversion
+       $ sudo apt-get install -y build-essential libgmp3-dev
+       
+       curl -LO https://get.golang.org/$(uname)/go_installer && chmod +x go_installer && ./go_installer && rm go_installer
+
+   
+## Solidity
+   - スマートコント楽との開発言語
+## Truffle
+   - ミドルウェア
+   
+## Ganasche
+
+## 
+
+
