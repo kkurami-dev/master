@@ -6,7 +6,8 @@ set NODE_ENV=production
 
 ::call npm i -s npm i react-native-input-spinner
 ::call npm i axios
-call npm i react-native-elements
+::call npm i react-native-elements
+call rnpm i express
 
 call npm i
 call npm start --minify -c --clearCache

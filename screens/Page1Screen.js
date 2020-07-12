@@ -1,5 +1,5 @@
 // -*- coding: utf-8-unix -*-
-const VERSION='Time-stamp: "2020-07-07 22:24:19 kuramitu"';
+const VERSION='Time-stamp: "2020-07-08 06:54:32 kuramitu"';
 
 import Storage from 'react-native-storage';
 import React, { Component, useCallback, useEffect, useState, AsyncStorage } from 'react';
@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { Card, Button, FormLabel, FormInput } from "react-native-elements";
 import axios from 'axios';
+//const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const ConfigJson = require('../env.json');
 
@@ -79,31 +81,33 @@ export default class Page1Screen extends Component {
     }).start(() => this.StartImageRotateFunction());
   }
 
-  authPost = () => {
-
-    //受け取り側が素のPHP($_POST['']なのでstringifyする)
-    //Laravelとかならいらない
-    var qs = require('qs');
-
-    axios
-      .post('http://localhost/auth/api.php',
-            qs.stringify({
-              email: this.state.email,
-              password: this.state.password
-            }))
-      .then((res) => {
-        if(res.data.auth){
-          alert('認証OK');
-        }else{
-          alert('認証NG');
-        }
-      })
-      .catch(error => console.log(error));
+  authPost = async() => {
+    // ReactNativeでPOSTする
+    //   <https://qiita.com/zaburo/items/2903bb3b8fb7a9646474>
+    // 
+    // 
+    const res = await axios
+          .get('https://4r3ki42pi3.execute-api.ap-northeast-1.amazonaws.com//prod',{
+            withCredentials: true,
+            mode: 'cors',
+            email: 'a@b.c',
+            password: 'password'
+          })
+          .then((res) => {
+            console.log("axios.post.then()", res);
+            if(res.data.auth){
+              alert('認証OK');
+            }else{
+              alert('認証NG');
+            }
+          })
+          .catch(error => {
+            console.log("axios.post.then()", error);
+          });
   }
-  
+
   render() {
-    console.log("Page1Screen.js render ----------------------------------------");
-    console.log(this);
+    console.log("Page1Screen.js render ----------------------------------------", this);
 
     // const [value, setValue] = React.useState('');
     // const onChange = event => {
@@ -134,9 +138,9 @@ export default class Page1Screen extends Component {
                   }}
           />
           <View style={ mystyle.button }>
-            <Button title="go to Page1Spinner"
+            <Button title="auth Post"
                     onPress={() => {
-                      this.props.navigation.navigate('Page1Spinner')
+                      this.authPost()
                     }}
             />
           </View>

@@ -364,13 +364,25 @@ navigationOptions: {
        $ sudo apt install -y bzr subversion
        $ sudo apt-get install -y build-essential libgmp3-dev
        
-       curl -LO https://get.golang.org/$(uname)/go_installer && chmod +x go_installer && ./go_installer && rm go_installer
+       $ curl -LO https://get.golang.org/$(uname)/go_installer && chmod +x go_installer && ./go_installer && rm go_installer
 
+       $ sudo npm i -g truffle@4.1.16
+       $ npm i ganache-cli
+       $ npm i web3@1.0.0-beta.26
    
 ## Solidity
+
+
+## Solidity
    - スマートコント楽との開発言語
+   
 ## Truffle
    - ミドルウェア
+   1. > truffle develop
+   1. truffle(develop) > compile
+   1. truffle(develop) > migrate
+   1. truffle(develop) > test
+   1. config.json の作成
    
 ## Ganasche
 
