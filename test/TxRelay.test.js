@@ -7,8 +7,8 @@ const provider = ganache.provider({
 const web3 = new Web3(provider);
 const config = require('../config.json');
 
-const MetaTransactionClient = require('../lib/metaTransactionClient');
-const MetaTransactionServer = require('../lib/metaTransactionServer');
+const MetaTransactionClient = require('../screens/metatx/metaTransactionClient');
+const MetaTransactionServer = require('../screens/metatx/metaTransactionServer');
 
 const compiledTxRelay = require('../build/TxRelay');
 const compiledMessageBox = require('../build/MessageBox');

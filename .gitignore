@@ -58,3 +58,4 @@ packages/
 /build
 /.kazu_accessKeys.csv
 ~$*
+/config.json
