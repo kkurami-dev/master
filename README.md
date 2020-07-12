@@ -383,7 +383,19 @@ navigationOptions: {
    1. truffle(develop) > migrate
    1. truffle(develop) > test
    1. config.json の作成
-   
+```
+{
+  "server_account": {
+    "privateKey": <PRIVATE KEY>,
+    "address": <ADDRESS>
+  },
+  "client_account": {
+    "privateKey": <PRIVATE KEY>,
+    "address": <ADDRESS>
+  }
+}
+```
+
 ## Ganasche
 
 ## 

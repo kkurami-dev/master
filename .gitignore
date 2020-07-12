@@ -55,3 +55,6 @@ packages/
 /package-lock.json
 
 /geth/geth
+/build
+/.kazu_accessKeys.csv
+~$*
