@@ -369,6 +369,7 @@ navigationOptions: {
        $ sudo npm i -g truffle@4.1.16
        $ npm i ganache-cli
        $ npm i web3@1.0.0-beta.26
+       $ npm i left-pad
    
 ## Solidity
 

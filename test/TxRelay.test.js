@@ -10,8 +10,10 @@ const config = require('../config.json');
 const MetaTransactionClient = require('../screens/metatx/metaTransactionClient');
 const MetaTransactionServer = require('../screens/metatx/metaTransactionServer');
 
-const compiledTxRelay = require('../build/TxRelay');
-const compiledMessageBox = require('../build/MessageBox');
+//const compiledTxRelay = require('../build/contracts/TxRelay');
+//const compiledMessageBox = require('../build/contracts/MessageBox');
+const compiledTxRelay = require('../build/contracts/TxRelay');
+const compiledMessageBox = require('../build/contracts/MessageBox');
 
 let accounts;
 let txRelay;
@@ -22,7 +24,7 @@ let newMessage = 'Updated message for Message Box!!';
 before( async () => {
   accounts = await web3.eth.getAccounts();
 
-  txRelay = await new web3.eth.Contract(JSON.parse(compiledTxRelay.interface))
+  txRelay = await new web3.eth.Contract(compiledTxRelay.interface)
     .deploy({
       data: compiledTxRelay.bytecode,
       arguments: []
@@ -33,7 +35,7 @@ before( async () => {
     });
   txRelay.setProvider(provider);
 
-  messageBox = await new web3.eth.Contract(JSON.parse(compiledMessageBox.interface))
+  messageBox = await new web3.eth.Contract(compiledMessageBox.interface)
     .deploy({
       data: compiledMessageBox.bytecode,
       arguments: ["Hello from message box"]
