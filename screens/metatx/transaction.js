@@ -23,7 +23,7 @@ const Web3 = require('web3');
 const util = require("ethereumjs-util");
 const CryptoJS = require("crypto-js");
 const leftPad = require('left-pad');
-const EthereumjsTx = require('ethereumjs-tx');
+const EthereumjsTx = require('ethereumjs-tx').Transaction;
 
 const provider = new Web3.providers.HttpProvider(config.endpoint);
 const web3 = new Web3(provider);

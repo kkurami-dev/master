@@ -2,6 +2,11 @@
 
 cd %~dp0
 
+call npm list --depth=0
+pause
+exit
+
+
 set NODE_ENV=production
 
 ::call npm i -s npm i react-native-input-spinner

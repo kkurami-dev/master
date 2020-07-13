@@ -367,9 +367,30 @@ navigationOptions: {
        $ curl -LO https://get.golang.org/$(uname)/go_installer && chmod +x go_installer && ./go_installer && rm go_installer
 
        $ sudo npm i -g truffle@4.1.16
-       $ npm i ganache-cli
-       $ npm i web3@1.0.0-beta.26
-       $ npm i left-pad
+       $ npm i --save ganache-cli web3@1.0.0-beta.26 left-pad
+       $ npm i --save web3@1.0.0-beta.26
+       $ npm i --save left-pad
+
+## meta-transaction-master
+
+   - AWS Linux で
+     1. 各種インストール
+       $ sudo yum install docker-ce
+       $ sudo yum install containerd.io
+       $ sudo yum install container-selinux
+       $ sudo yum install docker-ce
+       $ sudo yum install docker
+       
+       $ sudo service docker start
+       $ sudo usermod -a -G docker ec2-user
+       $ docker info
+       
+   - npm
+       $ npm i --save ethereumjs-tx
+       $ npm i --save keccak
+       $ sudo npm i -g ethereumjs-util
+       
+       Ropsten
    
 ## Solidity
 

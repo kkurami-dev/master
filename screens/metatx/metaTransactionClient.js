@@ -25,7 +25,7 @@ THE SOFTWARE.
 const config = require('../../config');
 const Web3 = require('web3');
 const util = require("ethereumjs-util");
-const EthereumjsTx = require('ethereumjs-tx');
+const EthereumjsTx = require('ethereumjs-tx').Transaction;
 const Transaction = require('./transaction');
 
 const provider = new Web3.providers.HttpProvider(config.endpoint);
