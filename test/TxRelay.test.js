@@ -63,6 +63,9 @@ describe('txrelay', () => {
 
   it('can sign tranxsaction at client', async () => {
     console.log("\n========================================");
+    msg_nonce = await messageBox.methods.msg_nonce().call();
+    assert.equal("0", msg_nonce);
+
     console.log("describe:web3.eth.sendTransaction()");
     await web3.eth.sendTransaction({
       to: config.server_account.address,
@@ -146,6 +149,9 @@ describe('txrelay', () => {
     message = await messageBox.methods.message().call();
     assert.equal(newMessage, message);
 
+    msg_nonce = await messageBox.methods.msg_nonce().call();
+    assert.equal("0", msg_nonce);
+    
     sender = await messageBox.methods.sender().call();
     assert.equal(txRelay.options.address, sender);
   });
@@ -164,7 +170,7 @@ describe('txrelay', () => {
 
     let updateMessage = 'Here it updates message again';
     let messageBoxAbi = compiledMessageBox.abi;
-    let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage', [updateMessage], {
+    let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage2', [updateMessage, "3"], {
       to: messageBox.options.address,
       value: 0,
       nonce: parseInt(clientAddressNonce), // nonce must match the one at TxRelay contract
@@ -215,7 +221,7 @@ describe('txrelay', () => {
 
     let updateMessage = 'If this message is written to blockchain, test failed';
     let messageBoxAbi = compiledMessageBox.abi;
-    let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage', [updateMessage], {
+    let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage2', [updateMessage, "4"], {
       to: messageBox.options.address,
       value: 0,
       nonce: parseInt(clientAddressNonce), // nonce must match the one at TxRelay contract
@@ -258,7 +264,10 @@ describe('txrelay', () => {
 
     message = await messageBox.methods.message().call();
     assert.notEqual(updateMessage, message);
+    msg_nonce = await messageBox.methods.msg_nonce().call();
+    assert.equal("3", msg_nonce);
     console.log(message);
+    console.log(msg_nonce);
     console.log("TEST END.");
   });
 });

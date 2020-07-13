@@ -356,8 +356,8 @@ navigationOptions: {
    - ubuntu で
      1. git clone か zip ファイルを取得
        wget https://github.com/ethereum/go-ethereum/archive/v1.9.15.zip
-     1. 環境を揃える  
-        <https://github.com/golang/go/wiki/Ubuntu>
+     1. [環境を揃える](https://github.com/golang/go/wiki/Ubuntu)
+       ``` 
        $ sudo add-apt-repository ppa:longsleep/golang-backports
        $ sudo apt update
        $ sudo apt install golang-go
@@ -367,43 +367,34 @@ navigationOptions: {
        $ curl -LO https://get.golang.org/$(uname)/go_installer && chmod +x go_installer && ./go_installer && rm go_installer
 
        $ sudo npm i -g truffle@4.1.16
-       $ npm i --save ganache-cli web3@1.0.0-beta.26 left-pad
+       $ npm i --save ganache-cli
        $ npm i --save web3@1.0.0-beta.26
        $ npm i --save left-pad
+       ``` 
 
 ## meta-transaction-master
 
    - AWS Linux で
      1. 各種インストール
-       $ sudo yum install docker-ce
-       $ sudo yum install containerd.io
-       $ sudo yum install container-selinux
-       $ sudo yum install docker-ce
-       $ sudo yum install docker
-       
-       $ sudo service docker start
-       $ sudo usermod -a -G docker ec2-user
-       $ docker info
-       
+```
+$ sudo yum install docker-ce
+   $ sudo yum install containerd.io
+        $ sudo yum install container-selinux
+$ sudo yum install docker-ce
+$ sudo yum install docker
+
+$ sudo service docker start
+$ sudo usermod -a -G docker ec2-user
+$ docker info
+``` 
    - npm
-       $ npm i --save ethereumjs-tx
-       $ npm i --save keccak
-       $ sudo npm i -g ethereumjs-util
-       
-       Ropsten
+``` 
+$ npm i --save ethereumjs-tx
+$ npm i --save keccak
+$ sudo npm i -g ethereumjs-util
+```
+Ropsten
    
-## Solidity
-
-
-## Solidity
-   - スマートコント楽との開発言語
-   
-## Truffle
-   - ミドルウェア
-   1. > truffle develop
-   1. truffle(develop) > compile
-   1. truffle(develop) > migrate
-   1. truffle(develop) > test
    1. config.json の作成
 ```
 {
@@ -417,6 +408,19 @@ navigationOptions: {
   }
 }
 ```
+
+## Solidity
+
+
+## Solidity
+   - スマートコント楽との開発言語
+   
+## Truffle
+   - ミドルウェア
+   1. > truffle develop
+   1. truffle(develop) > compile
+   1. truffle(develop) > migrate
+   1. truffle(develop) > test
 
 ## Ganasche
 
