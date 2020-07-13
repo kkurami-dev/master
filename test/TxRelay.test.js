@@ -10,8 +10,6 @@ const config = require('../config.json');
 const MetaTransactionClient = require('../screens/metatx/metaTransactionClient');
 const MetaTransactionServer = require('../screens/metatx/metaTransactionServer');
 
-//const compiledTxRelay = require('../build/contracts/TxRelay');
-//const compiledMessageBox = require('../build/contracts/MessageBox');
 const compiledTxRelay = require('../build/contracts/TxRelay');
 const compiledMessageBox = require('../build/contracts/MessageBox');
 
@@ -62,7 +60,6 @@ describe('txrelay', () => {
   });
 
   it('can sign tranxsaction at client', async () => {
-    console.log("\n========================================");
     msg_nonce = await messageBox.methods.msg_nonce().call();
     assert.equal("0", msg_nonce);
 
@@ -100,7 +97,6 @@ describe('txrelay', () => {
   });
 
   it('can sign tranxsaction at server', async () => {
-    console.log("\n========================================");
     ////////////////////////////////////////
     // fetch nonce of sender address
     console.log("describe:web3.eth.getTransactionCount()");
@@ -158,8 +154,6 @@ describe('txrelay', () => {
   //return;
 
   it('increases nonce and can send transaction again', async () => {
-  console.log("\n========================================");
-
     // fetch nonce of sender address tracked at TxRelay
     console.log("describe:txRelay.methods.nonce() 2");
     let clientAddressNonce = await txRelay.methods.nonce(config.client_account.address).call();
@@ -211,8 +205,6 @@ describe('txrelay', () => {
   });
 
   it('does not accept transaction if sender and signer is different', async () => {
-    console.log("\n========================================");
-
     // fetch nonce of sender address tracked at TxRelay
     let clientAddressNonce = await txRelay.methods.nonce(config.client_account.address).call();
 
@@ -265,9 +257,8 @@ describe('txrelay', () => {
     message = await messageBox.methods.message().call();
     assert.notEqual(updateMessage, message);
     msg_nonce = await messageBox.methods.msg_nonce().call();
-    assert.equal("3", msg_nonce);
-    console.log(message);
-    console.log(msg_nonce);
-    console.log("TEST END.");
+    assert.notEqual("4", msg_nonce);
+    console.log("message:", message);
+    console.log("msg_nonce:", msg_nonce);
   });
 });
