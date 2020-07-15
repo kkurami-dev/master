@@ -1,11 +1,26 @@
 const assert = require('assert');
 const ganache = require('ganache-cli');
 const Web3 = require('web3');
+
+var pattern = /^[A-Z0-9]+$/;
+var logger = {
+  log: function(message) {
+    if (pattern.test(message)){
+    } else {
+      console.log(message);
+    }
+  }
+};
 const provider = ganache.provider({
-  "debug": true
+  "debug": true,
+  "allowUnlimitedContractSize": true,
+  "logger": logger
 });
 const web3 = new Web3(provider);
 const config = require('../config.json');
+
+const MessageBox = artifacts.require('MessageBox.sol')
+const delay = time => new Promise(res => setTimeout(() => res(), time))
 
 const MetaTransactionClient = require('../screens/metatx/metaTransactionClient');
 const MetaTransactionServer = require('../screens/metatx/metaTransactionServer');
@@ -18,6 +33,13 @@ let txRelay;
 let messageBox;
 let txToServer;
 let newMessage = 'Updated message for Message Box!!';
+
+// var id = web3.currentProvider.sendAsync({
+//   jsonrpc: '2.0',
+//   method: 'evm_snapshot',
+//   params: [],
+//   id: new Date().getTime()
+// }, (err, res) => console.log(res, err))
 
 before( async () => {
   console.log("before START");
@@ -60,6 +82,7 @@ describe('txrelay', () => {
   });
 
   it('can sign tranxsaction at client', async () => {
+    //const event = messageBox.Deposit({}, {fromBlock: 0, toBlock: 'latest'})
     msg_nonce = await messageBox.methods.msg_nonce().call();
     assert.equal("0", msg_nonce);
 
@@ -75,10 +98,10 @@ describe('txrelay', () => {
     // fetch nonce of sender address tracked at TxRelay
     console.log("describe:txRelay.methods.nonce() 1");
     let nonce = await txRelay.methods.nonce(config.client_account.address).call();
-    console.log("nonce", nonce);
+    //console.log("compiledMessageBox.abi", JSON.stringify(compiledMessageBox.abi));
     let rawTx = await MetaTransactionClient.createTx(compiledMessageBox.abi,
-                                                     'setMessage',
-                                                     [newMessage], {
+                                                     'setMessage2',
+                                                     [newMessage, "0"], {
       to: messageBox.options.address,
       value: 0,
       nonce: parseInt(nonce), // nonce must match the one at TxRelay contract
@@ -166,7 +189,7 @@ describe('txrelay', () => {
     let messageBoxAbi = compiledMessageBox.abi;
     let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage2', [updateMessage, "3"], {
       to: messageBox.options.address,
-      value: 0,
+//      value: 0,
       nonce: parseInt(clientAddressNonce), // nonce must match the one at TxRelay contract
       gas: 2000000,
       gasPrice: 2000000,
@@ -190,7 +213,7 @@ describe('txrelay', () => {
         "gas": 2000000,
         "gasPrice": 2000000,
         "gasLimit": 2000000,
-        "value": 0,
+//        "value": 0,
         "to": txRelay.options.address,
         "nonce": parseInt(serverAddressNonce), // nonce of address which signs tx ad server
         "from": config.server_account.address
@@ -215,7 +238,7 @@ describe('txrelay', () => {
     let messageBoxAbi = compiledMessageBox.abi;
     let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage2', [updateMessage, "4"], {
       to: messageBox.options.address,
-      value: 0,
+//      value: 0,
       nonce: parseInt(clientAddressNonce), // nonce must match the one at TxRelay contract
       gas: 2000000,
       gasPrice: 2000000,
@@ -238,7 +261,7 @@ describe('txrelay', () => {
         "gas": 2000000,
         "gasPrice": 2000000,
         "gasLimit": 2000000,
-        "value": 0,
+//        "value": 0,
         "to": txRelay.options.address,
         "nonce": parseInt(serverAddressNonce), // nonce of address which signs tx ad server
         "from": config.server_account.address
@@ -262,3 +285,21 @@ describe('txrelay', () => {
     console.log("msg_nonce:", msg_nonce);
   });
 });
+
+// contract('MessageTest', accounts => {
+//   it.only("check event.", async () => {
+//     const instance = await MessageBox.new("init")
+//     const event = instance.Deposit({}, {fromBlock: 0, toBlock: 'latest'})
+//     let receiptTx = await instance.deposit(1)
+//     receiptTx = await instance.deposit(2)
+//     event.watch((err, log) => {
+//       if (!err) console.log("event=", log)
+//       else console.log("event error =", err)
+//     })
+//     await delay(2000)
+//     receiptTx = await instance.deposit(3)
+//     await delay(2000)
+//     event.stopWatching()
+//     console.log(event.get.toString())
+//   })
+// })

@@ -36,13 +36,13 @@ contract TxRelay {
         address addressFromSig = ecrecover(h, sigV, sigR, sigS);
 
         // address recovered from signature must match with claimed sender
-        require(sender == addressFromSig);
+        require(sender == addressFromSig, "diff sender");
 
         //if we are going to do tx, update nonce
         nonce[sender]++;
 
         // invoke method on behalf of sender
-        require(destination.call(data));
+        require(destination.call(data), "call");
     }
 }
 
