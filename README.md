@@ -409,6 +409,9 @@ Ropsten
 }
 ```
 
+msg.sender は使えない　TxRelay のアドレスになる為、
+https://qiita.com/doskin/items/c4fd8952275c67deb594
+
 ## Solidity
 
 
