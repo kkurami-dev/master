@@ -1,6 +1,10 @@
 pragma solidity >=0.4.22 <0.7.0;
 //pragma solidity 0.4.19;
 
+// https://github.com/trufflesuite/truffle-logger-example
+// consol --network --show-log-statements
+//import "truffle/Console.sol";
+
 // This contract is heavily inspired by uPort from https://github.com/uport-project/uport-identity/blob/develop/contracts/TxRelay.sol
 contract TxRelay {
 
@@ -40,6 +44,11 @@ contract TxRelay {
 
         //if we are going to do tx, update nonce
         nonce[sender]++;
+
+        //Console.log("destination", destination);
+        emit Log( msg.sender, "msg.sender" );
+        emit Log( sender, "sender" );
+        emit Log( destination, "destination" );
 
         // invoke method on behalf of sender
         require(destination.call(data), "call");

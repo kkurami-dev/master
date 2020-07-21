@@ -358,6 +358,8 @@ navigationOptions: {
        wget https://github.com/ethereum/go-ethereum/archive/v1.9.15.zip
      1. [環境を揃える](https://github.com/golang/go/wiki/Ubuntu)
        ``` 
+       $ sudo npm rm -g truffle
+       
        $ sudo add-apt-repository ppa:longsleep/golang-backports
        $ sudo apt update
        $ sudo apt install golang-go
@@ -412,18 +414,38 @@ Ropsten
 msg.sender は使えない　TxRelay のアドレスになる為、
 https://qiita.com/doskin/items/c4fd8952275c67deb594
 
-## Solidity
+
+
+## Ganache
 
 
 ## Solidity
-   - スマートコント楽との開発言語
+   - スマートコントラクトとの開発言語
    
-## Truffle
+## 
    - ミドルウェア
-   1. > truffle develop
-   1. truffle(develop) > compile
-   1. truffle(develop) > migrate
-   1. truffle(develop) > test
+   1. $ truffle version
+```
+Truffle v4.1.16 (core: 4.1.16)
+Solidity v0.4.26 (solc-js)
+```
+   1. $ truffle develop
+   1. truffle(develop)> compile
+   1. truffle(develop)> migrate
+   1. truffle(develop)> test
+   
+   1. 設定変更
+   ( truffle-config.js の networks:{develop:{gas: を読むバー
+    ジョンもある)
+    - vi truffle
+``` 
+var default_tx_values = {
+  gas: 672197500,
+  gasPrice: 100000000000, // 100 Shannon,
+  from: null
+};
+```
+   truffle(develop)> web3.eth.getBlock("pending").gasLimit
 
 ## Ganasche
 

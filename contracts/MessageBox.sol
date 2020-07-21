@@ -11,23 +11,33 @@ contract MessageBox {
     string public msg_nonce;
     address public sender;
 
-    event Deposit(address _from, bytes32 _id, uint _value);
+    // This is for debug purpose
+    event Log(address from, string message);
 
     //function MessageBox(string initialMessage) public {
     constructor( string initialMessage ) public {
-        console.log("constructor()");
+        emit Log(msg.sender, "constructor()");
         message = initialMessage;
         msg_nonce = "0";
     }
 
     function setMessage(string newMessage) public {
-        console.log("setMessage() 1");
+        emit Log(msg.sender, "setMessage() 1");
         message = newMessage;
         sender = msg.sender;
     }
     
     function setMessage2(string newMessage, string newNonce) public {
-        console.log("setMessage() 2");
+        emit Log(msg.sender, "setMessage() 2");
+        message = newMessage;
+        msg_nonce = newNonce;
+        sender = msg.sender;
+    }
+
+    function setMessage3(string newMessage, string newNonce) public {
+        emit Log(msg.sender, "setMessage() 3");
+        message = newMessage;
+        msg_nonce = newNonce;
         message = newMessage;
         msg_nonce = newNonce;
         sender = msg.sender;

@@ -7,7 +7,7 @@ var logger = {
   log: function(message) {
     if (pattern.test(message)){
     } else {
-      console.log(message);
+      //console.log(message);
     }
   }
 };
@@ -15,6 +15,8 @@ const provider = ganache.provider({
   "debug": true,
   "allowUnlimitedContractSize": true,
   "logger": logger
+//  "gasLimit": 80000000,
+//  "gas": 90000000
 });
 const web3 = new Web3(provider);
 const config = require('../config.json');
@@ -34,6 +36,9 @@ let messageBox;
 let txToServer;
 let newMessage = 'Updated message for Message Box!!';
 
+
+// LOGGING
+//  Output Logs to File
 // var id = web3.currentProvider.sendAsync({
 //   jsonrpc: '2.0',
 //   method: 'evm_snapshot',
@@ -69,6 +74,7 @@ before( async () => {
     });
   messageBox.setProvider(provider);
   console.log("before END");
+  console.log("gasLimit:", web3.eth.getBlock("pending").gasLimit);
 });
 
 describe('txrelay', () => {
@@ -76,12 +82,13 @@ describe('txrelay', () => {
   it('deploys contracts', () => {
     assert.ok(txRelay.options.address);
     assert.ok(messageBox.options.address);
-
+    
     console.log("TxRelay address is " + txRelay.options.address);
     console.log("MessageBox address is " + messageBox.options.address);
   });
 
   it('can sign tranxsaction at client', async () => {
+    //var event = await txRelay.Log(config.server_account.address, "log");
     //const event = messageBox.Deposit({}, {fromBlock: 0, toBlock: 'latest'})
     msg_nonce = await messageBox.methods.msg_nonce().call();
     assert.equal("0", msg_nonce);
@@ -117,6 +124,7 @@ describe('txrelay', () => {
       txRelay.options.address
     );
     assert.equal(config.client_account.address, txToServer.from);
+    //assert.equal('0x'+ txToServer.to, messageBox.options.address);
   });
 
   it('can sign tranxsaction at server', async () => {

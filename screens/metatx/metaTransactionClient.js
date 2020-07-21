@@ -59,7 +59,7 @@ class MetaTransactionClient  {
     let nonce = txCopy.nonce.toString('hex') ? txCopy.nonce.toString('hex') : '0'; // if buffer is empty, nonce should be zero
     let to = txCopy.to.toString('hex');
     let data = txCopy.data.toString('hex');
-
+    console.log("txCopy", JSON.stringify(txCopy));
     // Tight packing, as Solidity sha3 does
     let hashInput = '0x1900'
       + util.stripHexPrefix(txRelayAddress)

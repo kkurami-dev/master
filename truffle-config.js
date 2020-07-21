@@ -1,10 +1,12 @@
 module.exports = {
   networks: {
-    development: {
-      host: "localhost",
+    develop: {
       port: 8545,
-      network_id: "*", // Match any network id
-      gas: 5000000
+      network_id: "*",
+//      gas:4600000,
+//      accounts: 5,
+//      defaultEtherBalance: 500,
+//      blockTime: 3
     }
   },
   compilers: {
@@ -18,3 +20,4 @@ module.exports = {
     }
   }
 };
+// ../lib/node_modules/truffle/build/cli.bundled.js
