@@ -338,6 +338,25 @@ navigationOptions: {
 1. [geth 1.9.1アップデート](https://qiita.com/murata-tomohide/items/d16042536b661a22ca73)
 1. 
 
+# WSL2　をインストール
+(WSL2導入｜WinアップデートからWSL2を既定にするまでのスクショ)[https://qiita.com/tomokei5634/items/27504849bb4353d8fef8]
+
+1. (Windows10 を 2020 に更新)[https://www.microsoft.com/ja-jp/software-download/windows10]
+1. (WSL 2 Linux カーネルの更新)[https://docs.microsoft.com/ja-jp/windows/wsl/wsl2-kernel]
+1. WSL 2 に更新する
+- 管理者権限のPowerShell で
+> dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+
+- WSL2 を既定のバージョンとして設定する
+> wsl --set-default-version 2
+
+- 動作している WSL バージョンの確認
+> wsl --list --verbose
+
+# CentOS
+- (WSL2のCentOSでもsystemdを利用する)[http://kozo.hatenablog.jp/entry/2020/05/06/202507]
+- (CentOS に .NET Core SDK または .NET Core ランタイムをインストールする)[https://docs.microsoft.com/ja-jp/dotnet/core/install/linux-centos]
+
 
 ## Golang 
    - Windows に開発環境を入れる(Chocolatey でインストールする)
@@ -449,6 +468,7 @@ var default_tx_values = {
 
 ## Ganasche
 
-## 
-
+## コントラクト
+Contract ABI Specification
+https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html
 
