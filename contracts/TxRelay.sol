@@ -13,7 +13,7 @@ contract TxRelay {
     mapping(address => uint) public nonce;
 
     // This is for debug purpose
-    event Log(address from, string message);
+    //event Log(address from, string message);
 
     /*
      * @dev Relays meta transactions
@@ -45,10 +45,14 @@ contract TxRelay {
         //if we are going to do tx, update nonce
         nonce[sender]++;
 
-        //Console.log("destination", destination);
-        emit Log( msg.sender, "msg.sender" );
-        emit Log( sender, "sender" );
+        (methodId, to_adr, amount) = abi.decode(data, (bytes4, address, uint256));
+        emit Log( to_adr, "TxRelay() to_adr" );
         emit Log( destination, "destination" );
+
+        //Console.log("destination", destination);
+        //emit Log( msg.sender, "msg.sender" );
+        //emit Log( sender, "sender" );
+        //emit Log( destination, "destination" );
 
         // invoke method on behalf of sender
         require(destination.call(data), "call");

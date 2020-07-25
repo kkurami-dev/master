@@ -414,7 +414,15 @@ $ npm i --save ethereumjs-tx
 $ npm i --save keccak
 $ sudo npm i -g ethereumjs-util
 ```
+
+
 Ropsten
+   
+   1. npm の参照
+   rootfs/usr/share/npm/package.json  
+   "url": "https://github.com/npm/npm"  
+   ↓
+   "url": "https://github.com/npm/cli"  
    
    1. config.json の作成
 ```
@@ -465,6 +473,11 @@ var default_tx_values = {
 };
 ```
    truffle(develop)> web3.eth.getBlock("pending").gasLimit
+   truffle(develop)> myToken = MyToken.at(MyToken.address)
+   truffle(develop)> myToken.name()
+   truffle(develop)> myToken.transfer(web3.eth.accounts[1], 1000e18)
+   myToken.balanceOf(web3.eth.accounts[0])
+   myToken.balanceOf(web3.eth.accounts[1])
 
 ## Ganasche
 
