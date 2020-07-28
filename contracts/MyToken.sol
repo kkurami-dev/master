@@ -12,7 +12,7 @@ contract MyToken is StandardToken {
 
   address txrel;
 
-  function MyToken(uint initialSupply, address _txrel) public {
+  constructor(uint initialSupply, address _txrel) public {
     totalSupply_ = initialSupply;
     balances[msg.sender] = initialSupply;
     txrel = _txrel;

@@ -65,7 +65,7 @@ before( async () => {
   console.log("gasLimit:", web3.eth.getBlock("pending").gasLimit);
 });
 
-describe('txrelay', () => {
+describe('txrelay-org', () => {
 
   it('deploys contracts', () => {
     assert.ok(txRelay.options.address);
