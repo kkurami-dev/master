@@ -1,3 +1,4 @@
+// -*- mode: emacs-lisp; coding: utf-8-unix -*-
 pragma solidity >=0.4.22 <0.7.0;
 //pragma solidity 0.4.19;
 
@@ -27,7 +28,7 @@ contract TxRelay {
         bytes32 sigR,
         bytes32 sigS,
         address destination,
-        bytes data,
+        bytes memory data,
         address sender
     ) public {
 
@@ -46,16 +47,31 @@ contract TxRelay {
         nonce[sender]++;
 
         // (methodId, to_adr, amount) = abi.decode(data, (bytes4, address, uint256));
-        // emit Log( to_adr, "TxRelay() to_adr" );
-        // emit Log( destination, "destination" );
-
-        //Console.log("destination", destination);
-        //emit Log( msg.sender, "msg.sender" );
-        //emit Log( sender, "sender" );
+        //emit Log( to_adr, "TxRelay() to_adr" );
         //emit Log( destination, "destination" );
 
+        bytes memory bbb = abi.encodePacked( sender );
+        bytes32 data_h = b20h( data );
+        bytes32 send_h = keccak256( bbb );
+        //emit Log( sender, string(aaa ));
+        require(send_h == data_h, "diff _from");
+
+        //Console.log("destination", destination);
+        emit Log( msg.sender, "msg.sender" );
+        emit Log( sender, "sender" );
+        emit Log( destination, "destination" );
+
         // invoke method on behalf of sender
-        require(destination.call(data), "call");
+        //require(destination.call(data), "call");
+    }
+
+    function b20h(bytes memory data) public pure returns( bytes32 ) {
+        bytes memory frombyte = new bytes(20);
+        for (uint j = 0; j < 20; j++) {
+            frombyte[j] = data[ 16 + j];
+        }
+        bytes32 data_h = keccak256( frombyte );
+        return data_h;
     }
 }
 
