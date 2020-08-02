@@ -79,7 +79,7 @@ async function setToken(op, func, args, ac ){
     config.server_account.privateKey
   );
   const result = await web3.eth.sendSignedTransaction('0x' + signedTxToRelay);
-  //L.decodeLog(result);
+  L.decodeLog(result);
 }
 
 before( async () => {
@@ -129,12 +129,13 @@ describe('txrelay', () => {
     fs.writeFileSync( "abi/MyTokenAbi.json" , JSON.stringify(myTokenAbi, " ", 2) )
     fs.writeFileSync( "abi/TxRelayAbiAbi.json" , JSON.stringify(txRelayAbi, " ", 2) )
 
-    await web3.eth.sendTransaction({
+    const result = await web3.eth.sendTransaction({
       to: config.server_account.address,
       from: accounts[0],
       value: web3.utils.toWei('1', "ether"),
       gas: '1000000'
     });
+    L.decodeLog(result);
 
     await setToken( myToken.options,
               "set_balance",
@@ -203,7 +204,7 @@ describe('txrelay', () => {
       config.server_account.privateKey
     );
     const result = await web3.eth.sendSignedTransaction('0x' + signedTxToRelay);
-    L.decodeLog(result);
+    L.decodeLog(myTokenAbi, result);
     const t01_new = await myToken.methods.balanceOf(config.server_account.address).call();
     assert.notEqual(t01_old, t01_new);
 
@@ -314,6 +315,7 @@ describe('txrelay', () => {
 
     try {
       const result = await web3.eth.sendSignedTransaction('0x' + signedTxToRelay);
+      L.decodeLog(myTokenAbi, result);
       assert(false);
     }
     catch (err) {
