@@ -115,19 +115,15 @@ before( async () => {
   myTokenAbi = myToken.options.jsonInterface;
 
   console.log("gasLimit:", web3.eth.getBlock("pending").gasLimit);
+
+  fs.writeFileSync( "abi/MyTokenAbi.json" , JSON.stringify(myTokenAbi, " ", 2) )
+  fs.writeFileSync( "abi/TxRelayAbiAbi.json" , JSON.stringify(txRelayAbi, " ", 2) )
 });
 
 describe('txrelay', () => {
   it('deploys contracts', async () => {
     assert.ok(txRelay.options.address);
     assert.ok(myToken.options.address);
-    
-    console.log("TxRelay address is " + txRelay.options.address);
-    console.log("MyToken address is " + myToken.options.address);
-
-    var abi_json = JSON.stringify(myTokenAbi, " ", 2);
-    fs.writeFileSync( "abi/MyTokenAbi.json" , JSON.stringify(myTokenAbi, " ", 2) )
-    fs.writeFileSync( "abi/TxRelayAbiAbi.json" , JSON.stringify(txRelayAbi, " ", 2) )
 
     const result = await web3.eth.sendTransaction({
       to: config.server_account.address,
@@ -142,23 +138,22 @@ describe('txrelay', () => {
               [ config.server_account.address, '1000000000000000000' ],
               config.server_account );
 
-    console.log("address s", config.server_account.address);
-    console.log("address c", config.client_account.address);
-
     web3.eth.getBalance(config.server_account.address).then(console.log);
     web3.eth.getBalance(config.client_account.address).then(console.log);
 
-    console.log("balanceOf s", await myToken.methods.balanceOf(
-      config.server_account.address
-    ).call());
-    console.log("balanceOf c", await myToken.methods.balanceOf(
-      config.client_account.address
-    ).call());
-
+    console.log("address(s:%d, c:%d) balanceOf(s:%d, c:%d)",
+                config.server_account.address,
+                config.client_account.address,
+                await myToken.methods.balanceOf(config.server_account.address).call(),
+                await myToken.methods.balanceOf(config.client_account.address).call(),
+               );
     //setToken(config.server_account.address, 100);
   });
 
   it('#01:can sign tranxsaction at client', async () => {
+    console.log("TxRelay address is " + txRelay.options.address);
+    console.log("MyToken address is " + myToken.options.address);
+
     var nonce = await txRelay.methods.nonce(config.server_account.address).call();
     var rawTx = await MetaTransactionClient.createTx(
       myTokenAbi,

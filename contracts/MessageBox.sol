@@ -26,7 +26,7 @@ contract MessageBox {
         message = newMessage;
         sender = msg.sender;
     }
-    
+
     function setMessage2(string newMessage, string newNonce) public {
         emit Log(msg.sender, "setMessage() 2");
         message = newMessage;
@@ -34,7 +34,14 @@ contract MessageBox {
         sender = msg.sender;
     }
 
-    function setMessage3(string newMessage, string newNonce) public {
+    function setMessageFrom(address _from, string newMessage, string newNonce) public {
+        emit Log(_from, "setMessageFrom()");
+        message = newMessage;
+        msg_nonce = newNonce;
+        sender = _from;
+    }
+
+    function setMessageMax(string newMessage, string newNonce) public {
         emit Log(msg.sender, "setMessage() 3");
         message = newMessage;
         msg_nonce = newNonce;

@@ -1,5 +1,5 @@
-// -*- mode: emacs-lisp; coding: utf-8-unix -*-
 pragma solidity >=0.4.22 <0.7.0;
+// -*- mode: emacs-lisp; coding: utf-8-unix -*-
 //pragma solidity 0.4.19;
 
 // https://github.com/trufflesuite/truffle-logger-example
@@ -55,9 +55,9 @@ contract TxRelay {
         require(send_h == data_h, "TxRelay() diff _from");
 
         //Console.log("destination", destination);
-        emit Log( msg.sender, "TxRelay() msg.sender" );
-        emit Log( sender, "sender" );
-        emit Log( destination, "TxRelay() destination" );
+        //emit Log( msg.sender, "TxRelay() msg.sender" );
+        //emit Log( sender, "sender" );
+        //emit Log( destination, "TxRelay() destination" );
 
         // invoke method on behalf of sender
         require(destination.call(data), "TxRelay() call error");
