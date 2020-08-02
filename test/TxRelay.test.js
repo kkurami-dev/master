@@ -32,6 +32,7 @@ const MetaTransactionServer = require('../screens/metatx/metaTransactionServer')
 
 const compiledTxRelay = require('../build/contracts/TxRelay');
 const compiledMyToken = require('../build/contracts/MyToken');
+const L = require('./LogDecoder.js');
 
 var accounts;
 var txRelay;
@@ -41,53 +42,44 @@ var myToken;
 var myTokenAbi;
 var message;
 
-async function sendSignedTx(address, abi, functionName, args, keyp ){
-  const nonce = await web3.eth.getTransactionCount(keyp.address);
-  const params = {
-    to: address,
-    nonce: nonce,
-    gas: 2000000,
-    gasPrice: 2000000,
-    gasLimit: 2000000
-  };
-  const wrapperTx = new EthereumjsTx(params);
-  const rowTx = Transaction.createTx(abi,
-                                     functionName,
-                                     args,
-                                     wrapperTx,
-                                     keyp.privateKey);
-  web3.eth.sendSignedTransaction('0x' + rowTx)
-    .on('receipt', console.log);
-
-  /*  
-    var rawTx = await MetaTransactionClient.createTx(
-      myTokenAbi,
-      'transferTxRelay',
-      [accounts[0], accounts[1], "3"],
-      {to: myToken.options.address,
-       nonce: parseInt(clientAddressNonce),
-       gas: 2000000,
-       gasPrice: 2000000,
-       gasLimit: 2000000
+async function setToken(op, func, args, ac ){
+  var clientAddressNonce = await txRelay.methods.nonce(ac.address).call();
+  var serverAddressNonce = await web3.eth.getTransactionCount(config.server_account.address);
+  var rawTx = await MetaTransactionClient.createTx(
+    op.jsonInterface,
+    func,
+    args,
+    { to: op.address,
+      value: 0,
+      nonce: parseInt(clientAddressNonce),
+      gas: 2000000,
+      gasPrice: 2000000,
+      gasLimit: 2000000
     });
-  var Tx = require('ethereumjs-tx');
-  var privateKey = 
-  var rawTx = {
-    nonce: '0x00',
-    gasPrice: '0x09184e72a000',
-    gasLimit: '0x2710',
-    to: '0x0000000000000000000000000000000000000000',
-    value: '0x00',
-    data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057'
-  }
-
-  var tx = new Tx(rawTx);
-  tx.sign(privateKey);
-
-  var serializedTx = tx.serialize();
-*/
-  // console.log(serializedTx.toString('hex'));
-  // 0xf889808609184e72a00082271094000000000000000000000000000000000000000080a47f74657374320000000000000000000000000000000000000000000000000000006000571ca08a8bbf888cfa37bbf0bb965423625641fc956967b81d12e23709cead01446075a01ce999b56a8a88504be365442ea61239198e23d1fce7d00fcfc5cd3b44b7215f
+  txToServer = await MetaTransactionClient.createRawTxToRelay(
+    rawTx,
+    ac.address,
+    ac.privateKey,
+    txRelay.options.address
+  );
+  var signedTxToRelay = await MetaTransactionServer.createRawTxToRelay(
+    txRelayAbi,
+    txToServer.sig,
+    txToServer.to,
+    txToServer.from,
+    txToServer.data,
+    { "gas": 2000000,
+      "gasPrice": 2000000,
+      "gasLimit": 2000000,
+      "value": 0,
+      "to": txRelay.options.address,
+      "nonce": parseInt(serverAddressNonce), // nonce of address which signs tx ad server
+      "from": config.server_account.address
+    },
+    config.server_account.privateKey
+  );
+  const result = await web3.eth.sendSignedTransaction('0x' + signedTxToRelay);
+  //L.decodeLog(result);
 }
 
 before( async () => {
@@ -134,7 +126,8 @@ describe('txrelay', () => {
     console.log("MyToken address is " + myToken.options.address);
 
     var abi_json = JSON.stringify(myTokenAbi, " ", 2);
-    fs.writeFileSync( "my_token.json" , abi_json )
+    fs.writeFileSync( "abi/MyTokenAbi.json" , JSON.stringify(myTokenAbi, " ", 2) )
+    fs.writeFileSync( "abi/TxRelayAbiAbi.json" , JSON.stringify(txRelayAbi, " ", 2) )
 
     await web3.eth.sendTransaction({
       to: config.server_account.address,
@@ -143,93 +136,63 @@ describe('txrelay', () => {
       gas: '1000000'
     });
 
-    // const a0 = await sendSignedTx(myToken.options.address,
-    //                         myTokenAbi,
-    //                         "balanceOf",
-    //                         [accounts[0]],
-    //                         config.server_account );
-/*                           
-    var contract = new web3.eth.Contract(myTokenAbi, myToken.options.address);
-    var batch = new web3.BatchRequest();
-    //var batch = web3.createBatch();
-    batch.add(contract.methods.balanceOf(accounts[0]).call.request({from: accounts[0]}, function(error, result){ 
-      if(!error){
-        a0 = result;
-      } else{
-        console.log(error);//transaction failed
-      }
-    }));
-    batch.add(contract.methods.balanceOf(accounts[0]).call.request({from: accounts[1]}, function(error, result){ 
-      if(!error){
-        a1 = result;
-      } else{
-        console.log(error);//transaction failed
-      }
-    }));
-    //batch.execute();
-    
-    // var a0 = myToken.methods.balanceOf(accounts[0]).call();
-    // var a1 = myToken.methods.balanceOf(accounts[1]).call();
-    console.log("balanceOf", a0, a1);
-*/
+    await setToken( myToken.options,
+              "set_balance",
+              [ config.server_account.address, '1000000000000000000' ],
+              config.server_account );
 
-    console.log("balanceOf 0", await myToken.methods.balanceOf(accounts[0]).call());
-    console.log("balanceOf 1", await myToken.methods.balanceOf(accounts[1]).call());
+    console.log("address s", config.server_account.address);
+    console.log("address c", config.client_account.address);
+
+    web3.eth.getBalance(config.server_account.address).then(console.log);
+    web3.eth.getBalance(config.client_account.address).then(console.log);
+
+    console.log("balanceOf s", await myToken.methods.balanceOf(
+      config.server_account.address
+    ).call());
+    console.log("balanceOf c", await myToken.methods.balanceOf(
+      config.client_account.address
+    ).call());
+
+    //setToken(config.server_account.address, 100);
   });
 
   it('#01:can sign tranxsaction at client', async () => {
-    //var event = await txRelay.Log(config.server_account.address, "log");
-    //const event = myToken.Deposit({}, {fromBlock: 0, toBlock: 'latest'})
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // fetch nonce of sender address tracked at TxRelay
-    console.log("describe:txRelay.methods.nonce() 1");
-    var nonce = await txRelay.methods.nonce(config.client_account.address).call();
-    //console.log("myTokenAbi", abi_json);
+    var nonce = await txRelay.methods.nonce(config.server_account.address).call();
     var rawTx = await MetaTransactionClient.createTx(
       myTokenAbi,
       'transferTxRelay',
-      [ accounts[0],
-        accounts[1],
+      [ config.server_account.address,
+        config.client_account.address,
         "1000000" ],
-      {
-        to: accounts[1],
-        from: accounts[0],
+      { to: myToken.options.address,
         value: 0,
         nonce: parseInt(nonce), // nonce must match the one at TxRelay contract
-        gas:      2000000,
+        gas: 2000000,
         gasPrice: 2000000,
         gasLimit: 2000000
       }
     );
-    ////////////////////////////////////////
     txToServer = await MetaTransactionClient.createRawTxToRelay(
       rawTx,
-      config.client_account.address,
-      config.client_account.privateKey,
+      config.server_account.address,
+      config.server_account.privateKey,
       txRelay.options.address
     );
-    assert.equal(config.client_account.address, txToServer.from);
-    //assert.equal('0x'+ txToServer.to, myToken.options.address);
+    console.log("data", txToServer.data);
+    assert.equal(config.server_account.address, txToServer.from);
   });
 
   it('#02:can sign tranxsaction at server', async () => {
-    const t01_old = await myToken.methods.balanceOf(accounts[0]).call();
-    
-    ////////////////////////////////////////
-    // fetch nonce of sender address
-    console.log("describe:web3.eth.getTransactionCount()");
+    const t01_old = await myToken.methods.balanceOf(config.server_account.address).call();
     var nonce = await web3.eth.getTransactionCount(config.server_account.address);
-
-    console.log("describe:MetaTransactionServer.createRawTxToRelay()");
     var signedTxToRelay = await MetaTransactionServer.createRawTxToRelay(
       txRelayAbi,
       txToServer.sig,
       txToServer.to,
       txToServer.from,
       txToServer.data,
-      {
-        "gas": 2000000,
+      { "gas": 2000000,
         "gasPrice": 2000000,
         "gasLimit": 2000000,
         "value": 0,
@@ -239,35 +202,16 @@ describe('txrelay', () => {
       },
       config.server_account.privateKey
     );
-
-    console.log("describe:web3.eth.sendSignedTransaction()");
     const result = await web3.eth.sendSignedTransaction('0x' + signedTxToRelay);
-    ////////////////////////////////////////////////////////////////////////////////
-
-    // show Log event at TxRelay contract
-    console.log("result", result);
-    result.logs.forEach((value, index, ar) => {
-      var log = value;
-      console.log(web3.eth.abi.decodeLog([
-        {
-          type: 'address',
-          name: 'from'
-        },
-        {
-          type: 'string',
-          name: 'message'
-        }
-      ], log.data, log.topics))
-    });
-
-    const t01_new = await myToken.methods.balanceOf(accounts[0]).call();
+    L.decodeLog(result);
+    const t01_new = await myToken.methods.balanceOf(config.server_account.address).call();
     assert.notEqual(t01_old, t01_new);
 
-    const msg_nonce = await myToken.methods.msg_nonce().call();
-    assert.equal("0", msg_nonce);
+    // const msg_nonce = await myToken.methods.msg_nonce().call();
+    // assert.equal("0", msg_nonce);
     
-    const sender = await myToken.methods.sender().call();
-    assert.equal(txRelay.options.address, sender);
+    // const sender = await myToken.methods.sender().call();
+    // assert.equal(txRelay.options.address, sender);
   });
   return;
 

@@ -146,7 +146,7 @@ describe('txrelay-org', () => {
     ////////////////////////////////////////////////////////////////////////////////
 
     // show Log event at TxRelay contract
-    console.log("result", result);
+    //console.log("result", result);
     result.logs.forEach((value, index, ar) => {
       let log = value;
       console.log(web3.eth.abi.decodeLog([

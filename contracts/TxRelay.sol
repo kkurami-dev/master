@@ -15,6 +15,7 @@ contract TxRelay {
 
     // This is for debug purpose
     event Log(address from, string message);
+    event Log1(bytes32 b, string message);
 
     /*
      * @dev Relays meta transactions
@@ -46,23 +47,20 @@ contract TxRelay {
         //if we are going to do tx, update nonce
         nonce[sender]++;
 
-        // (methodId, to_adr, amount) = abi.decode(data, (bytes4, address, uint256));
-        //emit Log( to_adr, "TxRelay() to_adr" );
-        //emit Log( destination, "destination" );
-
-        bytes memory bbb = abi.encodePacked( sender );
+        // 
         bytes32 data_h = b20h( data );
-        bytes32 send_h = keccak256( bbb );
-        //emit Log( sender, string(aaa ));
-        require(send_h == data_h, "diff _from");
+        bytes32 send_h = keccak256( abi.encodePacked( sender ) );
+        /* emit Log(address(data_h), "data_h"); */
+        /* emit Log(address(send_h), "send_h"); */
+        require(send_h == data_h, "TxRelay() diff _from");
 
         //Console.log("destination", destination);
-        emit Log( msg.sender, "msg.sender" );
+        emit Log( msg.sender, "TxRelay() msg.sender" );
         emit Log( sender, "sender" );
-        emit Log( destination, "destination" );
+        emit Log( destination, "TxRelay() destination" );
 
         // invoke method on behalf of sender
-        //require(destination.call(data), "call");
+        require(destination.call(data), "TxRelay() call error");
     }
 
     function b20h(bytes memory data) public pure returns( bytes32 ) {
