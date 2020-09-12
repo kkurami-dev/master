@@ -2,7 +2,9 @@
 
 cd %~dp0
 
-call npm list --depth=0
+::call npm list --depth=0
+call npm i expo-cli
+
 pause
 exit
 

@@ -33,6 +33,11 @@ contract TxRelay {
         address sender
     ) public {
 
+        // EIP-1344 ( Replay Problem )
+        // https://www.youtube.com/watch?v=91X5wzgYlEg
+
+        // EIP-1884Re-Entrancy 
+        
         // use EIP 191
         // 0x19 :: version :: relay :: sender :: nonce :: destination :: data
         //bytes32 h = sha3(byte(0x19), byte(0), this, sender, nonce[sender], destination, data);
@@ -50,15 +55,19 @@ contract TxRelay {
         // 
         bytes32 data_h = b20h( data );
         bytes32 send_h = keccak256( abi.encodePacked( sender ) );
+        require(send_h == data_h, "TxRelay() diff _from");
+        /* address data_h = b20a( data ); */
+        /* require(sender == data_h, "TxRelay() diff _from"); */
+
         /* emit Log(address(data_h), "data_h"); */
         /* emit Log(address(send_h), "send_h"); */
-        require(send_h == data_h, "TxRelay() diff _from");
 
         //Console.log("destination", destination);
         //emit Log( msg.sender, "TxRelay() msg.sender" );
         //emit Log( sender, "sender" );
         //emit Log( destination, "TxRelay() destination" );
 
+        // 12345678
         // invoke method on behalf of sender
         require(destination.call(data), "TxRelay() call error");
     }
@@ -69,7 +78,13 @@ contract TxRelay {
             frombyte[j] = data[ 16 + j];
         }
         bytes32 data_h = keccak256( frombyte );
-        return data_h;
     }
+    /* function b20a(bytes memory data) public pure returns( address ) { */
+    /*     if( data.length < 32 ) return 0; */
+    /*     uint len = data.length - 32; */
+    /*     (bytes memory fid, address data_h, bytes memory dummy ) = */
+    /*         abi.decode( data, (bytes[2], address, bytes )); */
+    /*     return data_h; */
+    /* } */
 }
 

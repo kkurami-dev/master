@@ -5,10 +5,10 @@ sudo npm install --unsafe-perm --verbose -g dtrace-provider
 echo "----------------------------------------"
 sudo npm install --unsafe-perm --verbose -g  react-native-cli
 echo "----------------------------------------"
-npm i -g react-native-scripts
+npm i react-native-scripts
 echo "----------------------------------------"
-npm i -g expo-cli
+npm i expo-cli
 echo "----------------------------------------"
-npm i -g exp
+npm i exp
 echo "----------------------------------------"
-npm i -g turtle-cli
+npm i turtle-cli

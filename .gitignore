@@ -60,3 +60,4 @@ packages/
 ~$*
 /config.json
 /abi
+*/node_modules/
