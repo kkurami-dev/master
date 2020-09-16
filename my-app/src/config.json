@@ -1,0 +1,17 @@
+{
+  "server_account": {
+    "privateKey": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+    "address": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+    "id": 0
+  },
+  "client_account": {
+    "privateKey": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+    "address": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+    "id": 1
+  },
+  "oth_account": {
+    "privateKey": "0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef",
+    "address": "0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1",
+    "id": 2
+  }
+}

@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-const config = require('../../config');
+const config = require('../config');
 const Web3 = require('web3');
 const util = require("ethereumjs-util");
 const EthereumjsTx = require('ethereumjs-tx').Transaction;

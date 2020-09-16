@@ -1,7 +1,7 @@
 pragma solidity >=0.4.22 <0.7.0;
 //pragma solidity 0.4.19;
 
-import '@nomiclabs/buidler/console.sol';
+//import '@nomiclabs/buidler/console.sol';
 
 // This is test contract invoked by TxProxy
 // It can only record message and last sender

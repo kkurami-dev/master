@@ -61,3 +61,5 @@ packages/
 /config.json
 /abi
 */node_modules/
+package-lock.json
+*/build/

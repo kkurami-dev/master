@@ -1,22 +1,31 @@
 pragma solidity >=0.4.22 <0.7.0;
 /* -*- mode: emacs-lisp; coding: utf-8-unix -*- */
+//pragma solidity ^0.6.0;
 //pragma solidity ^0.4.18;
 
-
+//import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+//import "@zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+//import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+// ParsedContract.sol:15:1: ParserError: Expected pragma, import directive or contract/interface/library definition.
+// ParsedContract.sol  ParserError
 
 contract MyToken is StandardToken {
+//contract MyToken is ERC721 {
 
     string public name = "MyToken";
     string public symbol = "MTKN";
-    uint public decimals = 18;
+    //uint public decimals = 18;
+    //uint public INITIAL_SUPPLY = 10000 * (10 ** decimals);
 
     address txrel;
 
     // This is for debug purpose
     event Log(address from, string message);
 
-    constructor(uint initialSupply, address _txrel) public {
+        //ERC721("MyCollectible", "MCO")
+    constructor(uint initialSupply, address _txrel)
+        public {
         totalSupply_ = initialSupply;
         balances[msg.sender] = initialSupply;
         txrel = _txrel;
