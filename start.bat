@@ -1,5 +1,9 @@
 :: -*- coding: shift_jis-dos -*-
 
+
+c = "0x4A7C625A628981919f37E321A4f9E7C4a90AF15c"
+toke = 
+
 cd %~dp0
 
 ::call npm list --depth=0
