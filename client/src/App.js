@@ -4,6 +4,11 @@ import getWeb3 from "./getWeb3";
 
 import "./App.css";
 
+var AWS = require('aws-sdk');
+
+var token;
+var kmsEncyptedToken = "CiC**********************************************************************************************I=";
+
 class App extends Component {
   state = { storageValue: 0, web3: null, accounts: null, contract: null };
 
@@ -25,7 +30,7 @@ class App extends Component {
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance }, this.runExample);
+      this.setState({ web3, accounts, contract: instance }, this.runKms);
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -48,6 +53,28 @@ class App extends Component {
     this.setState({ storageValue: response });
   };
 
+  runKms = async () => {
+    const { accounts, contract } = this.state;
+
+    let response;
+    const kmsClient = new AWS.KMS({ region: 'ap-northeast-1',
+                                    apiVersion: '2014-11-01' });
+    // Encrypt a data key
+    const KeyId = 'arn:aws:kms:ap-northeast-1:176264229023:key/01f9ef3a-7f13-4fb8-b70c-f60d76f924ab';
+    let base64txt = new Buffer(kmsEncyptedToken).toString();
+    kmsClient.encrypt({ KeyId, Plaintext: base64txt }, (err, data) => {
+      if (err) {
+        console.log(err, err.stack); // an error occurred
+      } else {
+        console.log(data)
+        const { CiphertextBlob } = data;
+      }
+    });
+
+    // Update state with the result.
+    this.setState({ storageValue: response });
+  };  
+
   render() {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
@@ -65,6 +92,10 @@ class App extends Component {
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
         <div>The stored value is: {this.state.storageValue}</div>
+        <button>
+          AWS  KMS で暗号化
+        </button>
+        <br/>
       </div>
     );
   }
