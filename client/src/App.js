@@ -99,6 +99,23 @@ class App extends Component {
       </div>
     );
   }
+  /*
+Ethereum
+Lamda sign
+
+ropsten module=logs&action=getLogs の代用
+https://y-nakajo.hatenablog.com/entry/2017/12/06/144220
+  - ずっと監視したい時はfilter#watch
+  - 過去に発生した少量のEventを取得したい時はfilter#get()
+  - 過去に発生した大量のEventを取得したい時はfilter#get(callback)
+
+  web3.eth.filter.get
+    fromBlockからtoBlockまでの間に発生したEventをすべて返します。
+    toBlockが'latest'やundefinedの時は、getをcallした時点までの
+    Eventを返します。
+
+
+  */
 }
 
 export default App;
