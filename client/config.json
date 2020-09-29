@@ -1,0 +1,12 @@
+{
+  "server_account": {
+    "privateKey": "e48ad81b8b51b0a92abc7051ae4c7283e3d755297ab3ee13d5b379452134b667",
+    "address": "0x7b24883d4b7a1fb548db111548d18e46886f92b2",
+    "id": 1
+  },
+  "client_account": {
+    "privateKey": "06860f1494d05c58b8375ad6f0730198622c04496da6005645a6b6ac966ffebc",
+    "address": "0x7bee7cb5a042253dbd0ae7c2693da5e867976e1f",
+    "id": 2
+  }
+}

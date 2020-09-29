@@ -64,3 +64,4 @@ packages/
 package-lock.json
 */build/
 /.kazu_accessKeys.json
+**/contracts/*.json

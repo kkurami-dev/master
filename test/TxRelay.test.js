@@ -5,10 +5,11 @@ const provider = ganache.provider({
   "debug": true
 });
 const web3 = new Web3(provider);
-const config = require('../../my-app/src/config.json');
 
-const MetaTransactionClient = require('../../my-app/src/metatx/metaTransactionClient');
-const MetaTransactionServer = require('../../my-app/src/metatx/metaTransactionServer');
+const appli = "../client/";
+const config = require(appli + 'config.json');
+const MetaTransactionClient = require(appli + 'src/metatx/metaTransactionClient');
+const MetaTransactionServer = require(appli + 'src/metatx/metaTransactionServer');
 
 const compiledTxRelay = require('../build/contracts/TxRelay');
 const compiledMessageBox = require('../build/contracts/MessageBox');
@@ -22,7 +23,7 @@ let newMessage = 'Updated message for Message Box!!';
 before( async () => {
   accounts = await web3.eth.getAccounts();
 
-  txRelay = await new web3.eth.Contract(JSON.parse(compiledTxRelay.interface))
+  txRelay = await new web3.eth.Contract(compiledTxRelay.abi)
     .deploy({
       data: compiledTxRelay.bytecode,
       arguments: []
@@ -33,7 +34,7 @@ before( async () => {
     });
   txRelay.setProvider(provider);
 
-  messageBox = await new web3.eth.Contract(JSON.parse(compiledMessageBox.interface))
+  messageBox = await new web3.eth.Contract(compiledMessageBox.abi)
     .deploy({
       data: compiledMessageBox.bytecode,
       arguments: ["Hello from message box"]
@@ -68,7 +69,7 @@ describe('txrelay', () => {
     // fetch nonce of sender address tracked at TxRelay
     let nonce = await txRelay.methods.nonce(config.client_account.address).call();
 
-    let messageBoxAbi = JSON.parse(compiledMessageBox.interface);
+    let messageBoxAbi = compiledMessageBox.abi;
     let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage', [newMessage], {
       to: messageBox.options.address,
       value: 0,
@@ -93,7 +94,7 @@ describe('txrelay', () => {
     let nonce = await web3.eth.getTransactionCount(config.server_account.address);
 
     let signedTxToRelay = await MetaTransactionServer.createRawTxToRelay(
-      JSON.parse(compiledTxRelay.interface),
+      compiledTxRelay.abi,
       txToServer.sig,
       txToServer.to,
       txToServer.from,
@@ -143,7 +144,7 @@ describe('txrelay', () => {
     let serverAddressNonce = await web3.eth.getTransactionCount(config.server_account.address);
 
     let updateMessage = 'Here it updates message again';
-    let messageBoxAbi = JSON.parse(compiledMessageBox.interface);
+    let messageBoxAbi = compiledMessageBox.abi;
     let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage', [updateMessage], {
       to: messageBox.options.address,
       value: 0,
@@ -160,7 +161,7 @@ describe('txrelay', () => {
     );
 
     let signedTxToRelay = await MetaTransactionServer.createRawTxToRelay(
-      JSON.parse(compiledTxRelay.interface),
+      compiledTxRelay.abi,
       txToServer.sig,
       txToServer.to,
       txToServer.from,
@@ -192,7 +193,7 @@ describe('txrelay', () => {
     let serverAddressNonce = await web3.eth.getTransactionCount(config.server_account.address);
 
     let updateMessage = 'If this message is written to blockchain, test failed';
-    let messageBoxAbi = JSON.parse(compiledMessageBox.interface);
+    let messageBoxAbi = compiledMessageBox.abi;
     let rawTx = await MetaTransactionClient.createTx(messageBoxAbi, 'setMessage', [updateMessage], {
       to: messageBox.options.address,
       value: 0,
@@ -209,7 +210,7 @@ describe('txrelay', () => {
     );
 
     let signedTxToRelay = await MetaTransactionServer.createRawTxToRelay(
-      JSON.parse(compiledTxRelay.interface),
+      compiledTxRelay.abi,
       txToServer.sig,
       txToServer.to,
       config.server_account.address, // Since this is different from signer, this transaction should fail
