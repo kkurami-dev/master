@@ -486,6 +486,7 @@ var default_tx_values = {
 Contract ABI Specification
 https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html
 
+
 ## truffle develop
 
 Truffle Develop started at http://127.0.0.1:9545/
@@ -532,3 +533,13 @@ Commands:
   Build for production: cd client && npm run build
 
 npm install @openzeppelin/contracts
+
+
+## Matic (マティック)へのデプロイ
+[公式ページ](https://docs.matic.network/docs/develop/remix) 
+1. METAMASK で https://rpc-mumbai.matic.today に接続
+1. [gas 取得サイトの Faucet](https://faucet.matic.network/)に接続し、
+   MATIC Token を任意のアドレスに指定し 「Submit」→「Confirm」
+1.
+1.「.secret」に METAMASK のパスフレーズを記載
+1. 

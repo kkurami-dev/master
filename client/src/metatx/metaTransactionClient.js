@@ -40,11 +40,23 @@ class MetaTransactionClient  {
    * @param args
    * @param params
    */
+  static createTxA(data, params) {
+    let wrapperTx = new EthereumjsTx(params);
+    return Transaction.createTxA(data, wrapperTx);
+  };
+
+  /**
+   * Create unsigned Tx object which has real tx as data
+   * @param abi
+   * @param functionName
+   * @param args
+   * @param params
+   */
   static createTx(abi, functionName, args, params) {
     let wrapperTx = new EthereumjsTx(params);
     return Transaction.createTx(abi, functionName, args, wrapperTx);
   };
-
+  
   /**
    * Create data that can be sent to server. sent data is then signed at server and thrown to network
    * @param rawTx

@@ -1,15 +1,19 @@
-const ConvertLib = artifacts.require("../build/contracts/ConvertLib");
-const MetaCoin = artifacts.require("../build/contracts/MetaCoin");
+const cdir = '../client/src/contracts';
 
-const MyToken = artifacts.require('../build/contracts/MyToken');
-const TxRelay = require('../build/contracts/TxRelay');
-const MessageBox = require('../build/contracts/MessageBox');
+//const ConvertLib = artifacts.require(cdir + "/ConvertLib");
+//const MetaCoin = artifacts.require(cdir + "/MetaCoin");
 
-let fs;
+const MyToken = artifacts.require(cdir + '/MyToken');
+const TxRelay = require(cdir + '/TxRelay');
+const MessageBox = require(cdir + '/MessageBox');
+const SimpleStorage = require(cdir + '/SimpleStorageAbi');
+const fs = require("fs");
 
 function jsonWwrite (file, obj){
-  let data = JSON.stringify(obj.abi);
-  fs.writeFileSync(file, data)
+  let data = JSON.stringify(obj.abi,  " ", 2);
+  //console.log(file);
+  //console.log(data);
+  fs.writeFileSync("./client/src/configs/"+ file, data);
 }
 
 before( async () => {
@@ -17,7 +21,9 @@ before( async () => {
 
 describe('make', () => {
   it('deploys contracts', () => {
-    jsonWwrite("../../my-app/src/configs/MyTokenAbi.json", MyToken);
-    jsonWwrite("../../my-app/src/configs/TxRelayAbi.json", TxRelay);
+    jsonWwrite("MyTokenAbi.json", MyToken);
+    jsonWwrite("TxRelayAbi.json", TxRelay);
+    jsonWwrite("SimpleStorageAbi.json", SimpleStorage);
+    jsonWwrite("MessageBoxAbi.json", MessageBox);
   });
 });

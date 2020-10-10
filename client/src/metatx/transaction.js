@@ -33,7 +33,10 @@ class Transaction {
   static createTx(abi, functionName, args, wrapperTx, privateKey=null) {
     let types = Transaction.getTypesFromAbi(abi, functionName);
     let txData = Transaction.encodeFunctionTxData(functionName, types, args);
+    return Transaction.createTxA(txData, wrapperTx, privateKey);
+  };
 
+  static createTxA(txData, wrapperTx, privateKey=null) {
     let txObject = {};
     txObject.to = Transaction.add0x(wrapperTx.to);
     txObject.gasPrice = Transaction.add0x(wrapperTx.gasPrice);

@@ -17,6 +17,10 @@ contract TxRelay {
     event Log(address from, string message);
     event Log1(bytes32 b, string message);
 
+    // debug data
+    bytes32 public g_data_h;
+    bytes32 public g_send_h;
+    
     /*
      * @dev Relays meta transactions
      * @param sigV, sigR, sigS ECDSA signature on some data to be forwarded
@@ -55,6 +59,8 @@ contract TxRelay {
         // 
         bytes32 data_h = b20h( data );
         bytes32 send_h = keccak256( abi.encodePacked( sender ) );
+        g_data_h = data_h;
+        g_send_h = send_h;
         require(send_h == data_h, "TxRelay() diff _from");
         /* address data_h = b20a( data ); */
         /* require(sender == data_h, "TxRelay() diff _from"); */
@@ -78,7 +84,7 @@ contract TxRelay {
         for (uint j = 0; j < 20; j++) {
             frombyte[j] = data[ 16 + j];
         }
-        bytes32 data_h = keccak256( frombyte );
+        return keccak256( frombyte );
     }
     /* function b20a(bytes memory data) public pure returns( address ) { */
     /*     if( data.length < 32 ) return 0; */

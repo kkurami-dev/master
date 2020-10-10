@@ -38,7 +38,6 @@ class MetaTransactionServer  {
    * @returns {Promise<*>}
    */
   static async createRawTxToRelay(abi, sig, to, from, data, wrapperTx, privateKey) {
-
     return Transaction.createTx(abi, "relayMetaTx",
       [ sig.v,
         Transaction.add0x(sig.r.toString('hex')),

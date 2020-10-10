@@ -1,10 +1,13 @@
 import React, { Component } from "react";
 import SimpleStorageContract from "./contracts/SimpleStorage.json";
 import getWeb3 from "./getWeb3";
+import axios from 'axios';
 
 import "./App.css";
 
 var AWS = require('aws-sdk');
+
+const API_BASE_URL = 'https://4r3ki42pi3.execute-api.ap-northeast-1.amazonaws.com/prod/';
 
 var token;
 var kmsEncyptedToken = "CiC**********************************************************************************************I=";
@@ -30,7 +33,7 @@ class App extends Component {
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance }, this.runKms);
+      this.setState({ web3, accounts, contract: instance }, this.getDataFromApi);
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -39,6 +42,33 @@ class App extends Component {
       console.error(error);
     }
   };
+
+  getDataFromApi() {
+    let params = {
+      params: { address: this.state.place },
+    };
+    
+    console.log(API_BASE_URL + "", params)
+    return;
+    // APIをコール
+    console.log(API_BASE_URL + "", params)
+    axios.get(API_BASE_URL + "", params)
+      .then((response) => {
+        console.log(response)
+        // APIから取得したデータをstateに保存
+        this.setState({
+          message: response.data.message
+        });
+      })
+    axios.post(API_BASE_URL + "", params)
+      .then((error, response) => {
+        console.log(error, response)
+        // APIから取得したデータをstateに保存
+        this.setState({
+          message: response.data.message
+        });
+      })
+  }  
 
   runExample = async () => {
     const { accounts, contract } = this.state;
@@ -87,11 +117,15 @@ class App extends Component {
         <p>
           If your contracts compiled and migrated successfully, below will show
           a stored value of 5 (by default).
+          Web3:v{this.state.web3.version}
         </p>
         <p>
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
-        <div>The stored value is: {this.state.storageValue}</div>
+        <div>
+          The stored value is: {this.state.storageValue}
+          {this.state.message}
+        </div>
         <button>
           AWS  KMS で暗号化
         </button>
