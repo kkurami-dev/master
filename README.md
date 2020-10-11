@@ -540,6 +540,22 @@ npm install @openzeppelin/contracts
 1. METAMASK で https://rpc-mumbai.matic.today に接続
 1. [gas 取得サイトの Faucet](https://faucet.matic.network/)に接続し、
    MATIC Token を任意のアドレスに指定し 「Submit」→「Confirm」
-1.
+   ( METAMASK で指定したアドレスを active にする )
 1.「.secret」に METAMASK のパスフレーズを記載
-1. 
+1. truffle-config.js の編集
+1. truffle で Matic に接続
+1．deploy の実施
+
+## Matic (マティック)へのデプロイの自動化
+- [【Ethereum】Contractをネットワークにデプロイする](https://inon29.hateblo.jp/entry/2017/08/03/082103)
+
+### 課題
+1. solc でのコンパイルはどこで行う
+   - Lambda 上ではさすがに、時間やメモリきついのでは
+1. デプロイするアカウントは
+   (Lambda でコンパイルしないなら、KMSアカウントは秘密鍵、パスフレーズが不明な為、使えない)
+   
+
+- 参考
+  - [Truffle v5 を利用する [Solidity version 0.5]](https://noumenon-th.net/programming/2019/08/09/truffle-v5/)
+  - 
