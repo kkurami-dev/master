@@ -521,9 +521,6 @@ truffle(develop)> migrate
 truffle(develop)> test
 truffle(develop)> debug 0x??????????????
 
-
-Unbox successful, sweet!
-
 Commands:
   Compile:              truffle compile
   Migrate:              truffle migrate
@@ -544,10 +541,14 @@ npm install @openzeppelin/contracts
 1.「.secret」に METAMASK のパスフレーズを記載
 1. truffle-config.js の編集
 1. truffle で Matic に接続
+1. Matic 向けに再度コンパイル
 1．deploy の実施
 
 ## Matic (マティック)へのデプロイの自動化
 - [【Ethereum】Contractをネットワークにデプロイする](https://inon29.hateblo.jp/entry/2017/08/03/082103)
+
+### すでにデプロイ済のコントラクトを再度初期化
+
 
 ### 課題
 1. solc でのコンパイルはどこで行う
@@ -559,3 +560,6 @@ npm install @openzeppelin/contracts
 - 参考
   - [Truffle v5 を利用する [Solidity version 0.5]](https://noumenon-th.net/programming/2019/08/09/truffle-v5/)
   - 
+
+## AWS Lambda で DynamoDB を使いキューを実現（push, pop）
+

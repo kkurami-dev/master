@@ -7,7 +7,7 @@ const provider = ganache.provider({
 const web3 = new Web3(provider);
 
 const appli = "../client/";
-const config = require(appli + 'config.json');
+const config = require(appli + 'src/configs/config.json');
 const MetaTransactionClient = require(appli + 'src/metatx/metaTransactionClient');
 const MetaTransactionServer = require(appli + 'src/metatx/metaTransactionServer');
 

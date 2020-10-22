@@ -6,7 +6,7 @@ const cdir = '../client/src/contracts';
 const MyToken = artifacts.require(cdir + '/MyToken');
 const TxRelay = require(cdir + '/TxRelay');
 const MessageBox = require(cdir + '/MessageBox');
-const SimpleStorage = require(cdir + '/SimpleStorageAbi');
+const SimpleStorage = require(cdir + '/SimpleStorage');
 const fs = require("fs");
 
 function jsonWwrite (file, obj){
@@ -21,6 +21,9 @@ before( async () => {
 
 describe('make', () => {
   it('deploys contracts', () => {
+    console.log("process.config", process.config);
+    return;
+    
     jsonWwrite("MyTokenAbi.json", MyToken);
     jsonWwrite("TxRelayAbi.json", TxRelay);
     jsonWwrite("SimpleStorageAbi.json", SimpleStorage);

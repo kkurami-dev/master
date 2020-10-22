@@ -5,6 +5,23 @@ import axios from 'axios';
 
 import "./App.css";
 
+import metaTransactionClient from "./metatx/metaTransactionClient";
+import metaTransactionServer from "./metatx/metaTransactionServer";
+import Transaction from "./metatx/transaction";
+
+// const metaTransactionClient = require("./metatx/metaTransactionClient");
+// const metaTransactionServer = require("./metatx/metaTransactionServer");
+// const Transaction = require("./metatx/transaction");
+
+const fs = require("fs");
+const solc = require('solc');
+
+// 定数
+const BUFF_SIZE = 100;    // バッファーのサイズ
+const BUFF_POS  = 0;      // バッファーの保存開始位置
+const READ_SIZE = 3;      // 読み取るサイズ
+const READ_POS  = 0;      // 読み取り開始位置
+
 var AWS = require('aws-sdk');
 
 const API_BASE_URL = 'https://4r3ki42pi3.execute-api.ap-northeast-1.amazonaws.com/prod/';
@@ -12,10 +29,83 @@ const API_BASE_URL = 'https://4r3ki42pi3.execute-api.ap-northeast-1.amazonaws.co
 var token;
 var kmsEncyptedToken = "CiC**********************************************************************************************I=";
 
+function handleClick(e) {
+  e.preventDefault();
+  let altKey                  = e.altKey               ,
+      bubbles                 = e.bubbles              ,
+      button                  = e.button               ,
+      buttons                 = e.buttons              ,
+      cancelable              = e.cancelable           ,
+      clientX                 = e.clientX              ,
+      clientY                 = e.clientY              ,
+      ctrlKey                 = e.ctrlKey              ,
+      currentTarget           = e.currentTarget        ,
+      defaultPrevented        = e.defaultPrevented     ,
+      detail                  = e.detail               ,
+      dispatchConfig          = e.dispatchConfig       ,
+      eventPhase              = e.eventPhase           ,
+      getModifierState        = e.getModifierState     ,
+      isDefaultPrevented      = e.isDefaultPrevented()   ,
+      isPropagationStopped    = e.isPropagationStopped() ,
+      isTrusted               = e.isTrusted            ,
+      metaKey                 = e.metaKey              ,
+      movementX               = e.movementX            ,
+      movementY               = e.movementY            ,
+      nativeEvent             = e.nativeEvent          ,
+      pageX                   = e.pageX                ,
+      pageY                   = e.pageY                ,
+      relatedTarget           = e.relatedTarget        ,
+      screenX                 = e.screenX              ,
+      screenY                 = e.screenY              ,
+      shiftKey                = e.shiftKey             ,
+      target                  = e.target               ,
+      timeStamp               = e.timeStamp            ,
+      type                    = e.type                 ,
+      view                    = e.view                 ;
+  let log ={
+    e,
+    altKey,bubbles,button,buttons,cancelable,clientX,clientY,ctrlKey,currentTarget,defaultPrevented,detail,dispatchConfig,eventPhase,getModifierState,isDefaultPrevented,isPropagationStopped,isTrusted,metaKey,movementX,movementY,nativeEvent,pageX,pageY,relatedTarget,screenX,screenY,shiftKey,target,timeStamp,type,view
+  };
+  console.log(log);
+  console.log('The link was clicked.');
+}
+
+async function deployContract(web3, eth) {
+  console.log("deployContract", web3);
+
+  // 入れ物準備
+  const buff = Buffer.alloc(BUFF_SIZE);
+  let str = "";
+  
+  // ファイルを同期的に開いて内容を取得
+  try{
+    const networkId = await web3.eth.net.getId();
+    const deployedNetwork = obj.networks[networkId];
+
+    const obj = require("./contracts/TxRelay.json");
+    console.log(obj);
+
+    let bytecode = obj.bytecode;
+    let abi = obj.abi;
+
+    // デプロイに必要なGasを問い合わせる
+    let gasEstimate = web3.eth.estimateGas({data: bytecode});
+  }
+  catch(e){
+    console.log(e.message);
+  }  
+}
+
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null };
+  state = { storageValue: 0,
+            web3: null,
+            accounts: null,
+            contract: null
+          };
 
   componentDidMount = async () => {
+    console.log("componentDidMount");
+    
     try {
       // Get network provider and web3 instance.
       const web3 = await getWeb3();
@@ -30,6 +120,14 @@ class App extends Component {
         SimpleStorageContract.abi,
         deployedNetwork && deployedNetwork.address,
       );
+      
+      let getNodeInfo = web3.eth.getNodeInfo();
+      let log = {
+        web3, window,
+        accounts, networkId, deployedNetwork, instance,
+        getNodeInfo
+      };
+      console.log(log);
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -126,13 +224,11 @@ class App extends Component {
           The stored value is: {this.state.storageValue}
           {this.state.message}
         </div>
-        <button>
-          AWS  KMS で暗号化
-        </button>
-        <br/>
+        <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
+        <button onClick={deployContract.bind(this.state.web3)}>デプロイ</button><br/>
       </div>
     );
-  }
+  };
   /*
 Ethereum
 Lamda sign

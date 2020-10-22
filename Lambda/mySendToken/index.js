@@ -78,10 +78,10 @@ async function setup() {
   const web3 = new Web3( provider );
   console.log("new Web3 OK;");
 
-  let account;
+  let account = "0x5041Da2c2432ABD99AEBE874C18a326D95451ABC";
   try {
-    const accounts = await web3.eth.getAccounts();
-    account = accounts[0];
+    //const accounts = await web3.eth.getAccounts();
+    //account = accounts[0];
   } catch(e){
     console.log("web3.eth.getAccounts", e);
   }
