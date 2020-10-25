@@ -1,11 +1,11 @@
 var AWS = require('aws-sdk');
-AWS.config.update({
-  maxRetries: 4,
-  httpOptions: {
-    timeout: 30000,
-    connectTimeout: 7000
-  }
-});
+// AWS.config.update({
+//   maxRetries: 4,
+//   httpOptions: {
+//     timeout: 30000,
+//     connectTimeout: 7000
+//   }
+// });
 
 var kms = new AWS.KMS({apiVersion: '2014-11-01'}),
     Web3 = require('web3'),
@@ -62,45 +62,88 @@ const region = "ap-northeast-1";
  */
 
 const cliaddr = '0x196730A9c9331B2DF8057656802430cd6fBF65b8';
-var prop;
+var web3;
 
 async function setup() {
+  let stime = Date.now();
   console.log("setup start");
   //console.log("KMS", kms);
 
-  const provider = new kap.KmsProvider(
-    endpoint,
-    { region, keyIds: [keyId] },
-    //"ropsten",
-  );
-  console.log("kap.KmsProvider OK");
+  if (web3){
+    web3.currentProvider.engine.start();
+  } else {
+    const provider = new kap.KmsProvider(
+      endpoint,
+      { region, keyIds: [keyId] },
+      //"ropsten",
+    );
+    console.log("kap.KmsProvider OK");
 
-  const web3 = new Web3( provider );
-  console.log("new Web3 OK;");
+    web3 = new Web3( provider );
+    console.log("new Web3 OK;");
+  }
 
   let account = "0x5041Da2c2432ABD99AEBE874C18a326D95451ABC";
   try {
-    //const accounts = await web3.eth.getAccounts();
-    //account = accounts[0];
+    const accounts = await web3.eth.getAccounts();
+    account = accounts[0];
   } catch(e){
     console.log("web3.eth.getAccounts", e);
   }
-  console.log("account", account, "cliaddr",cliaddr);
+  //console.log("web3", web3);
+  //console.log("currentProvider", web3.currentProvider);
 
+  console.log("setup ether time:", Date.now() - stime, "ms");
   return{ web3, account };
 }
 
-async function check() {
+async function check(prop) {
+  let stime = Date.now();
+
   let web3 = prop.web3;
   let account = prop.account;
 
   let amo1 = await web3.eth.getBalance(account) / Math.pow(10, 18);
   let amo2 = await web3.eth.getBalance(cliaddr) / Math.pow(10, 18);
   let GasPrice = await web3.eth.getGasPrice();
-  console.log("getBalance kms:",amo1, "cli:",amo2, "GasPrice:",GasPrice);
+  console.log("Eth kms:",amo1, "cli:",amo2, "GasPrice:",GasPrice);
+
+  console.log("check time:", Date.now() - stime, "ms");
 }
 
-async function transfer() {
+async function transfer(prop) {
+  let stime = Date.now();
+  
+  let web3 = prop.web3;
+  let account = prop.account;
+
+  //送金の実行。実行結果としてトランザクションIDが返される。
+  let result;
+  web3.eth.sendTransaction(
+    {from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")}
+  )
+    .on('transactionHash', function(hash){
+      console.log("transfer on transactionHash", hash);
+    })
+    .on('receipt', function(receipt){
+      console.log("transfer on receipt", receipt);
+      result = receipt.logs[0].topics;
+    })
+    .on('confirmation', function(confirmationNumber, receipt){
+      console.log("transfer on confirmation", confirmationNumber, receipt);
+    })
+  // ガス不足エラーの場合、第二引数にレシートがセットされます。
+    .on('error', function(error, receipt){
+      let err = JSON.stringify(error)
+      console.error("transfer on error", err, receipt);
+    })
+    
+  console.log("transfer ether time:", Date.now() - stime, "ms");
+  return result;
+}
+async function transfer_ret(prop) {
+  let stime = Date.now();
+  
   let web3 = prop.web3;
   let account = prop.account;
 
@@ -108,30 +151,69 @@ async function transfer() {
   let result = await web3.eth.sendTransaction(
     {from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")}
   );
-  //console.log("transfer ether", result);
-  //console.log("transfer ether", result.logs[0].topics);
+    
+  console.log("transfer result", result);
+  console.log("transfer ether time:", Date.now() - stime, "ms");
+  return result.logs[0].topics
+}
+async function transfer_sync(prop) {
+  let stime = Date.now();
+  
+  let web3 = prop.web3;
+  let account = prop.account;
+
+  //送金の実行。実行結果としてトランザクションIDが返される。
+  let result;
+  await web3.eth.sendTransaction(
+    {from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")}
+  ).then(function(receipt){
+    console.log("transfer then", receipt);
+    result = receipt.logs[0].topics;
+  });
+    
+  console.log("transfer ether time:", Date.now() - stime, "ms");
+  return result;
 }
 
 exports.handler = async (event, context, callback) => {
   //context.callbackWaitsForEmptyEventLoop = false;//ESOCKETTIMEDOUT になる
   console.log("handler start");
-  prop = await setup();
-  await check();
-  let stime = Date.now();
-  await transfer();
-  let etime = Date.now() - stime;
-  console.log("transfer ether time:", etime);
-  await check();
 
-  console.log("prop", prop.account);
+  let result;
+  try {
+    let prop = await setup();
+    await check( prop );
+    switch(event.type) {
+    case 0: break;
+    case 1:
+      result = await transfer_sync(prop); break;
+    case 2:
+      result = await transfer_ret(prop);  break;
+    case 3:
+      result = await transfer(prop);      break;// time over
+    }
+    if(event.log && event.log === 1){
+      console.log("web3", prop.web3);
+      console.log("currentProvider", prop.web3.currentProvider);
+      console.log("engine", prop.web3.currentProvider.engine);
+    }
+    //console.log("engine 1", prop.web3.currentProvider.engine);
+    prop.web3.currentProvider.engine.stop();
+    //console.log("engine 2", prop.web3.currentProvider.engine);
+    await check(prop);
 
-  // TODO implement
+  } catch(e){
+    let msg = JSON.stringify(e);
+    console.error(msg);
+    result = msg;
+  }
+
   const response = {
     statusCode: 200,
     //    time: etime,
-    body: JSON.stringify('Hello from Lambda!'),
+    body: result,
   };
-  return response;
+  //return response;
   //throw response;// Status: Failed
-  //callback(null, response);//ESOCKETTIMEDOUT になる
+  callback(null, response);//ESOCKETTIMEDOUT になる
 };
