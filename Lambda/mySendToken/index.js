@@ -1,4 +1,6 @@
 var AWS = require('aws-sdk');
+
+// aws-kms-provider を使用する場合のエラー対応としては不足
 // AWS.config.update({
 //   maxRetries: 4,
 //   httpOptions: {
@@ -15,8 +17,12 @@ const keyId = "01f9ef3a-7f13-4fb8-b70c-f60d76f924ab";
 const endpoint = 'https://rpc-mumbai.matic.today';
 const region = "ap-northeast-1";
 
-
 /**
+ *
+ *
+ *
+ *
+ *
  * AWS Lambda context オブジェクト
  *   https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/python-context.html
  * 再試行とタイムアウトの問題
@@ -66,7 +72,7 @@ var web3;
 
 async function setup() {
   let stime = Date.now();
-  console.log("setup start");
+  console.log("setup start AWS Ver:",AWS.VERSION,  );
   //console.log("KMS", kms);
 
   if (web3){
@@ -176,13 +182,16 @@ async function transfer_sync(prop) {
 }
 
 exports.handler = async (event, context, callback) => {
-  //context.callbackWaitsForEmptyEventLoop = false;//ESOCKETTIMEDOUT になる
   console.log("handler start");
+  //context.callbackWaitsForEmptyEventLoop = false;//ESOCKETTIMEDOUT になる
 
   let result;
   try {
+    // web3 ライブラリの設定
     let prop = await setup();
+    // 現在の Eth 量の確認
     await check( prop );
+
     switch(event.type) {
     case 0: break;
     case 1:
@@ -193,19 +202,22 @@ exports.handler = async (event, context, callback) => {
       result = await transfer(prop);      break;// time over
     }
     if(event.log && event.log === 1){
-      console.log("web3", prop.web3);
-      console.log("currentProvider", prop.web3.currentProvider);
-      console.log("engine", prop.web3.currentProvider.engine);
+      console.log("web3", prop.web3,
+                  "currentProvider", prop.web3.currentProvider,
+                  "engine", prop.web3.currentProvider.engine);
     }
+
+    // TIMEDOUT 対応として、handler 外ではブロックチェーンの監視はしない
+    // handler 外の処理は次の Lambda 実行時に実行される為、20秒後のみ動作
+    // する様な場合は、タイムアウトとなってしまう。
     //console.log("engine 1", prop.web3.currentProvider.engine);
     prop.web3.currentProvider.engine.stop();
     //console.log("engine 2", prop.web3.currentProvider.engine);
+    
     await check(prop);
-
   } catch(e){
     let msg = JSON.stringify(e);
     console.error(msg);
-    result = msg;
   }
 
   const response = {
@@ -213,7 +225,7 @@ exports.handler = async (event, context, callback) => {
     //    time: etime,
     body: result,
   };
-  //return response;
+  //return response;// 関数が終わらなくなる
   //throw response;// Status: Failed
-  callback(null, response);//ESOCKETTIMEDOUT になる
+  callback(null, response); // engine.stop が必須
 };
