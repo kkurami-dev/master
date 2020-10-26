@@ -90,12 +90,8 @@ async function setup() {
   }
 
   let account = "0x5041Da2c2432ABD99AEBE874C18a326D95451ABC";
-  try {
-    const accounts = await web3.eth.getAccounts();
-    account = accounts[0];
-  } catch(e){
-    console.log("web3.eth.getAccounts", e);
-  }
+  // const accounts = await web3.eth.getAccounts();
+  // account = accounts[0];
   //console.log("web3", web3);
   //console.log("currentProvider", web3.currentProvider);
 
@@ -140,9 +136,9 @@ async function transfer(prop) {
     })
   // ガス不足エラーの場合、第二引数にレシートがセットされます。
     .on('error', function(error, receipt){
-      let err = JSON.stringify(error)
+      let err = JSON.stringify(error);
       console.error("transfer on error", err, receipt);
-    })
+    });
     
   console.log("transfer ether time:", Date.now() - stime, "ms");
   return result;
@@ -158,10 +154,10 @@ async function transfer_ret(prop) {
     {from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")}
   );
     
-  console.log("transfer result", result);
-  console.log("transfer ether time:", Date.now() - stime, "ms");
-  return result.logs[0].topics
+  console.log("transfer_ret result", result, " time:", Date.now() - stime, "ms");
+  return result.logs[0].topics;
 }
+
 async function transfer_sync(prop) {
   let stime = Date.now();
   
@@ -177,29 +173,167 @@ async function transfer_sync(prop) {
     result = receipt.logs[0].topics;
   });
     
-  console.log("transfer ether time:", Date.now() - stime, "ms");
+  console.log("transfer_sync", result, " time:", Date.now() - stime, "ms");
+  return result;
+}
+
+function transfer_nosync(prop) {
+  let stime = Date.now();
+  
+  let web3 = prop.web3;
+  let account = prop.account;
+
+  //送金の実行。実行結果としてトランザクションIDが返される。
+  let result;
+  web3.eth.sendTransaction(
+    {from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")}
+  ).then(function(receipt){
+    console.log("transfer_nosync then:", Date.now() - stime, "ms", receipt);
+    result = receipt.logs[0].topics;
+  });
+    
+  console.log("transfer_nosync time:", Date.now() - stime, "ms");
+  return result;
+}
+
+async function transfer_prom(prop) {
+  let stime = Date.now();
+  
+  let web3 = prop.web3;
+  let account = prop.account;
+
+  //送金の実行。実行結果としてトランザクションIDが返される。
+  let result;
+  web3.eth.sendTransaction({
+    from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
+  }, function(error, hash){
+    if( error ) throw error;
+    console.log("transfer_prom callback", Date.now() - stime, "ms", hash);
+    web3.eth.getTransactionReceipt(hash, function(error, receipt){
+      console.log("transfer_prom getTransactionReceipt", Date.now() - stime, "ms", receipt);
+      result = receipt;
+    });
+  });
+
+  // 自前での結果取得待ち
+  const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+  while(!result){
+    await sleep(300);
+  }
+  clearTimeout(sleep);
+    
+  console.log("transfer prom time:", Date.now() - stime, "ms");
+  return result;
+}
+
+async function transfer_show(prop) {
+  let stime = Date.now();
+  
+  let web3 = prop.web3;
+  let account = prop.account;
+
+  //送金の実行。実行結果としてトランザクションIDが返される。
+  let result;
+  web3.eth.sendTransaction({
+    from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
+  },function(error, hash){
+    if( error ) throw error;
+    console.log("transfer_show callback", "time:", Date.now() - stime, "ms", hash);
+  });
+    
+  console.log("transfer_show time:", Date.now() - stime, "ms", result);
+  return result;
+}
+
+function transfer_newprom(prop) {
+  let stime = Date.now();
+  
+  let web3 = prop.web3;
+  let account = prop.account;
+
+  //送金の実行。実行結果としてトランザクションIDが返される。
+  let result;
+  return new Promise((resolve) => {
+    web3.eth.sendTransaction({
+      from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
+    },function(error, hash){
+      if( error ) throw error;
+      console.log("transfer_newprom callback", "time:", Date.now() - stime, "ms", hash);
+      resolve( hash );
+    });
+  });
+}
+
+async function transfer_batch(prop) {
+  let stime = Date.now();
+  
+  let web3 = prop.web3;
+  let account = prop.account;
+
+  let result;
+  let result_arr = [];
+  var batch = new web3.BatchRequest();
+  console.log("new web3.BatchRequest()", batch.requestManager);
+  //送金の実行。実行結果としてトランザクションIDが返される。
+  batch.add(web3.eth.sendTransaction({
+    from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
+  }, function(error, hash){
+    //result = receipt.logs[0].topics;
+    result_arr.push( hash );
+    console.log("transfer callback 1", error, hash, result_arr.length);
+    if (result_arr.length == 2){
+      //console.log("batch.requestManager.engine", batch.requestManager.engine);
+      console.log("requestManager.provider", batch.requestManager.provider);
+    }
+  }));
+  batch.add(web3.eth.sendTransaction({
+    from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
+  }, function(error, hash){
+    //result = receipt.logs[0].topics;
+    result_arr.push( hash );
+    console.log("transfer callback 2", error, hash, result_arr.length);
+    if (result_arr.length == 2){
+      console.log("batch.requestManager", batch.requestManager);
+    }
+  }));
+  batch.execute();
+
+  console.log("web3.currentProvider.engine.stop();", batch.requestManager);
+  //web3.currentProvider.engine.stop();
+  batch.provider.engine.stop();
+    
+  console.log("transfer batch time:", Date.now() - stime, "ms");
   return result;
 }
 
 exports.handler = async (event, context, callback) => {
-  console.log("handler start");
+  console.log("handler start", event);
+  let sstime = Date.now();
   //context.callbackWaitsForEmptyEventLoop = false;//ESOCKETTIMEDOUT になる
 
   let result;
   try {
     // web3 ライブラリの設定
     let prop = await setup();
-    // 現在の Eth 量の確認
-    await check( prop );
 
     switch(event.type) {
-    case 0: break;
-    case 1:
-      result = await transfer_sync(prop); break;
-    case 2:
-      result = await transfer_ret(prop);  break;
-    case 3:
-      result = await transfer(prop);      break;// time over
+    case 0: await check( prop );break;
+    case 1: result = await transfer_sync(prop); break;
+    case 2: result = await transfer_ret(prop);  break;
+    case 3: {
+      let stime = Date.now();
+      result = await transfer_ret(prop);
+      result = await transfer_ret(prop);
+      console.log("transfer_ret x2 time:", Date.now() - stime, "ms");
+      break;
+    }
+    case 4: result = await transfer_batch(prop); break;
+    case 5: result = await transfer(prop); break;// time over
+    case 6: result = transfer_nosync(prop); break;
+    case 7: result = await transfer_prom(prop); break;
+    case 8: await transfer_newprom(prop); break;
+    case 9: await transfer_show(prop); break;
+      
     }
     if(event.log && event.log === 1){
       console.log("web3", prop.web3,
@@ -214,15 +348,16 @@ exports.handler = async (event, context, callback) => {
     prop.web3.currentProvider.engine.stop();
     //console.log("engine 2", prop.web3.currentProvider.engine);
     
-    await check(prop);
-  } catch(e){
+    //await check(prop);
+  } catch(e) {
     let msg = JSON.stringify(e);
     console.error(msg);
+    result = msg;
   }
 
   const response = {
     statusCode: 200,
-    //    time: etime,
+    time: Date.now() - sstime,
     body: result,
   };
   //return response;// 関数が終わらなくなる
