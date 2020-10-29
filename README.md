@@ -516,10 +516,15 @@ Private Keys:
 (9) 8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5
 
 ## (truffle debug)[https://y-nakajo.hatenablog.com/entry/2017/11/20/153346]
+$ truffle console --network matic
 truffle(develop)> compile
 truffle(develop)> migrate
 truffle(develop)> test
 truffle(develop)> debug 0x??????????????
+
+MessageBox.sol Migrations.sol MyToken.sol SimpleStorage.sol
+TxRelay.sol
+
 
 Commands:
   Compile:              truffle compile

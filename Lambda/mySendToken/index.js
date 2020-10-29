@@ -1,5 +1,4 @@
 var AWS = require('aws-sdk');
-
 // aws-kms-provider を使用する場合のエラー対応としては不足
 // AWS.config.update({
 //   maxRetries: 4,
@@ -8,14 +7,20 @@ var AWS = require('aws-sdk');
 //     connectTimeout: 7000
 //   }
 // });
+var Web3 = require('web3'),
+    kap = require('aws-kms-provider'),
+    ssAbi = require('SimpleStorageAbi.json');
+
+// レシート解析
+// in-app-purchase
 
 var kms = new AWS.KMS({apiVersion: '2014-11-01'}),
-    Web3 = require('web3'),
-    kap = require('aws-kms-provider');
+    docClient = new AWS.DynamoDB.DocumentClient();
 
-const keyId = "01f9ef3a-7f13-4fb8-b70c-f60d76f924ab";
-const endpoint = 'https://rpc-mumbai.matic.today';
-const region = "ap-northeast-1";
+const keyId = "01f9ef3a-7f13-4fb8-b70c-f60d76f924ab",
+      endpoint = 'https://rpc-mumbai.matic.today',
+      region = "ap-northeast-1",
+      ssAddress = '0xD5E3b6A8Ebe3c55c05318B264b865b990EBb242C';
 
 /**
  *
@@ -71,6 +76,7 @@ const cliaddr = '0x196730A9c9331B2DF8057656802430cd6fBF65b8';
 var web3;
 
 async function setup() {
+  const account = "0x5041Da2c2432ABD99AEBE874C18a326D95451ABC";
   let stime = Date.now();
   console.log("setup start AWS Ver:",AWS.VERSION,  );
   //console.log("KMS", kms);
@@ -83,13 +89,12 @@ async function setup() {
       { region, keyIds: [keyId] },
       //"ropsten",
     );
-    console.log("kap.KmsProvider OK");
+    console.log("kap.KmsProvider OK", account);
 
     web3 = new Web3( provider );
     console.log("new Web3 OK;");
   }
 
-  let account = "0x5041Da2c2432ABD99AEBE874C18a326D95451ABC";
   // const accounts = await web3.eth.getAccounts();
   // account = accounts[0];
   //console.log("web3", web3);
@@ -111,6 +116,21 @@ async function check(prop) {
   console.log("Eth kms:",amo1, "cli:",amo2, "GasPrice:",GasPrice);
 
   console.log("check time:", Date.now() - stime, "ms");
+}
+
+function putDynamoDB(Item) {
+  let params = {
+    TableName: "TestDB",
+    Item
+  };
+  console.log("Adding a new item...");
+  docClient.put(params, function(err, data) {
+    if (err) {
+      console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+    } else {
+      console.log("Added item:", JSON.stringify(data));
+    }
+  });  
 }
 
 async function transfer(prop) {
@@ -139,7 +159,7 @@ async function transfer(prop) {
       let err = JSON.stringify(error);
       console.error("transfer on error", err, receipt);
     });
-    
+  
   console.log("transfer ether time:", Date.now() - stime, "ms");
   return result;
 }
@@ -153,7 +173,7 @@ async function transfer_ret(prop) {
   let result = await web3.eth.sendTransaction(
     {from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")}
   );
-    
+  
   console.log("transfer_ret result", result, " time:", Date.now() - stime, "ms");
   return result.logs[0].topics;
 }
@@ -171,9 +191,46 @@ async function transfer_sync(prop) {
   ).then(function(receipt){
     console.log("transfer then", receipt);
     result = receipt.logs[0].topics;
+    done();
   });
-    
+  
   console.log("transfer_sync", result, " time:", Date.now() - stime, "ms");
+  return result;
+}
+
+async function deploy_contract(prop) {
+  let web3 = prop.web3;
+  let result;
+  let bytecode;
+
+  await web3.eth.getCode(ssAddress)
+    .then(res => bytecode = res);
+  //console.log("code:", bytecode);
+
+  console.log("web3.eth", web3.eth);
+  let gasPrice = await web3.eth.getGasPrice();
+  console.log("gasPrice:", gasPrice);
+
+  // デプロイに必要なGasを問い合わせる
+  let gasEstimate = await web3.eth.estimateGas({ from:prop.account, data: bytecode})
+      .then((error, data) => {
+        console.log("err", error, "data",data);
+      });
+  console.log("gasEstimate:", gasEstimate);
+
+  let TestContract = web3.eth.contract(ssAbi);
+
+  TestContract.new({from: prop.account, data:bytecode });
+  console.log("gasEstimate:", TestContract);
+
+  let newssAddress;
+
+  putDynamoDB({
+    BuildID: "data1",
+    now_time: Date.now(),
+    ssAddress: newssAddress
+  });
+  
   return result;
 }
 
@@ -191,7 +248,7 @@ function transfer_nosync(prop) {
     console.log("transfer_nosync then:", Date.now() - stime, "ms", receipt);
     result = receipt.logs[0].topics;
   });
-    
+  
   console.log("transfer_nosync time:", Date.now() - stime, "ms");
   return result;
 }
@@ -207,9 +264,11 @@ async function transfer_prom(prop) {
   web3.eth.sendTransaction({
     from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
   }, function(error, hash){
+    // トランザクションハッシュが使用可能
     if( error ) throw error;
     console.log("transfer_prom callback", Date.now() - stime, "ms", hash);
     web3.eth.getTransactionReceipt(hash, function(error, receipt){
+      // トランザクションレシートが利用可能
       console.log("transfer_prom getTransactionReceipt", Date.now() - stime, "ms", receipt);
       result = receipt;
     });
@@ -221,7 +280,7 @@ async function transfer_prom(prop) {
     await sleep(300);
   }
   clearTimeout(sleep);
-    
+  
   console.log("transfer prom time:", Date.now() - stime, "ms");
   return result;
 }
@@ -240,7 +299,7 @@ async function transfer_show(prop) {
     if( error ) throw error;
     console.log("transfer_show callback", "time:", Date.now() - stime, "ms", hash);
   });
-    
+  
   console.log("transfer_show time:", Date.now() - stime, "ms", result);
   return result;
 }
@@ -285,6 +344,7 @@ async function transfer_batch(prop) {
       //console.log("batch.requestManager.engine", batch.requestManager.engine);
       console.log("requestManager.provider", batch.requestManager.provider);
     }
+    done();
   }));
   batch.add(web3.eth.sendTransaction({
     from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
@@ -295,13 +355,14 @@ async function transfer_batch(prop) {
     if (result_arr.length == 2){
       console.log("batch.requestManager", batch.requestManager);
     }
+    done();
   }));
   batch.execute();
 
   console.log("web3.currentProvider.engine.stop();", batch.requestManager);
   //web3.currentProvider.engine.stop();
   batch.provider.engine.stop();
-    
+  
   console.log("transfer batch time:", Date.now() - stime, "ms");
   return result;
 }
@@ -315,10 +376,12 @@ exports.handler = async (event, context, callback) => {
   try {
     // web3 ライブラリの設定
     let prop = await setup();
+    console.log("account:", prop.account, "cliaddr:", cliaddr);
 
     switch(event.type) {
     case 0: await check( prop );break;
-    case 1: result = await transfer_sync(prop); break;
+    //case 1: result = await transfer_sync(prop); break;
+    case 1: result = await deploy_contract(prop); break;
     case 2: result = await transfer_ret(prop);  break;
     case 3: {
       let stime = Date.now();
