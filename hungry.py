@@ -31,3 +31,24 @@ print("x * y: ", x * y)
 print("x / y: ", x / y)
 print("x / 2.0: ", x / 2.0)
 
+A = np.array([[1, 2], [3, 4]])
+print(A)
+print(A.shape)
+print(A.dtype)
+B = np.array([[3, 0], [0, 6]])
+print("A + B: ", A + B)
+print("A * B: ", A * B)
+print("A * 10: ", A * 10)
+
+A1 = np.array([[1, 2], [3, 4]])
+B1 = np.array([10, 20])
+print("A1 * B1: ", A1 * B1)
+
+X = np.array([[51, 55],[14, 19], [0, 4]])
+print("X:",X, " X[0]:", X[0], "X[0][1]:",X[0][1])
+
+X1 = X.flatten()
+print("X.flatten X1:", X1)
+print("X.flatten X1 > 15:", X1 > 15)
+print("X.flatten X1[X1 > 15]:", X1[X1 > 15])
+
