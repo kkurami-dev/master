@@ -8,7 +8,11 @@ SET PYTHONPATH=C:\Python38\lib
 :: c:\python38\python.exe -m pip install --upgrade pip
 
 :: 追加モジュール
+::  配列
 :: pip install numpy
+::  グラフ描画
+:: pip install matplotlib
+:: goto :BATEND
 
 ::CMD
 ::PAUSE
@@ -24,4 +28,8 @@ SET PYTHONPATH=C:\Python38\lib
 py --version
 
 python hungry.py
+
+:BATEND
+@ECHO --- BATEND ---
 PAUSE
+EXIT
