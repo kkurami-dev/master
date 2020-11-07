@@ -14,7 +14,10 @@ if [ $# -eq 1 ]; then
 fi
 
 # リージョン毎にLambda関数のリストを出力する
-aws --profile ${PROFILE} lambda list-functions --output text --region "ap-northeast-1" --query 'Functions[*].[FunctionName, Runtime, LastModified, Description]' >> ./funcs.txt
+aws --profile ${PROFILE} lambda list-functions \
+    --output text \
+    --region "ap-northeast-1" \
+    --query 'Functions[*].[FunctionName, Runtime, LastModified, Description]' >> ./funcs.txt
 
 e7z='/C/Program\ Files/7-Zip/7z.exe'
 echo -n "" > ./curl_cmd.sh

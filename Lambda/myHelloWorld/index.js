@@ -1,3 +1,4 @@
+// Time-stamp: "2020-11-07 10:12:53 kuramitu"
 var AWS = require('aws-sdk');
 var docClient = new AWS.DynamoDB.DocumentClient({
   apiVersion: '2012-08-10',

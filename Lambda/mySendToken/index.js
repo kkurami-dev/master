@@ -203,6 +203,8 @@ async function deploy_contract(prop) {
   let result;
   let bytecode;
 
+  console.log("this:", this, Function.name);
+
   await web3.eth.getCode(ssAddress)
     .then(res => bytecode = res);
   //console.log("code:", bytecode);
