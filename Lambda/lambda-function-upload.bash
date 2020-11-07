@@ -18,7 +18,7 @@ zipUpload(){
     UZIP=${PWD}/${FPATH}.zip
     UZIP=${UZIP#/i}
 
-    echo 圧縮、アップロード、削除の一連処理
+    echo "# 圧縮、アップロード、削除の一連処理"
     7z a -tzip -r ${ZIP} ./${FPATH}/* > /dev/null
     aws lambda update-function-code \
         --function-name ${FPATH} \
@@ -31,7 +31,7 @@ zipUpload(){
     #     --payload '{"text":"hello"}' \
     #     --log-type Tail \
     #     --query 'LogResult' --output text | base64 -d
-    echo Lambda関数 ${FPATH} の直接実行
+    echo "# Lambda関数 ${FPATH} の直接実行"
     aws lambda invoke --function-name ${FPATH} out \
         --region "ap-northeast-1" \
         --payload '{"text":"hello"}' \
