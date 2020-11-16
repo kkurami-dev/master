@@ -82,7 +82,25 @@ exp build:android
 
 'expo'.
 
-----------------------------------------
+## Push 通知を行う
+- [Firebase Cloud Messagingに出会っていなかったらと思うと、ぞっとします。](https://qiita.com/Kazunori-Kimura/items/485b79bc6630453d853b)
+- [ReactNativeアプリでFCM通知メッセージを使う](https://qiita.com/mildsummer/items/0ace4fcc9f1609713fec)
+- Firebase [サーバー環境と FCM](https://firebase.google.com/docs/cloud-messaging/server?hl=ja#firebase-admin-sdk-for-fcm)
+- Firebase [バックグラウンド アプリにテスト メッセージを送信する](https://firebase.google.com/docs/cloud-messaging/android/first-message?hl=ja)
+- AWS [Android プッシュ通知のセットアップ](https://docs.aws.amazon.com/ja_jp/pinpoint/latest/developerguide/mobile-push-android.html)
+- AWS [プッシュ通知の送信](https://docs.aws.amazon.com/ja_jp/pinpoint/latest/developerguide/send-messages-push.html)
+
+1. 受信側のWebアプリ
+    $ npm install --save firebase
+    
+
+## アプリ内決済のレシート検証
+- [in-app-purchase](https://www.npmjs.com/package/in-app-purchase)
+- [github voltrue2/in-app-purchase](https://github.com/voltrue2/in-app-purchase)
+- 
+
+
+
 ## 画面
 
 01. App.js : 最初に読み込まれるファイル

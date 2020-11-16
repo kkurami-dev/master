@@ -17,8 +17,7 @@ var Web3 = require('web3'),
 var kms = new AWS.KMS({apiVersion: '2014-11-01'}),
     docClient = new AWS.DynamoDB.DocumentClient();
 
-const keyId = "01f9ef3a-7f13-4fb8-b70c-f60d76f924ab",
-      endpoint = 'https://rpc-mumbai.matic.today',
+const endpoint = 'https://rpc-mumbai.matic.today',
       region = "ap-northeast-1",
       ssAddress = '0xD5E3b6A8Ebe3c55c05318B264b865b990EBb242C';
 
@@ -75,9 +74,16 @@ const keyId = "01f9ef3a-7f13-4fb8-b70c-f60d76f924ab",
 const cliaddr = '0x196730A9c9331B2DF8057656802430cd6fBF65b8';
 var web3;
 
+async function scanDynamo(TableName, FilterExpression, ExpressionAttributeValues) {
+}
+
+
 async function setup() {
   const account = "0x5041Da2c2432ABD99AEBE874C18a326D95451ABC";
+  let prop = {};
   let stime = Date.now();
+  let keyId = process.env.KMS_KEY;
+
   console.log("setup start AWS Ver:",AWS.VERSION,  );
   //console.log("KMS", kms);
 
@@ -92,8 +98,12 @@ async function setup() {
     console.log("kap.KmsProvider OK", account);
 
     web3 = new Web3( provider );
+    prop.web3 = web3;
+    prop.account = account;
     console.log("new Web3 OK;");
   }
+
+  
 
   // const accounts = await web3.eth.getAccounts();
   // account = accounts[0];
@@ -101,7 +111,7 @@ async function setup() {
   //console.log("currentProvider", web3.currentProvider);
 
   console.log("setup ether time:", Date.now() - stime, "ms");
-  return{ web3, account };
+  return prop;
 }
 
 async function check(prop) {
@@ -191,7 +201,6 @@ async function transfer_sync(prop) {
   ).then(function(receipt){
     console.log("transfer then", receipt);
     result = receipt.logs[0].topics;
-    done();
   });
   
   console.log("transfer_sync", result, " time:", Date.now() - stime, "ms");
@@ -346,7 +355,6 @@ async function transfer_batch(prop) {
       //console.log("batch.requestManager.engine", batch.requestManager.engine);
       console.log("requestManager.provider", batch.requestManager.provider);
     }
-    done();
   }));
   batch.add(web3.eth.sendTransaction({
     from: account, to: cliaddr, value: web3.utils.toWei('1', "gwei")
@@ -357,7 +365,6 @@ async function transfer_batch(prop) {
     if (result_arr.length == 2){
       console.log("batch.requestManager", batch.requestManager);
     }
-    done();
   }));
   batch.execute();
 
@@ -372,6 +379,7 @@ async function transfer_batch(prop) {
 exports.handler = async (event, context, callback) => {
   console.log("handler start", event);
   let sstime = Date.now();
+
   //context.callbackWaitsForEmptyEventLoop = false;//ESOCKETTIMEDOUT になる
 
   let result;

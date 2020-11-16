@@ -1,5 +1,7 @@
 #!/bin/bash
 
-#truffle console -newwork development --show-log-statements --verbose-rpc
-truffle console -newwork development --show-log-statements
-truffle console 
+set -ue
+
+#truffle console --network development --show-log-statements --verbose-rpc
+#truffle console --network development --show-log-statements
+truffle console --network matic
