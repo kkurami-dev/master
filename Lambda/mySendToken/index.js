@@ -77,6 +77,8 @@ var web3;
 async function scanDynamo(TableName, FilterExpression, ExpressionAttributeValues) {
 }
 
+async function InAppPurchase(){
+}
 
 async function setup() {
   const account = "0x5041Da2c2432ABD99AEBE874C18a326D95451ABC";

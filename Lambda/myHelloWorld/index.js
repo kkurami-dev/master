@@ -1,9 +1,12 @@
-// Time-stamp: "2020-11-07 10:12:53 kuramitu"
-var AWS = require('aws-sdk');
+// Time-stamp: "2020-11-23 21:15:10 kuramitu"
+var AWS = require('aws-sdk'),
+    iap = require('in-app-purchase');
 var docClient = new AWS.DynamoDB.DocumentClient({
   apiVersion: '2012-08-10',
   region: "ap-northeast-1"
 });
+
+var app_reports_url = 'https://api.appstoreconnect.apple.com/v1/salesReports';
 
 async function intervalCheckDB( RequestId, now_time ){
   const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
@@ -40,7 +43,7 @@ async function intervalCheckDB( RequestId, now_time ){
   clearTimeout(sleep);
 }
 
-exports.handler = async (event, context, callback) => {
+async function quer(event, context, callback){
   context.callbackWaitsForEmptyEventLoop = false;
   const now_time = Date.now();
   const RequestId = '0x' + context.awsRequestId.replace(/-/g, '');
@@ -65,4 +68,16 @@ exports.handler = async (event, context, callback) => {
   }).promise();
 
   callback(null, 0);
+};
+
+async function InAppPurchase(){
+  // AppStore
+  //   Download Sales and Trends Reports
+  //   https://developer.apple.com/documentation/appstoreconnectapi/download_sales_and_trends_reports
+  // GooglePlay
+  //   Purchase Status API を使って購入を確認
+  //   https://developer.android.com/google/play/developer-api?hl=ja
+}
+
+exports.handler = async (event, context, callback) => {
 };
