@@ -24,7 +24,7 @@
 
     <fragment
         android:id="@+id/gameFragment"
-        android:name="com.kotlin.trivialdrive.GameFragment"
+        android:name="com.kotlin.cc_kk_trivialdrive.GameFragment"
         android:label="fragment_game"
         tools:layout="@layout/fragment_game">
         <action
@@ -33,7 +33,7 @@
     </fragment>
     <fragment
         android:id="@+id/makePurchaseFragment"
-        android:name="com.kotlin.trivialdrive.MakePurchaseFragment"
+        android:name="com.kotlin.cc_kk_trivialdrive.MakePurchaseFragment"
         android:label="fragment_make_purchase" tools:layout="@layout/fragment_make_purchase">
         <action
             android:id="@+id/action_playGame"

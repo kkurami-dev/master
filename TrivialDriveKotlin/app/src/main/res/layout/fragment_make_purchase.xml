@@ -29,7 +29,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/inapp_inventory"
         style="@style/InventoryRecyclerView"
-        tools:context="com.kotlin.trivialdrive.MakePurchaseFragment"
+        tools:context="com.kotlin.cc_kk_trivialdrive.MakePurchaseFragment"
         tools:listitem="@layout/inventory_item"
     />
     <androidx.appcompat.widget.AppCompatTextView
@@ -38,7 +38,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/subs_inventory"
         style="@style/InventoryRecyclerView"
-        tools:context="com.kotlin.trivialdrive.MakePurchaseFragment"
+        tools:context="com.kotlin.cc_kk_trivialdrive.MakePurchaseFragment"
         tools:listitem="@layout/inventory_item"
     />
 </androidx.appcompat.widget.LinearLayoutCompat>

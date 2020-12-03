@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive.billingrepo
+package com.kotlin.cc_kk_trivialdrive.billingrepo
 
 import android.app.Activity
 import android.app.Application
@@ -31,16 +31,16 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.SkuDetails
 import com.android.billingclient.api.SkuDetailsParams
-import com.kotlin.trivialdrive.billingrepo.BillingRepository.GameSku.CONSUMABLE_SKUS
-import com.kotlin.trivialdrive.billingrepo.BillingRepository.GameSku.INAPP_SKUS
-import com.kotlin.trivialdrive.billingrepo.BillingRepository.GameSku.SUBS_SKUS
-import com.kotlin.trivialdrive.billingrepo.localdb.AugmentedSkuDetails
-import com.kotlin.trivialdrive.billingrepo.localdb.Entitlement
-import com.kotlin.trivialdrive.billingrepo.localdb.GAS_PURCHASE
-import com.kotlin.trivialdrive.billingrepo.localdb.GasTank
-import com.kotlin.trivialdrive.billingrepo.localdb.GoldStatus
-import com.kotlin.trivialdrive.billingrepo.localdb.LocalBillingDb
-import com.kotlin.trivialdrive.billingrepo.localdb.PremiumCar
+import com.kotlin.cc_kk_trivialdrive.billingrepo.BillingRepository.GameSku.CONSUMABLE_SKUS
+import com.kotlin.cc_kk_trivialdrive.billingrepo.BillingRepository.GameSku.INAPP_SKUS
+import com.kotlin.cc_kk_trivialdrive.billingrepo.BillingRepository.GameSku.SUBS_SKUS
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.AugmentedSkuDetails
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.Entitlement
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GAS_PURCHASE
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GasTank
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GoldStatus
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.LocalBillingDb
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.PremiumCar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

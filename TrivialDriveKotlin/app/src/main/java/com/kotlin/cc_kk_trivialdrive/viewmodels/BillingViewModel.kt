@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive.viewmodels
+package com.kotlin.cc_kk_trivialdrive.viewmodels
 
 import android.app.Activity
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import com.kotlin.trivialdrive.billingrepo.BillingRepository
-import com.kotlin.trivialdrive.billingrepo.localdb.AugmentedSkuDetails
-import com.kotlin.trivialdrive.billingrepo.localdb.GasTank
-import com.kotlin.trivialdrive.billingrepo.localdb.GoldStatus
-import com.kotlin.trivialdrive.billingrepo.localdb.PremiumCar
+import com.kotlin.cc_kk_trivialdrive.billingrepo.BillingRepository
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.AugmentedSkuDetails
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GasTank
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GoldStatus
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.PremiumCar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive.billingrepo.localdb
+package com.kotlin.cc_kk_trivialdrive.billingrepo.localdb
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao

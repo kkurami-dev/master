@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive.adapters
+package com.kotlin.cc_kk_trivialdrive.adapters
 
 import android.content.res.Resources
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.kotlin.trivialdrive.R
-import com.kotlin.trivialdrive.billingrepo.localdb.AugmentedSkuDetails
+import com.kotlin.cc_kk_trivialdrive.R
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.AugmentedSkuDetails
 import kotlinx.android.synthetic.main.inventory_item.view.sku_description
 import kotlinx.android.synthetic.main.inventory_item.view.sku_image
 import kotlinx.android.synthetic.main.inventory_item.view.sku_price

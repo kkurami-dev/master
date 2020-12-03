@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive
+package com.kotlin.cc_kk_trivialdrive
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

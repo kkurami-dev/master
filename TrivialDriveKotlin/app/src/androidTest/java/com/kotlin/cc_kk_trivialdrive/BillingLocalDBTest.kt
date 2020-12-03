@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive
+package com.kotlin.cc_kk_trivialdrive
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.LiveData
@@ -21,13 +21,13 @@ import androidx.lifecycle.Observer
 import androidx.room.Room
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
-import com.kotlin.trivialdrive.billingrepo.localdb.AugmentedSkuDetailsDao
-import com.kotlin.trivialdrive.billingrepo.localdb.EntitlementsDao
-import com.kotlin.trivialdrive.billingrepo.localdb.GasTank
-import com.kotlin.trivialdrive.billingrepo.localdb.GoldStatus
-import com.kotlin.trivialdrive.billingrepo.localdb.LocalBillingDb
-import com.kotlin.trivialdrive.billingrepo.localdb.PremiumCar
-import com.kotlin.trivialdrive.billingrepo.localdb.PurchaseDao
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.AugmentedSkuDetailsDao
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.EntitlementsDao
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GasTank
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GoldStatus
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.LocalBillingDb
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.PremiumCar
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.PurchaseDao
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

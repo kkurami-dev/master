@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive
+package com.kotlin.cc_kk_trivialdrive
 
 
 import android.app.Activity
@@ -25,12 +25,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.kotlin.trivialdrive.adapters.SkuDetailsAdapter
-import com.kotlin.trivialdrive.billingrepo.localdb.AugmentedSkuDetails
-import com.kotlin.trivialdrive.viewmodels.BillingViewModel
+import com.kotlin.cc_kk_trivialdrive.adapters.SkuDetailsAdapter
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.AugmentedSkuDetails
+import com.kotlin.cc_kk_trivialdrive.viewmodels.BillingViewModel
 import kotlinx.android.synthetic.main.fragment_make_purchase.view.inapp_inventory
 import kotlinx.android.synthetic.main.fragment_make_purchase.view.subs_inventory
 

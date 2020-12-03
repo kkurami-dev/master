@@ -30,7 +30,7 @@
  * 3 - Grouping all the app's products and subscriptions in one file called Entitlements seem
  *      effective.
  */
-package com.kotlin.trivialdrive.billingrepo.localdb
+package com.kotlin.cc_kk_trivialdrive.billingrepo.localdb
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive.billingrepo
+package com.kotlin.cc_kk_trivialdrive.billingrepo
 
 /**
  * This class is an addendum. It shouldn't really be here: it should be on the secure server. But if

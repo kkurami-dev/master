@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive.billingrepo.localdb
+package com.kotlin.cc_kk_trivialdrive.billingrepo.localdb
 
 import androidx.room.Entity
 import androidx.room.Ignore
@@ -22,7 +22,7 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.Purchase
-import com.kotlin.trivialdrive.billingrepo.BillingRepository
+import com.kotlin.cc_kk_trivialdrive.billingrepo.BillingRepository
 
 /**
  * This [Entity] is used partly for convenience and partly for security.

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kotlin.trivialdrive
+package com.kotlin.cc_kk_trivialdrive
 
 
 import android.os.Bundle
@@ -25,8 +25,8 @@ import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
-import com.kotlin.trivialdrive.billingrepo.localdb.GasTank
-import com.kotlin.trivialdrive.viewmodels.BillingViewModel
+import com.kotlin.cc_kk_trivialdrive.billingrepo.localdb.GasTank
+import com.kotlin.cc_kk_trivialdrive.viewmodels.BillingViewModel
 import kotlinx.android.synthetic.main.fragment_game.btn_drive
 import kotlinx.android.synthetic.main.fragment_game.btn_purchase
 import kotlinx.android.synthetic.main.fragment_game.free_or_premium_car
