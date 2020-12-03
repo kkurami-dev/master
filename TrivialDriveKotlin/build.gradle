@@ -18,7 +18,7 @@
 
 buildscript {
     ext {
-        APP_ID = "com.isaidamier.kotlin.trivialdrive"
+        APP_ID = "com.isaidamier.kotlin.cc_kk_trivialdrive"
 
         //keystorePropertiesFilename lives in gradle.properties
         keystorePropertiesFile = rootProject.file(keystorePropertiesFilename)
