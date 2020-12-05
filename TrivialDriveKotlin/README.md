@@ -4,7 +4,7 @@
 # Google Play Console
 
 ## API アクセス
-[APIアクセス前](./202012_purchases/API アクセス-リンク前.jpg)
+![APIアクセス前](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク前.jpg "API アクセス-リンク前")
 
 # Trivial Drive Kotlin
 
