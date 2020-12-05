@@ -1,3 +1,11 @@
+
+# 設定
+
+# Google Play Console
+
+## API アクセス
+[APIアクセス前](./202012_purchases/API アクセス-リンク前.jpg)
+
 # Trivial Drive Kotlin
 
 Sample for In-App Billing version 3
