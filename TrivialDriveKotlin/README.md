@@ -34,13 +34,16 @@
    アクセス  
    ![新しいサービスアカウント作成](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_新しいサービスアカウント作成.jpg "新しいサービスアカウント作成")
 
-## リンクの設定
+## サービスアカウント作成
 
 1. ロールの設定
   追加で設定
   - Google Play Billing API
-  
-## リンクの設定後
+  - [クライアント ライブラリとサービス アカウントを使用してレポートをダウンロードする](https://support.google.com/googleplay/android-developer/answer/6135870?visit_id=637428342562683103-3129570089&p=stats_export&rd=1#export)
+
+
+
+## リンクの設定
 
 1. サービスアカウント関連付け後（反映までに時間がかかるかも）
   1. 関連付け結果  
@@ -48,7 +51,10 @@
   1. ユーザと権限  
     ![ユーザと権限](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_ユーザと権限.jpg "ユーザと権限")
   1. ユーザを招待  
-    ![_ユーザを招待](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_ユーザを招待.jpg "_ユーザを招待")
+    ![ユーザを招待](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_ユーザを招待.jpg "ユーザを招待")
+  1. アプリを追加  
+    ![アプリを追加](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-アプリを追加.jpg "アプリを追加")
+    追加し、変更を保存
 
 1. APIの動作確認
   1. ダッシュボード の 「APIとサービスの有効化」を選択  
@@ -56,7 +62,7 @@
   1. リストの中から「Google Play Android Developer API」を探し選択  
     ![APIライブラリ](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_APIライブラリ.jpg "APIライブラリ")
   1. API が有効なら、APIを試すを選択  
-    ![Google_Play_Android_Developer_API](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_Google_Play_Android_Developer_API.jpg "Google_Play_Android_Developer_API")
+    ![Google_Play_Android_Developer_API](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_Google_Play_Android_Developer_API.jpg "Google_Play_Android_Developer_API")  
 
 https://console.developers.google.com/
 
