@@ -40,7 +40,7 @@
   追加で設定
   - Google Play Billing API
   - [クライアント ライブラリとサービス アカウントを使用してレポートをダウンロードする](https://support.google.com/googleplay/android-developer/answer/6135870?visit_id=637428342562683103-3129570089&p=stats_export&rd=1#export)
-
+  - [Google サービス アカウントのセットアップ](https://docs.vmware.com/jp/VMware-Workspace-ONE-UEM/1907/Android_Platform/GUID-AWT-CREATE-GOOGLESERVACCOUNT.html)
 
 
 ## リンクの設定
