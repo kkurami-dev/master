@@ -34,6 +34,8 @@
    アクセス  
    ![新しいサービスアカウント作成](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_新しいサービスアカウント作成.jpg "新しいサービスアカウント作成")
 
+## リンクの設定
+
 1. ロールの設定
   追加で設定
   - Google Play Billing API
@@ -44,19 +46,33 @@
   1. 関連付け結果  
     ![関連付け後](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク後.jpg "関連付け後")
   1. ユーザと権限  
-    ![ユーザと権限](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_ユーザと権限.jpg"ユーザと権限")
+    ![ユーザと権限](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_ユーザと権限.jpg "ユーザと権限")
   1. ユーザを招待  
-    ![_ユーザを招待](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_ユーザを招待.jpg"_ユーザを招待")
+    ![_ユーザを招待](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_ユーザを招待.jpg "_ユーザを招待")
 
 1. APIの動作確認
   1. ダッシュボード の 「APIとサービスの有効化」を選択  
-  ![APIとサービスの有効化](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_APIとサービスの有効化.jpg "API アクセス-リンク_APIとサービスの有効化")  
+    ![APIとサービスの有効化](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_APIとサービスの有効化.jpg "API アクセス-リンク_APIとサービスの有効化")  
   1. リストの中から「Google Play Android Developer API」を探し選択  
-  ![APIライブラリ](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_APIライブラリ.jpg "APIライブラリ")
+    ![APIライブラリ](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_APIライブラリ.jpg "APIライブラリ")
   1. API が有効なら、APIを試すを選択  
-  ![Google_Play_Android_Developer_API](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_Google_Play_Android_Developer_API.jpg "Google_Play_Android_Developer_API")
+    ![Google_Play_Android_Developer_API](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_Google_Play_Android_Developer_API.jpg "Google_Play_Android_Developer_API")
 
 https://console.developers.google.com/
+
+# google-api-nodejs-client
+- google-api-nodejs-client-master/src/apis/androidpublisher/v3.ts
+- androidpublisher nodejs "price"
+
+## 【参考】
+  - [Android Publisherによるストア管理の自動化](https://techlife.cookpad.com/entry/2014/09/10/175601)
+  - [Google APIs Node.js Client を使って Google Analytics のページビューを取得する](https://dev.classmethod.jp/articles/using-google-apis-node-js-client/)
+
+## 【公式】
+- [購入ステータスAPI](https://docs.huihoo.com/android/4.4/google/play/billing/gp-purchase-status-api.html)
+- [Using OAuth 2.0 for Server to Server Applications](https://developers.google.com/identity/protocols/oauth2/service-account#httprest_1)
+- [googleapis/google-api-nodejs-client](https://github.com/googleapis/google-api-nodejs-client#oauth2-client)
+- [scope の一覧](https://developers.google.com/identity/protocols/oauth2/scopes)
 
 # Trivial Drive Kotlin
 https://github.com/android/play-billing-samples/tree/master/TrivialDriveKotlin
