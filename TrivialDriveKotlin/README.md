@@ -44,9 +44,9 @@
   1. 関連付け結果  
     ![関連付け後](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク後.jpg "関連付け後")
   1. ユーザと権限  
-    ![ユーザと権限](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセ-リンク_ユーザと権限.jpg "ユーザと権限")
+    ![ユーザと権限](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセ-リンク_ユーザと権限.jpg"ユーザと権限")
   1. ユーザを招待  
-    ![_ユーザを招待](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセ-リンク_ユーザを招待.jpg "_ユーザを招待")
+    ![_ユーザを招待](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセ-リンク_ユーザを招待.jpg"_ユーザを招待")
 
 1. APIの動作確認
   1. ダッシュボード の 「APIとサービスの有効化」を選択  
