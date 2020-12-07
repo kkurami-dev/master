@@ -31,7 +31,7 @@ async function PurchaseVlidate(){
 
   // 認証しアクセストークン取得
   let authorize = await jwtClient.authorize();
-  console.log("authorize %j", authorize);
+  //console.log("authorize %j", authorize);
 
   // レシート情報
   let receipt = {
@@ -40,17 +40,19 @@ async function PurchaseVlidate(){
     purchaseToken: ""
   };
 
+  // アプリ内アイテム一覧取得
   const result1 = await androidApi.inappproducts.list({
     packageName: receipt.packageName,
   });
   console.log("inappproducts.list %j", result1);
 
+  // レシートの検証
   const result2 = await androidApi.purchases.products.get({
     packageName: receipt.packageName,
     productId: receipt.productId,
     token: receipt.purchaseToken
   });
-  console.log("purchases.Products.get %j", result2);
+  console.log("purchases.products.get %j", result2);
 }
 
 exports.handler = async (event) => {

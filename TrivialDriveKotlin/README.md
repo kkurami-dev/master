@@ -13,9 +13,14 @@
 - アプリの公開、アプリ側の設定は情報が多々あるので、ここでは説明しない。  
   - [Google Play Storeにアプリを公開する](https://qiita.com/minuro/items/536ac3f7c27c1442a1cb)
   - [androidでアプリ内課金をする](http://tech-gym.com/2011/07/android/396.html)
+
 - OAuth 2.0 に付いても情報があるので、ここでは説明しない。  
   - [サーバー間のアプリケーションで OAuth 2.0 を使う](https://prev.net-newbie.com/apps/OAuth2ServiceAccount.html)
-  - 
+  - [GooglePlayの課金システム 準備する](https://developer.android.com/google/play/billing/getting-ready?hl=ja)
+    **注意![注意_BillingLibraryVer](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/注意_BillingLibraryVer.jpg "注意_BillingLibraryVer")**
+
+- 下記は使えなくなる
+  - [AIDL を通じて Google Play の課金システムを使用する](https://developer.android.com/google/play/billing/api)
 
 ## リンクの設定前
 
@@ -82,11 +87,11 @@
     ![Google_Play_Android_Developer_API](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-リンク_Google_Play_Android_Developer_API.jpg "Google_Play_Android_Developer_API")  
     エラーが出た場合はサービスアカウントの作成、サービスアカウントの設
     定を見直す。
-    --- エラー例 ---
-    - The project id used to call the Google Play Developer API has not been linked in the Google Play Developer Console.
-      -> アプリの追加が行われていない
-      -> 権限の設定が漏れている
-      -> SCOP が間違っている
+    --- エラー例 ---  
+    - The project id used to call the Google Play Developer API has not been linked in the Google Play Developer Console.  
+      -> アプリの追加が行われていない  
+      -> 権限の設定が漏れている  
+      -> SCOP が間違っている  
          - Google Play Console Developer
          - Google Play Billing API
          - androidpublisher
@@ -98,6 +103,7 @@ https://console.developers.google.com/
 
 # google-api-nodejs-client
 - [APIの一覧（Google Play Android Developer API）](https://developers.google.com/android-publisher/api-ref/rest?apix=true)
+- [API のソースや解説 Git](https://github.com/googleapis/google-api-nodejs-client#oauth2-client)
 - google-api-nodejs-client-master/src/apis/androidpublisher/v3.ts
 - androidpublisher nodejs "price"
 

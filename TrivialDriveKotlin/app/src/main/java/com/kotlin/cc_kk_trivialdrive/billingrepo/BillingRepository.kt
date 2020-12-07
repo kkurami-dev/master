@@ -752,7 +752,7 @@ class BillingRepository private constructor(private val application: Application
             when (billingResult.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
                     if (skuDetailsList.orEmpty().isNotEmpty()) {
-                        skuDetailsList.forEach {
+                        skuDetailsList?.forEach {
                             CoroutineScope(Job() + Dispatchers.IO).launch {
                                 localCacheBillingClient.skuDetailsDao().insertOrUpdate(it)
                             }
@@ -772,12 +772,12 @@ class BillingRepository private constructor(private val application: Application
      * [onPurchasesUpdated]
      */
     fun launchBillingFlow(activity: Activity, augmentedSkuDetails: AugmentedSkuDetails) =
-            launchBillingFlow(activity, SkuDetails(augmentedSkuDetails.originalJson))
+            launchBillingFlow(activity, SkuDetails(augmentedSkuDetails.originalJson!!))
 
     fun launchBillingFlow(activity: Activity, skuDetails: SkuDetails) {
         val oldSku: String? = getOldSku(skuDetails.sku)
         val purchaseParams = BillingFlowParams.newBuilder().setSkuDetails(skuDetails)
-                .setOldSku(oldSku).build()
+                .setOldSku(oldSku!!).build()
         playStoreBillingClient.launchBillingFlow(activity, purchaseParams)
     }
 
