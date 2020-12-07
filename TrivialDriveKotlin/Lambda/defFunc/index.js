@@ -3,48 +3,6 @@ const key = require('./gsuite_admin_service_account.json');
 const scopes = ['https://www.googleapis.com/auth/androidpublisher'];
 const subadress = 'kkurami.dev@gmail.com';// [組織に所属する誰かのメールアドレス]
 
-// サービスアカウント情報(`gsuite_admin_service_account.json`)の読み込み
-//const jwtClient = new google.auth.JWT(
-const getAuthorizedClient = () => {
-  let auth = new google.auth.JWT({
-    email: key.client_email,
-    key: key.private_key,
-    scopes,
-    subadress,
-  });
-  //console.log("auth.JWT", auth);
-  return auth;
-};
-
-// サービスアカウント情報を利用したクライアント認証
-//jwtClient.authorize();
-const getAndroidpublisher = () => {
-  let publisher = google.androidpublisher({
-    version: 'v3',
-    auth: getAuthorizedClient()
-  });
-  console.log("androidpublisher", publisher);
-  return publisher;
-}
-
-const requestProductValidation = data => new Promise((resolve, reject) => {
-  let ret;
-  let api = getAndroidpublisher();
-  ret = api.inappproducts( data );
-  console.log("inappproducts", ret);
-  ret = api.purchases.products.get(data, (err, response) => {
-    console.log("purchases get", err, response);
-    if (err) {
-      console.error(`The API returned an error: ${err}`);
-      resolve({status: "Error"});
-    } else {
-      const isValid = response && response.data && response.data.purchaseState === 0;
-      resolve({status: isValid ? "OK" : "Error"});
-    }
-  });
-  //console.log("purchases.products.get", ret);
-});
-
 async function PurchaseVlidate(){
   //return await requestProductValidation("com.isaidamier.kotlin.cc_kk_trivialdrive");
   // ・公式のAPI仕様書
@@ -55,6 +13,7 @@ async function PurchaseVlidate(){
   // ・Indexing API を使用する前提条件
   //    https://developers.google.com/search/apis/indexing-api/v3/prereqs?hl=ja#node.js
 
+  // 認証情報の作成
   // .readonly 付ける？
   const jwtClient = new google.auth.JWT(
     key.client_email,
@@ -64,6 +23,7 @@ async function PurchaseVlidate(){
     null
   );
 
+  // REST APIのセットアップ
   const androidApi = google.androidpublisher({
     version: 'v3',
     auth: jwtClient
@@ -73,6 +33,7 @@ async function PurchaseVlidate(){
   let authorize = await jwtClient.authorize();
   console.log("authorize %j", authorize);
 
+  // レシート情報
   let receipt = {
     packageName: "com.isaidamier.kotlin.cc_kk_trivialdrive",
     productId: "",
