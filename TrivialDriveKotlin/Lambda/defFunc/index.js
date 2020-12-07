@@ -75,14 +75,16 @@ async function PurchaseVlidate(){
 
   let receipt = {
     packageName: "com.isaidamier.kotlin.cc_kk_trivialdrive",
+    productId: "",
+    purchaseToken: ""
   };
 
   const result1 = await androidApi.inappproducts.list({
     packageName: receipt.packageName,
   });
-  console.log("purchases.Products.get %j", result1);
+  console.log("inappproducts.list %j", result1);
 
-  const result2 = await androidApi.purchases.Products.get({
+  const result2 = await androidApi.purchases.products.get({
     packageName: receipt.packageName,
     productId: receipt.productId,
     token: receipt.purchaseToken

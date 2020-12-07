@@ -38,10 +38,22 @@
 
 1. ロールの設定
   追加で設定
+  - [Google サービス アカウントのセットアップ](https://docs.vmware.com/jp/VMware-Workspace-ONE-UEM/1907/Android_Platform/GUID-AWT-CREATE-GOOGLESERVACCOUNT.html)
+  - [ロールについて](https://cloud.google.com/iam/docs/understanding-roles)
+  - [リソースへのアクセス権の付与、変更、取り消し](https://cloud.google.com/iam/docs/granting-changing-revoking-access?_ga=2.158656380.-794735377.1607174412)
   - Google Play Billing API
   - [クライアント ライブラリとサービス アカウントを使用してレポートをダウンロードする](https://support.google.com/googleplay/android-developer/answer/6135870?visit_id=637428342562683103-3129570089&p=stats_export&rd=1#export)
-  - [Google サービス アカウントのセットアップ](https://docs.vmware.com/jp/VMware-Workspace-ONE-UEM/1907/Android_Platform/GUID-AWT-CREATE-GOOGLESERVACCOUNT.html)
 
+  ①の権限は Google Play Console を参照出来る権限を持っており、こちら
+  の鍵を使用すると、AWS Lambda などから googleapi を使い参照ができる。  
+  ②の権限は Google Play Console への参照権限が足りず、Google Play
+  Console に表示されない  
+
+  1. サービスアカウントを作成する  
+  1. IAMを設定する(設定済表示)  
+    ![設定済のIAM](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-設定後IAM.jpg "設定後IAM")
+  1. ロールを割り当てる(設定済表示)  
+    ![設定済のIAMロール](https://github.com/kkurami-dev/master/blob/in-app-purchase/TrivialDriveKotlin/202012_purchases/API%20アクセス-設定後IAMロール.jpg "設定後IAMロール")
 
 ## リンクの設定
 
@@ -85,6 +97,7 @@
 https://console.developers.google.com/
 
 # google-api-nodejs-client
+- [APIの一覧（Google Play Android Developer API）](https://developers.google.com/android-publisher/api-ref/rest?apix=true)
 - google-api-nodejs-client-master/src/apis/androidpublisher/v3.ts
 - androidpublisher nodejs "price"
 
