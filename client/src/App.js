@@ -4,6 +4,7 @@ import getWeb3 from "./getWeb3";
 import axios from 'axios';
 
 import "./App.css";
+import DropDownMenu from './Menu.js'
 
 import metaTransactionClient from "./metatx/metaTransactionClient";
 import metaTransactionServer from "./metatx/metaTransactionServer";
@@ -209,6 +210,10 @@ class App extends Component {
     }
     return (
       <div className="App">
+        <div>
+          <p>hello menu</p>
+          <DropDownMenu />
+        </div>
         <h1>Good to Go!</h1>
         <p>Your Truffle Box is installed and ready.</p>
         <h2>Smart Contract Example</h2>
