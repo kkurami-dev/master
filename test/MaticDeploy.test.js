@@ -1,10 +1,15 @@
-const assert = require('assert');
-const ganache = require('ganache-cli');
-const Web3 = require('web3');
-const provider = ganache.provider({
-  "debug": true
-});
-const web3 = new Web3(provider);
+const assert = require('assert'),
+      ganache = require('ganache-cli'),
+      Web3 = require('web3'),
+      provider = ganache.provider({
+        "debug": true
+      }),
+      web3 = new Web3(provider),
+
+// npm install -g solc
+      path = require('path'),
+      fs = require('fs'),
+      solc = require('solc');
 
 const appli = "../client/";
 const config = require(appli + 'src/configs/config.json');
@@ -49,7 +54,16 @@ async function getlog(no){
   return arr;
 }
 
+function SolcCompile( file ){
+  const IndexPath = path.resolve(__dirname, 'contracts', file),
+        source = fs.readFileSync(IndexPath, 'utf8'),
+        log = solc.compile(source,1);
+  console.log("SolcCompile", log);
+}
+
 before( async () => {
+  return;
+
   accounts = await web3.eth.getAccounts();
 
   txRelay = await new web3.eth.Contract(compiledTxRelay.abi)

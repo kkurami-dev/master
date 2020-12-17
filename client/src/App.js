@@ -14,7 +14,7 @@ import Transaction from "./metatx/transaction";
 // const Transaction = require("./metatx/transaction");
 
 const fs = require("fs");
-const solc = require('solc');
+//const solc = require('solc');
 
 // 定数
 const BUFF_SIZE = 100;    // バッファーのサイズ
@@ -105,7 +105,7 @@ class App extends Component {
 
   componentDidMount = async () => {
     console.log("componentDidMount");
-    
+
     try {
       // Get network provider and web3 instance.
       const web3 = await getWeb3();

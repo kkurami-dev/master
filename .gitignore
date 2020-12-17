@@ -125,7 +125,7 @@ GTAGS
 *.lock
 *VirtualBox*
 /.emacs.d/places
-.#*
+.\#*
 archive-contents
 /.emacs.d/
 /TAGS
@@ -133,7 +133,7 @@ _*
 .hg
 .svn
 .git
-#*
+\#*
 /CMake/
 /.windows
 /.gnupg

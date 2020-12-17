@@ -20,10 +20,11 @@ before( async () => {
 });
 
 describe('make', () => {
+  return;
+
   it('deploys contracts', () => {
     console.log("process.config", process.config);
     jsonWwrite("SimpleStorageAbi.json", SimpleStorage);
-    return;
     
     jsonWwrite("MyTokenAbi.json", MyToken);
     jsonWwrite("TxRelayAbi.json", TxRelay);
