@@ -104,6 +104,18 @@ class App extends Component {
             contract: null
           };
 
+   constructor() {
+     super();
+     this.state = {
+       data:{
+         val1:"",
+         val2:"",
+       },
+       some_code: "",
+       alert_message: ""
+     };
+   }
+
   componentDidMount = async () => {
     console.log("componentDidMount");
 
@@ -202,12 +214,26 @@ class App extends Component {
 
     // Update state with the result.
     this.setState({ storageValue: response });
-  };  
+  };
+
+  handleOnChange = (e) => {
+    let data = this.state.data;
+    //console.log(e);
+    //console.log(e.target);
+    switch(e.target.name){
+    case "1": data.val1 = e.target.value; break;
+    case "2": data.val2 = e.target.value; break;
+    }
+    this.setState({ data });
+    //this.setState({ some_code: e.target.value });
+  };
 
   render() {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
+
+    let data = this.state.data;
     return (
       <div className="App">
         <div>
@@ -227,10 +253,21 @@ class App extends Component {
         </p>
         <div>
           The stored value is: {this.state.storageValue}
-          {this.state.message}
+          {this.state.message}<br />
+          {data.val1}<br />
+          {data.val2}<br />
         </div>
         <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
         <button onClick={deployContract.bind(this.state.web3)}>デプロイ</button><br/>
+        <p>ここに入力①
+          <input type="text" name="1" value={data.val1} onChange={e => this.handleOnChange(e)} />
+        </p>
+        <p>ここに入力②
+          <input type="text" name="2" value={data.val2} onChange={e => this.handleOnChange(e)} />
+        </p>
+        <div>
+          <input type="submit" value="確定" onClick={() => this.doSomething()} />
+        </div>
       </div>
     );
   };
