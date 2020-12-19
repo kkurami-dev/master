@@ -31,7 +31,15 @@ export default class DataList extends React.Component {
   /**
    * リストの選択時の処理
    */
-  handleClick = (e) => {
+  item_edit = (e) => {
+    let val = e.target.name;
+    // this.setState({
+    //   listOpen: false,
+    // })
+    console.log("data", val);
+    history.push({ pathname: '/detail', state: { talbe:1, ...itemList[val] }});
+  }
+  item_delete = (e) => {
     let val = e.target.name;
     // this.setState({
     //   listOpen: false,
@@ -42,16 +50,24 @@ export default class DataList extends React.Component {
 
   render() {
     return (
-    <ul>
-      <For of={itemList} ifEmpty={<div>no items</div>}>
-        {(item, {isLast, key}) => (
-          <li>
-            {item.title} {isLast && '(最後)'}
-            <button onClick={this.handleClick} name={key}>詳細</button>
-          </li>
-        )}
-      </For>
-    </ul>
+      <table className="type06">
+        <thead>
+          <tr>  <th >位置</th>  <th >メニュー</th> <th >説明</th> <th colspan="2" >操作</th> </tr>
+        </thead>
+        <tbody>
+          <For of={itemList} ifEmpty={<div>no items</div>}>
+            {(item, {isLast, key}) => (
+              <tr>
+                <td>{key}{isLast && '(最後)'}</td>
+                <td>{item.name}</td>
+                <td>{item.title} </td>
+                <td><button onClick={this.item_edit} name={key}>編集</button></td>
+                <td><button onClick={this.item_delete} name={key}>削除</button></td>
+              </tr>
+            )}
+          </For>
+        </tbody>
+      </table>
     );
   }
 }
