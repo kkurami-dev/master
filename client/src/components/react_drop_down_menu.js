@@ -7,6 +7,7 @@ import onClickOutside from 'react-onclickoutside'
 import "../App.css";
 import history from '../history';
 
+/** メニュー項目(json でファイルにしてもよい) */
 const menuList = [
   {name:"/welcom",  title:"welcom へ"},
   {name:'/hello',   title:"hello へ"},
@@ -20,7 +21,7 @@ const menuList = [
 ];
 
 /**
- * render() から呼べるけど this が
+ * render() から呼べるけど this が関連しないので、メニューが閉じれない
  */
 function MakeMenuListF(props) {
   return (
