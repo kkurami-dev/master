@@ -24,12 +24,7 @@ class DropDownMenu extends React.Component {
     })
     //alert(val)
     console.log("menu", val);
-    switch(val){
-    case 1: history.push('welcome'); break;
-    case 2: history.push('hello'); break;
-    case 3: history.push('from'); break;
-    case 4: history.push('eth'); break;
-    }
+    history.push(val);
   }
  
   handleClickOutside() {
@@ -48,19 +43,19 @@ class DropDownMenu extends React.Component {
         {listOpen && (
           <div className="menuBox">
             <div className="menuContent">
-              <div onClick={this.handleClickMenu.bind(this, 1)}>menu 1</div>
+              <div onClick={this.handleClickMenu.bind(this, '/welcome')}>welcom へ</div>
             </div>
             <div className="menuContent">
-              <div onClick={this.handleClickMenu.bind(this, 2)}>menu 2</div>
+              <div onClick={this.handleClickMenu.bind(this, '/hello')}>hello へ</div>
             </div>
             <div className="lastMenuContent">
-              <div onClick={this.handleClickMenu.bind(this, 3)}>menu 3</div>
+              <div onClick={this.handleClickMenu.bind(this, '/form')}>form へ</div>
             </div>
             <div className="lastMenuContent">
-              <div onClick={this.handleClickMenu.bind(this, 4)}>menu 4</div>
+              <div onClick={this.handleClickMenu.bind(this, '/aws_cwl')}>CloudWatch Logs</div>
             </div>
             <div className="lastMenuContent">
-              <div onClick={this.handleClickMenu.bind(this, 5)}>menu 5</div>
+              <div onClick={this.handleClickMenu.bind(this, '/aws_ddb')}>DynamoDB アクセス確認</div>
             </div>
           </div>
         )}

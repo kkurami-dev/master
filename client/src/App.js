@@ -25,7 +25,6 @@ import Web3Ethereum from './components/web3_ethereum';
 
 import "./App.css";
 
-
 //var dom = require('react-router-dom');
 //var BrowserRouter = dom.BrowserRouter;
 //var Switch = dom.Switch;
@@ -34,9 +33,15 @@ class App extends Component {
   handleClick = ( e ) => {
     //console.log(e.target, history);
     switch(e.target.name){
-    case "top": history.push('/'); break;
-    case "back": history.goBack(); break;
-    default: history.push('/'); break;
+    case "top":
+      history.push('/');
+      break;
+    case "back":
+      history.goBack();
+      break;
+    default:
+      history.push('/');
+      break;
     }
   };
 
@@ -60,6 +65,9 @@ class App extends Component {
             <Route path="/aws_cwl" component={CloudWatch} />
             <Route path="/aws_ddb" component={DynamoDB} />
             <Route path="/aws_kms" component={Kms} />
+
+            <Route path="/input" component={Input} />
+            <Route path="/storage" component={Storage} />
 
             <Route path="/eth" component={Web3Ethereum} />
           </div>
