@@ -6,22 +6,11 @@ import Main from './components/main';
 import Welcome from './components/welcome';
 import Hello from './components/hello';
 import Form from './components/form';
+
+import DropDownMenu from './components/react_drop_down_menu'
+
 import Web3Ethereum from './components/web3_ethereum';
 
-import SimpleStorageContract from "./contracts/SimpleStorage.json";
-import getWeb3 from "./getWeb3";
-import axios from 'axios';
-
-import "./App.css";
-import DropDownMenu from './Menu.js'
-
-import metaTransactionClient from "./metatx/metaTransactionClient";
-import metaTransactionServer from "./metatx/metaTransactionServer";
-import Transaction from "./metatx/transaction";
-
-// const metaTransactionClient = require("./metatx/metaTransactionClient");
-// const metaTransactionServer = require("./metatx/metaTransactionServer");
-// const Transaction = require("./metatx/transaction");
 
 const fs = require("fs");
 //const solc = require('solc');
@@ -132,71 +121,6 @@ class App extends Component {
        alert_message: ""
      };
    }
-
-  componentDidMount = async () => {
-    console.log("componentDidMount");
-
-    try {
-      // Get network provider and web3 instance.
-      const web3 = await getWeb3();
-
-      // Use web3 to get the user's accounts.
-      const accounts = await web3.eth.getAccounts();
-
-      // Get the contract instance.
-      const networkId = await web3.eth.net.getId();
-      const deployedNetwork = SimpleStorageContract.networks[networkId];
-      const instance = new web3.eth.Contract(
-        SimpleStorageContract.abi,
-        deployedNetwork && deployedNetwork.address,
-      );
-      
-      let getNodeInfo = web3.eth.getNodeInfo();
-      let log = {
-        web3, window,
-        accounts, networkId, deployedNetwork, instance,
-        getNodeInfo
-      };
-      console.log(log);
-
-      // Set web3, accounts, and contract to the state, and then proceed with an
-      // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance }, this.getDataFromApi);
-    } catch (error) {
-      // Catch any errors for any of the above operations.
-      alert(
-        `Failed to load web3, accounts, or contract. Check console for details.`,
-      );
-      console.error(error);
-    }
-  };
-
-  getDataFromApi() {
-    let params = {
-      params: { address: this.state.place },
-    };
-    
-    console.log(API_BASE_URL + "", params)
-    return;
-    // APIをコール
-    console.log(API_BASE_URL + "", params)
-    axios.get(API_BASE_URL + "", params)
-      .then((response) => {
-        console.log(response)
-        // APIから取得したデータをstateに保存
-        this.setState({
-          message: response.data.message
-        });
-      })
-    axios.post(API_BASE_URL + "", params)
-      .then((error, response) => {
-        console.log(error, response)
-        // APIから取得したデータをstateに保存
-        this.setState({
-          message: response.data.message
-        });
-      })
-  }  
 
   runExample = async () => {
     const { accounts, contract } = this.state;
