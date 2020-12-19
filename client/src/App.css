@@ -1,4 +1,6 @@
-/* 全体のスタイル定義 */
+/** -*- coding: utf-8-unix -*-
+ * 全体のスタイル定義
+ */
 .App {
   text-align: center;
   border: '1px solid blue';

@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*-
+ * 文字を入力し変数に取り込みと読込、表示サンプル
+ */
 import React, { Component } from 'react';
 
 class Hello extends  Component {

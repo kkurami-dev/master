@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*- 
+ *
+ */
 // This optional code is used to register a service worker.
 // register() is not called by default.
 

@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*-
+ * 最初に読み込む、画面分割のサンプル
+ */
 import React, { Component } from 'react';
 import SplitPane from 'react-split-pane';
 //import { Link, withRouter } from 'react-router';

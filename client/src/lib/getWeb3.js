@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*-
+ * 
+ */
 import Web3 from "web3";
 
 const getWeb3 = () =>

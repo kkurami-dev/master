@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*- 
+ *
+ */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';

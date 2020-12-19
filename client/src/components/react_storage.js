@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*-
+ * ブラウザのメモリ領域にデータを保持するサンプル
+ */
 import React, { Component } from 'react';
 
 const APP_KEY = "ReactApp001";

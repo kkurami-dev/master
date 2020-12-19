@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*- 
+ *
+ */
 import React, {
   Component,
 //  Suspense,
@@ -9,7 +12,9 @@ import {
   //NavLink
 } from 'react-router-dom';
 
+import "./App.css";
 import history from './history';
+
 import Main from './components/main';
 import Welcome from './components/welcome';
 import Hello from './components/hello';
@@ -23,13 +28,11 @@ import Input from './components/react_input';
 import Storage from './components/react_storage';
 import Web3Ethereum from './components/web3_ethereum';
 
-import "./App.css";
-
 //var dom = require('react-router-dom');
 //var BrowserRouter = dom.BrowserRouter;
 //var Switch = dom.Switch;
 
-class App extends Component {
+export default class App extends Component {
   handleClick = ( e ) => {
     //console.log(e.target, history);
     switch(e.target.name){
@@ -77,4 +80,3 @@ class App extends Component {
   };
 }
 
-export default App;

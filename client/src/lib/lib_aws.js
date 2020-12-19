@@ -1,3 +1,6 @@
+/** -*- coding: utf-8-unix -*-
+ * 
+ */
 import axios from 'axios';
 
 var AWS = require('aws-sdk');
