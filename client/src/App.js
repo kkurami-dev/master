@@ -1,5 +1,13 @@
-import React, { Component, Suspense, lazy }  from "react";
-import { Router, Route, NavLink } from 'react-router-dom';
+import React, {
+  Component,
+//  Suspense,
+//  lazy
+}  from "react";
+import {
+  Router,
+  Route,
+  //NavLink
+} from 'react-router-dom';
 
 import history from './history';
 import Main from './components/main';
@@ -7,78 +15,52 @@ import Welcome from './components/welcome';
 import Hello from './components/hello';
 import Form from './components/form';
 
-import "./App.css";
-
-import DropDownMenu from './components/react_drop_down_menu'
-
+import CloudWatch from './components/aws_cloud_watch';
+import DynamoDB from './components/aws_cloud_watch';
+import Kms from './components/aws_cloud_watch';
+import DropDownMenu from './components/react_drop_down_menu';
+import Input from './components/react_input';
+import Storage from './components/react_storage';
 import Web3Ethereum from './components/web3_ethereum';
 
-var dom = require('react-router-dom');
-var BrowserRouter = dom.BrowserRouter;
-var Switch = dom.Switch;
+import "./App.css";
 
-function handleClick(e) {
-  e.preventDefault();
-  let altKey                  = e.altKey               ,
-      bubbles                 = e.bubbles              ,
-      button                  = e.button               ,
-      buttons                 = e.buttons              ,
-      cancelable              = e.cancelable           ,
-      clientX                 = e.clientX              ,
-      clientY                 = e.clientY              ,
-      ctrlKey                 = e.ctrlKey              ,
-      currentTarget           = e.currentTarget        ,
-      defaultPrevented        = e.defaultPrevented     ,
-      detail                  = e.detail               ,
-      dispatchConfig          = e.dispatchConfig       ,
-      eventPhase              = e.eventPhase           ,
-      getModifierState        = e.getModifierState     ,
-      isDefaultPrevented      = e.isDefaultPrevented()   ,
-      isPropagationStopped    = e.isPropagationStopped() ,
-      isTrusted               = e.isTrusted            ,
-      metaKey                 = e.metaKey              ,
-      movementX               = e.movementX            ,
-      movementY               = e.movementY            ,
-      nativeEvent             = e.nativeEvent          ,
-      pageX                   = e.pageX                ,
-      pageY                   = e.pageY                ,
-      relatedTarget           = e.relatedTarget        ,
-      screenX                 = e.screenX              ,
-      screenY                 = e.screenY              ,
-      shiftKey                = e.shiftKey             ,
-      target                  = e.target               ,
-      timeStamp               = e.timeStamp            ,
-      type                    = e.type                 ,
-      view                    = e.view                 ;
-  let log ={
-    e,
-    altKey,bubbles,button,buttons,cancelable,clientX,clientY,ctrlKey,currentTarget,defaultPrevented,detail,dispatchConfig,eventPhase,getModifierState,isDefaultPrevented,isPropagationStopped,isTrusted,metaKey,movementX,movementY,nativeEvent,pageX,pageY,relatedTarget,screenX,screenY,shiftKey,target,timeStamp,type,view
-  };
-  console.log(log);
-  console.log('The link was clicked.');
-}
+
+//var dom = require('react-router-dom');
+//var BrowserRouter = dom.BrowserRouter;
+//var Switch = dom.Switch;
 
 class App extends Component {
-  componentDidMount = async () => {
-    console.log("componentDidMount");
-
-    //console.log(BrowserRouter, Switch);
-  }
+  handleClick = ( e ) => {
+    //console.log(e.target, history);
+    switch(e.target.name){
+    case "top": history.push('/'); break;
+    case "back": history.goBack(); break;
+    default: history.push('/'); break;
+    }
+  };
 
   render() {
     return (
       <div className="App">
-        <div>
+        <header>
           <DropDownMenu />
+        </header>
+        <div className="boxContainer">
+          <button className="box" onClick={this.handleClick} name="back">back</button><br/>
+          <button className="box" onClick={this.handleClick} name="top">Top</button><br/>
         </div>
         <Router history={history}>
           <div>
-            <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
-
             <Route exact path="/" component={Main} />
             <Route path="/welcome" component={Welcome} />
             <Route path="/hello" component={Hello} />
             <Route path="/form" component={Form} />
+
+            <Route path="/aws_cwl" component={CloudWatch} />
+            <Route path="/aws_ddb" component={DynamoDB} />
+            <Route path="/aws_kms" component={Kms} />
+
             <Route path="/eth" component={Web3Ethereum} />
           </div>
         </Router>

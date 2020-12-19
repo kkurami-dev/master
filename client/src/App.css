@@ -23,6 +23,13 @@
   color: #09d3ac;
 }
 
+.boxContainer {
+  overflow: hidden;
+}
+.box{
+  float:left;
+}
+
 .title {
   color: red;
 }

@@ -1,6 +1,19 @@
 import React, { Component } from 'react';
 
 class Hello extends  Component {
+   constructor(props) {
+     super(props);
+     
+     this.state = {
+       data:{
+         val1:"",
+         val2:"",
+       },
+       some_code: "",
+       alert_message: ""
+     };
+   }
+
   /**
    * 文字入力のサンプル
    * input の onChange 内容の変更契機に呼ばれ、
@@ -23,6 +36,7 @@ class Hello extends  Component {
   }
 
   render() {
+    let data = this.state.data;
     return (
       <div>
         <p>ここに入力①
