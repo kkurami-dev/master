@@ -1,5 +1,7 @@
+/* 全体のスタイル定義 */
 .App {
   text-align: center;
+  border: '1px solid blue';
 }
 
 .App-logo {
@@ -21,6 +23,50 @@
   color: #09d3ac;
 }
 
+.title {
+  color: red;
+}
+
 .split {
-  border: '3px solid graeen'
+  /* border: 3px solid graeen; */
+  border: inset 1px #ffffff;
+}
+
+.leftMenu {
+  color: blue;
+  width: 100%;
+  background: #ffcf81;
+  /* /\* fixnakanishi 雑に高さを決めているので注意 *\/ */
+  height: 85vh;
+  overflow: scroll;
+  position: relative;
+  /* scroll-behavior: smooth; */
+}
+
+/* menu  */
+.dropDownMenu {
+  position: relative;
+  text-align: left;
+  padding: 3px 5px;
+}
+.menuButton {
+  display: inline;
+  cursor: pointer;
+  border: 1px solid black;
+  padding: 3px 5px;
+}
+.menuBox {
+  position: absolute;
+  top: 23px;
+  width: 120px;
+  zIndex: 1;
+  cursor: pointer;
+  border: 1px solid black;
+}
+.menuContent {
+  padding: 3px 5px;
+  borderBottom: 1px solid black;
+}
+.lastMenuContent {
+  padding: 3px 5px;
 }

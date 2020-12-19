@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import SplitPane from 'react-split-pane';
 //import { Link, withRouter } from 'react-router';
 import { withRouter } from 'react-router';
+
 import "../App.css";
 
 //var ReactRouter = require('react-router');
@@ -29,9 +30,9 @@ class Main extends Component {
         <ul>
           <li></li>
         </ul>
-        <SplitPane split="vertical" minSize={50} defaultSize="50%">
-          <div style={split}>test1<br/>test1<br/></div>
-          <div style={split}>test2<br/>test2<br/></div>
+        <SplitPane split="vertical" minSize={50} defaultSize="20%">
+          <div className="leftMenu">test1<br/>test1<br/></div>
+          <div className="split">test2<br/>test2<br/></div>
         </SplitPane>
         {this.props.children}
       </div>

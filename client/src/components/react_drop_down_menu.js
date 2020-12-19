@@ -1,6 +1,9 @@
 import React from 'react'
+import history from '../history';
 import onClickOutside from 'react-onclickoutside'
- 
+
+import "../App.css";
+
 class DropDownMenu extends React.Component {
   constructor(props) {
     super(props)
@@ -19,7 +22,14 @@ class DropDownMenu extends React.Component {
     this.setState({
       listOpen: false,
     })
-    alert(val)
+    //alert(val)
+    console.log("menu", val);
+    switch(val){
+    case 1: history.push('welcome'); break;
+    case 2: history.push('hello'); break;
+    case 3: history.push('from'); break;
+    case 4: history.push('eth'); break;
+    }
   }
  
   handleClickOutside() {
@@ -31,53 +41,32 @@ class DropDownMenu extends React.Component {
   render() {
     const { listOpen } = this.state
     return (
-      <div style={styles.dropDownMenu}>
-        <div onClick={this.toggleList.bind(this)} style={styles.menuButton}>
+      <div className="dropDownMenu">
+        <div onClick={this.toggleList.bind(this)} className="menuButton">
           menu
         </div>
         {listOpen && (
-          <div style={styles.menuBox}>
-            <div style={styles.menuContent}>
+          <div className="menuBox">
+            <div className="menuContent">
               <div onClick={this.handleClickMenu.bind(this, 1)}>menu 1</div>
             </div>
-            <div style={styles.menuContent}>
+            <div className="menuContent">
               <div onClick={this.handleClickMenu.bind(this, 2)}>menu 2</div>
             </div>
-            <div style={styles.lastMenuContent}>
+            <div className="lastMenuContent">
               <div onClick={this.handleClickMenu.bind(this, 3)}>menu 3</div>
+            </div>
+            <div className="lastMenuContent">
+              <div onClick={this.handleClickMenu.bind(this, 4)}>menu 4</div>
+            </div>
+            <div className="lastMenuContent">
+              <div onClick={this.handleClickMenu.bind(this, 5)}>menu 5</div>
             </div>
           </div>
         )}
       </div>
     )
   }
-}
- 
-const styles = {
-  dropDownMenu: {
-    position: 'relative',
-  },
-  menuButton: {
-    display: 'inline',
-    cursor: 'pointer',
-    border: '1px solid black',
-    padding: '3px 5px',
-  },
-  menuBox: {
-    position: 'absolute',
-    top: '23px',
-    width: '120px',
-    zIndex: 1,
-    cursor: 'pointer',
-    border: '1px solid black',
-  },
-  menuContent: {
-    padding: '3px 5px',
-    borderBottom: '1px solid black',
-  },
-  lastMenuContent: {
-    padding: '3px 5px',
-  },
 }
  
 export default onClickOutside(DropDownMenu)

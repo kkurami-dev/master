@@ -1,5 +1,5 @@
 import React, { Component, Suspense, lazy }  from "react";
-import { Router, Route } from 'react-router-dom';
+import { Router, Route, NavLink } from 'react-router-dom';
 
 import history from './history';
 import Main from './components/main';
@@ -64,20 +64,22 @@ class App extends Component {
 
     //console.log(BrowserRouter, Switch);
   }
-  
+
   render() {
     return (
       <div className="App">
+        <div>
+          <DropDownMenu />
+        </div>
         <Router history={history}>
           <div>
-            <DropDownMenu />
             <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
 
             <Route exact path="/" component={Main} />
-            <Route exact path="/welcome" component={Welcome} />
-            <Route exact path="/hello" component={Hello} />
-            <Route exact path="/form" component={Form} />
-            <Route exact path="/eth" component={Web3Ethereum} />
+            <Route path="/welcome" component={Welcome} />
+            <Route path="/hello" component={Hello} />
+            <Route path="/form" component={Form} />
+            <Route path="/eth" component={Web3Ethereum} />
           </div>
         </Router>
       </div>
