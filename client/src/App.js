@@ -1,17 +1,17 @@
-import React, { Component }  from "react";
+import React, { Component, Suspense, lazy }  from "react";
 import { Router, Route } from 'react-router-dom';
-
-import history from './history';
-import Main from './components/main';
-import Welcome from './components/welcome';
-import Hello from './components/hello';
-import Form from './components/form';
 
 import "./App.css";
 
-import DropDownMenu from './components/react_drop_down_menu'
+const history = lazy(() => import('./history'));
+const Main = lazy(() => import('./components/main'));
+const Welcome = lazy(() => import('./components/welcome'));
+const Hello = lazy(() => import('./components/hello'));
+const Form = lazy(() => import('./components/form'));
 
-import Web3Ethereum from './components/web3_ethereum';
+const DropDownMenu = lazy(() => import('./components/react_drop_down_menu'));
+
+const Web3Ethereum = lazy(() => import('./components/web3_ethereum'));
 
 var dom = require('react-router-dom');
 var BrowserRouter = dom.BrowserRouter;
@@ -69,7 +69,7 @@ class App extends Component {
     return (
       <div className="App">
         <Router history={history}>
-          <div>
+          <Suspense fallback={<div>Loading...</div>}>
             <DropDownMenu />
             <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
 
@@ -78,7 +78,7 @@ class App extends Component {
             <Route exact path="/hello" component={Hello} />
             <Route exact path="/form" component={Form} />
             <Route exact path="/eth" component={Web3Ethereum} />
-          </div>
+          </Suspense>
         </Router>
       </div>
     );
