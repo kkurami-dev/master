@@ -16,7 +16,7 @@ import Hello from './components/hello';
 import Form from './components/form';
 
 import CloudWatch from './components/aws_cloud_watch';
-import DynamoDB from './components/aws_cloud_watch';
+import DynamoDB from './components/aws_dynamodb';
 import Kms from './components/aws_cloud_watch';
 import DropDownMenu from './components/react_drop_down_menu';
 import Input from './components/react_input';

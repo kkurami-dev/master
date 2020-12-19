@@ -1,3 +1,6 @@
+/** 
+ * 全体で表示するのメニュー
+ */
 import React from 'react'
 import history from '../history';
 import onClickOutside from 'react-onclickoutside'
@@ -18,13 +21,14 @@ class DropDownMenu extends React.Component {
     }))
   }
  
-  handleClickMenu(val) {
+  handleClickMenu(val){
     this.setState({
       listOpen: false,
     })
     //alert(val)
     console.log("menu", val);
-    history.push(val);
+    //history.push(val); // 履歴登録ありの画面遷移
+    history.replace(val); // 履歴登録なしの画面遷移
   }
  
   handleClickOutside() {
@@ -55,7 +59,20 @@ class DropDownMenu extends React.Component {
               <div onClick={this.handleClickMenu.bind(this, '/aws_cwl')}>CloudWatch Logs</div>
             </div>
             <div className="lastMenuContent">
-              <div onClick={this.handleClickMenu.bind(this, '/aws_ddb')}>DynamoDB アクセス確認</div>
+              <div onClick={this.handleClickMenu.bind(this, '/aws_ddb')}>DynamoDB</div>
+            </div>
+            <div className="lastMenuContent">
+              <div onClick={this.handleClickMenu.bind(this, '/aws_kms')}>AWS Key Management Service</div>
+            </div>
+
+            <div className="lastMenuContent">
+              <div onClick={this.handleClickMenu.bind(this, '/input')}>Reack の入力</div>
+            </div>
+            <div className="lastMenuContent">
+              <div onClick={this.handleClickMenu.bind(this, '/storage')}>Reack ブラウザストーレジ</div>
+            </div>
+            <div className="lastMenuContent">
+              <div onClick={this.handleClickMenu.bind(this, '/eth')}>Web3 Ethereum</div>
             </div>
           </div>
         )}
