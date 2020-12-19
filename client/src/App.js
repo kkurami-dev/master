@@ -1,4 +1,13 @@
-import React, { Component } from "react";
+import React, { Component, useEffect, useReducer }  from "react";
+import { Router, Route, IndexRoute, browserHistory } from 'react-router';
+
+import history from './history';
+import Main from './components/main';
+import Welcome from './components/welcome';
+import Hello from './components/hello';
+import Form from './components/form';
+import Web3Ethereum from './components/web3_ethereum';
+
 import SimpleStorageContract from "./contracts/SimpleStorage.json";
 import getWeb3 from "./getWeb3";
 import axios from 'axios';
@@ -96,6 +105,14 @@ async function deployContract(web3, eth) {
     console.log(e.message);
   }  
 }
+
+const APP_KEY = "ReactApp001";
+const appState = localStorage.getItem( APP_KEY );
+const initialState = appState ? JSON.parse(appState) : {
+  events: [],
+  operationLogs: []
+};
+
 
 class App extends Component {
   state = { storageValue: 0,
@@ -216,6 +233,12 @@ class App extends Component {
     this.setState({ storageValue: response });
   };
 
+  /**
+   * 文字入力のサンプル
+   * input の onChange 内容の変更契機に呼ばれ、
+   * その input に設定( target )されている属性で更新対象の判断や、値の取得を行う
+   * 
+   */
   handleOnChange = (e) => {
     let data = this.state.data;
     //console.log(e);
@@ -228,8 +251,17 @@ class App extends Component {
     //this.setState({ some_code: e.target.value });
   };
 
+  doSomething = () =>{
+  }
+
+  /**
+   * ブラウザ内にデータを保持する
+   */
+  //useEffect( () => localStorage.setItem(APP_KEY, JSON.stringify(state)), [state])
+
   render() {
     if (!this.state.web3) {
+      // web3 のインスタンスが入るまではここに入る
       return <div>Loading Web3, accounts, and contract...</div>;
     }
 
@@ -240,6 +272,7 @@ class App extends Component {
           <p>hello menu</p>
           <DropDownMenu />
         </div>
+        
         <h1>Good to Go!</h1>
         <p>Your Truffle Box is installed and ready.</p>
         <h2>Smart Contract Example</h2>
@@ -251,14 +284,19 @@ class App extends Component {
         <p>
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
+
+        {/* 文字出力のサンプル */}
         <div>
           The stored value is: {this.state.storageValue}
           {this.state.message}<br />
           {data.val1}<br />
           {data.val2}<br />
         </div>
+        
         <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
         <button onClick={deployContract.bind(this.state.web3)}>デプロイ</button><br/>
+
+        {/* 文字入力のサンプル */}
         <p>ここに入力①
           <input type="text" name="1" value={data.val1} onChange={e => this.handleOnChange(e)} />
         </p>
