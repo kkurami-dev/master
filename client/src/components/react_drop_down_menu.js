@@ -7,12 +7,59 @@ import onClickOutside from 'react-onclickoutside'
 import "../App.css";
 import history from '../history';
 
+const menuList = [
+  {name:"/welcom",  title:"welcom へ"},
+  {name:'/hello',   title:"hello へ"},
+  {name:"/form",    title:"form へ"},
+  {name:"/aws_cwl", title:"CloudWatch Logs"},
+  {name:"/aws_ddb", title:"DynamoDB"},
+  {name:"/aws_kms", title:"AWS Key Management Service"},
+  {name:"/input",   title:"Reack の入力"},
+  {name:"/storage", title:"Reack ブラウザストーレジ"},
+  {name:"/eth",     title:"Web3 Ethereum"},
+];
+
+/**
+ * render() から呼べるけど this が
+ */
+function MakeMenuListF(props) {
+  return (
+    <div className="menuBox">
+      { /* リストの処理全体の処理を記載  */
+        menuList.map(item => (
+          <div className="menuContent" key={item.name}>
+            <div onClick={this.handleClickMenu.bind(this, item.name)}>{item.title}</div>
+          </div>
+        ))}
+    </div>
+  );
+}
+
 class DropDownMenu extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       listOpen: false,
     }
+  }
+
+  /**
+   * render() から呼べない
+   */
+  MakeMenuListI(){
+    const { listOpen } = this.state
+    if (listOpen)
+      return (
+        <div className="menuBox">
+          { /* リストの処理全体の処理を記載  */
+            menuList.map(item => (
+              <div className="menuContent" key={item.name}>
+                <div onClick={this.handleClickMenu.bind(this, item.name)}>{item.title}</div>
+              </div>
+            ))}
+        </div>
+      );
+    return null;
   }
 
   /**
@@ -46,39 +93,6 @@ class DropDownMenu extends React.Component {
     })
   }
 
-  /**
-   * メニューの内容作成
-   */
-  makeMenuItem(){
-    let data = [
-      {name:"/welcom",  title:"welcom へ"},
-      {name:'/hello',   title:"hello へ"},
-      {name:"/form",    title:"form へ"},
-      {name:"/aws_cwl", title:"CloudWatch Logs"},
-      {name:"/aws_ddb", title:"DynamoDB"},
-      {name:"/aws_kms", title:"AWS Key Management Service"},
-      {name:"/input",   title:"Reack の入力"},
-      {name:"/storage", title:"Reack ブラウザストーレジ"},
-      {name:"/eth",     title:"Web3 Ethereum"},
-    ];
-    let html;
-
-    /**
-     *  メニュー用のデータから実際のメニュー一覧を作成
-     */
-    for(let i = 0; i < data.length; i++ ){
-      html = html + (
-        <div className="menuContent">
-          <div onClick={this.handleClickMenu.bind(this, data[i].name)}>{data[i].title}</div>
-        </div>
-      );
-    }
-    /** 最後に全体を囲む要素を追加して作成完了 */
-    html = (<div className="menuBox"> {html} </div>);
-    
-    return html;
-  }
- 
   render() {
     const { listOpen } = this.state
     return (
@@ -86,13 +100,24 @@ class DropDownMenu extends React.Component {
         <div onClick={this.toggleList.bind(this)} className="menuButton">
           menu
         </div>
+        {/* <MakeMenuListF/> */}
         { /**
            * listOpen フラグでメニューが表示されいた(true)
-           * の場合だけ makeMenuItem() 関数が実行、処理される(if文的)
+           * の場合だけメニューの内容作成が実行、処理される(if文的)
            */
-          listOpen && this.makeMenuItem.bind(this) }
+          listOpen &&
+            (<div className="menuBox">
+               { /* リストの処理全体の処理を記載  */
+                 menuList.map(item => (
+                   <div className="menuContent" key={item.name}>
+                     <div onClick={this.handleClickMenu.bind(this, item.name)}>{item.title}</div>
+                   </div>
+                 ))}
+             </div>
+          )
+        }
       </div>
-    )
+    );
   }
 }
  
