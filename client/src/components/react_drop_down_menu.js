@@ -20,47 +20,12 @@ const menuList = [
   {name:"/eth",     title:"Web3 Ethereum"},
 ];
 
-/**
- * render() から呼べるけど this が関連しないので、メニューが閉じれない
- */
-function MakeMenuListF(props) {
-  return (
-    <div className="menuBox">
-      { /* リストの処理全体の処理を記載  */
-        menuList.map(item => (
-          <div className="menuContent" key={item.name}>
-            <div onClick={this.handleClickMenu.bind(this, item.name)}>{item.title}</div>
-          </div>
-        ))}
-    </div>
-  );
-}
-
 class DropDownMenu extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       listOpen: false,
     }
-  }
-
-  /**
-   * render() から呼べない
-   */
-  MakeMenuListI(){
-    const { listOpen } = this.state
-    if (listOpen)
-      return (
-        <div className="menuBox">
-          { /* リストの処理全体の処理を記載  */
-            menuList.map(item => (
-              <div className="menuContent" key={item.name}>
-                <div onClick={this.handleClickMenu.bind(this, item.name)}>{item.title}</div>
-              </div>
-            ))}
-        </div>
-      );
-    return null;
   }
 
   /**
@@ -73,7 +38,7 @@ class DropDownMenu extends React.Component {
   }
 
   /**
-   * 
+   * メニューを選択したときにメニューを閉じて、画面遷移する
    */
   handleClickMenu(val){
     this.setState({
@@ -103,8 +68,8 @@ class DropDownMenu extends React.Component {
         </div>
         {/* <MakeMenuListF/> */}
         { /**
-           * listOpen フラグでメニューが表示されいた(true)
-           * の場合だけメニューの内容作成が実行、処理される(if文的)
+           * listOpen フラグでメニューが表示(true)されいた
+           * 場合だけメニューの内容作成が実行される(if文的)
            */
           listOpen &&
             (<div className="menuBox">
