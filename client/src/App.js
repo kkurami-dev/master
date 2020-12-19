@@ -21,9 +21,6 @@ const BUFF_POS  = 0;      // バッファーの保存開始位置
 const READ_SIZE = 3;      // 読み取るサイズ
 const READ_POS  = 0;      // 読み取り開始位置
 
-var AWS = require('aws-sdk');
-
-const API_BASE_URL = 'https://4r3ki42pi3.execute-api.ap-northeast-1.amazonaws.com/prod/';
 
 var token;
 var kmsEncyptedToken = "CiC**********************************************************************************************I=";
@@ -135,49 +132,6 @@ class App extends Component {
     this.setState({ storageValue: response });
   };
 
-  runKms = async () => {
-    const { accounts, contract } = this.state;
-
-    let response;
-    const kmsClient = new AWS.KMS({ region: 'ap-northeast-1',
-                                    apiVersion: '2014-11-01' });
-    // Encrypt a data key
-    const KeyId = 'arn:aws:kms:ap-northeast-1:176264229023:key/01f9ef3a-7f13-4fb8-b70c-f60d76f924ab';
-    let base64txt = new Buffer(kmsEncyptedToken).toString();
-    kmsClient.encrypt({ KeyId, Plaintext: base64txt }, (err, data) => {
-      if (err) {
-        console.log(err, err.stack); // an error occurred
-      } else {
-        console.log(data)
-        const { CiphertextBlob } = data;
-      }
-    });
-
-    // Update state with the result.
-    this.setState({ storageValue: response });
-  };
-
-  /**
-   * 文字入力のサンプル
-   * input の onChange 内容の変更契機に呼ばれ、
-   * その input に設定( target )されている属性で更新対象の判断や、値の取得を行う
-   * 
-   */
-  handleOnChange = (e) => {
-    let data = this.state.data;
-    //console.log(e);
-    //console.log(e.target);
-    switch(e.target.name){
-    case "1": data.val1 = e.target.value; break;
-    case "2": data.val2 = e.target.value; break;
-    }
-    this.setState({ data });
-    //this.setState({ some_code: e.target.value });
-  };
-
-  doSomething = () =>{
-  }
-
   /**
    * ブラウザ内にデータを保持する
    */
@@ -219,17 +173,6 @@ class App extends Component {
         
         <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
         <button onClick={deployContract.bind(this.state.web3)}>デプロイ</button><br/>
-
-        {/* 文字入力のサンプル */}
-        <p>ここに入力①
-          <input type="text" name="1" value={data.val1} onChange={e => this.handleOnChange(e)} />
-        </p>
-        <p>ここに入力②
-          <input type="text" name="2" value={data.val2} onChange={e => this.handleOnChange(e)} />
-        </p>
-        <div>
-          <input type="submit" value="確定" onClick={() => this.doSomething()} />
-        </div>
       </div>
     );
   };
