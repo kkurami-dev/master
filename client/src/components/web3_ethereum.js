@@ -67,6 +67,25 @@ async function deployContract(web3, eth) {
 }
 
 export default class Web3Ethereum extends  Component {
+  state = { storageValue: 0,
+            web3: null,
+            accounts: null,
+            contract: null
+          };
+
+  runExample = async () => {
+    const { accounts, contract } = this.state;
+
+    // Stores a given value, 5 by default.
+    await contract.methods.set(5).send({ from: accounts[0] });
+
+    // Get the value from the contract to prove it worked.
+    const response = await contract.methods.get().call();
+
+    // Update state with the result.
+    this.setState({ storageValue: response });
+  };
+
   componentDidMount = async () => {
     console.log("componentDidMount");
 

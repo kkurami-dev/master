@@ -7,12 +7,15 @@ import Welcome from './components/welcome';
 import Hello from './components/hello';
 import Form from './components/form';
 
+import "./App.css";
+
 import DropDownMenu from './components/react_drop_down_menu'
 
 import Web3Ethereum from './components/web3_ethereum';
 
-var token;
-var kmsEncyptedToken = "CiC**********************************************************************************************I=";
+var dom = require('react-router-dom');
+var BrowserRouter = dom.BrowserRouter;
+var Switch = dom.Switch;
 
 function handleClick(e) {
   e.preventDefault();
@@ -56,25 +59,12 @@ function handleClick(e) {
 }
 
 class App extends Component {
-  state = { storageValue: 0,
-            web3: null,
-            accounts: null,
-            contract: null
-          };
+  componentDidMount = async () => {
+    console.log("componentDidMount");
 
-  runExample = async () => {
-    const { accounts, contract } = this.state;
-
-    // Stores a given value, 5 by default.
-    await contract.methods.set(5).send({ from: accounts[0] });
-
-    // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call();
-
-    // Update state with the result.
-    this.setState({ storageValue: response });
-  };
-
+    //console.log(BrowserRouter, Switch);
+  }
+  
   render() {
     return (
       <div className="App">
@@ -83,11 +73,11 @@ class App extends Component {
             <DropDownMenu />
             <button onClick={handleClick}>クリック時の動作ログ出力</button><br/>
 
-            <Route path="/" exact component={Main} />
-            <Route path="/welcome" exact component={Welcome} />
-            <Route path="/hello" exact component={Hello} />
-            <Route path="/form" exact component={Form} />
-            <Route path="/eth" exact component={Web3Ethereum} />
+            <Route exact path="/" component={Main} />
+            <Route exact path="/welcome" component={Welcome} />
+            <Route exact path="/hello" component={Hello} />
+            <Route exact path="/form" component={Form} />
+            <Route exact path="/eth" component={Web3Ethereum} />
           </div>
         </Router>
       </div>

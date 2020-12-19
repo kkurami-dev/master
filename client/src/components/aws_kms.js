@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 
 var AWS = require('aws-sdk');
 
+var token;
+var kmsEncyptedToken = "CiC**********************************************************************************************I=";
+
 class Hello extends  Component {
 
   runKms = async () => {
