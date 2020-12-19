@@ -26,6 +26,8 @@ import Kms from './components/aws_cloud_watch';
 import DropDownMenu from './components/react_drop_down_menu';
 import Input from './components/react_input';
 import Storage from './components/react_storage';
+import DataList from './components/react_data_list';
+import DetaDetail from './components/react_data_list_detail';
 import Web3Ethereum from './components/web3_ethereum';
 
 //var dom = require('react-router-dom');
@@ -71,6 +73,8 @@ export default class App extends Component {
 
             <Route path="/input" component={Input} />
             <Route path="/storage" component={Storage} />
+            <Route path="/data" component={DataList} />
+            <Route path="/detail" component={DetaDetail} />
 
             <Route path="/eth" component={Web3Ethereum} />
           </div>

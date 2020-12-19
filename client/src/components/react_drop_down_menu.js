@@ -17,6 +17,7 @@ const menuList = [
   {name:"/aws_kms", title:"AWS Key Management Service"},
   {name:"/input",   title:"Reack の入力"},
   {name:"/storage", title:"Reack ブラウザストーレジ"},
+  {name:"/data",    title:"Reack Jsonデータ一覧"},
   {name:"/eth",     title:"Web3 Ethereum"},
 ];
 
