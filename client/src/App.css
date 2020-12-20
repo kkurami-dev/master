@@ -99,3 +99,15 @@ table.type06 td {
   padding: 10px;
   vertical-align: top;
 }
+
+/********************
+   * スタイルシートの例など
+   *  https://webparts.cman.jp/string/blink/
+   */
+.attention {
+  animation: blinkAnime 1s infinite alternate;
+}
+@keyframes blinkAnime{
+   0% { color: #000000 }
+ 100% { color: #66ff66 }
+}

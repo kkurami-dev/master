@@ -2,13 +2,16 @@
  * 
  */
 import React, { Component } from 'react';
-import { callLambdaSendToken } from '../lib/lib_aws';
+import { callLambdaSendToken, getLambdaLog } from '../lib/lib_aws';
+
+import "../App.css";
 
 export default class Lambda extends  Component {
   constructor(props) {
     super(props)
     this.state = {
       exec: false,
+      logs: false,
     }
   }
 
@@ -27,11 +30,22 @@ export default class Lambda extends  Component {
     });
   }
 
+  handleLogs = () => {
+    if(this.state.logs) {
+      this.setState({ logs: false });
+    } else {
+      this.setState({ logs: true });
+      getLambdaLog(() => this.state.logs);
+    }
+  }
+
   render() {
     return (
       <div>Lambda
-        <p>{this.state.exec && "Lambda 関数実行中"}</p>
+        <p className="attention">{this.state.exec && "Lambda 関数実行中"}</p>
         <button className="box" onClick={this.handleClick} name="send">mySendToken の実行</button><br/>
+        <button className="box" onClick={this.handleLogs} name="send">ログ取得</button><br/>
+        <p>{this.state.logs}</p>
       </div>
     );
   }

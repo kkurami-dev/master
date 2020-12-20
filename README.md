@@ -26,6 +26,20 @@ $ npm version
   zlib: '1.2.11' }
 ```
 
+参考
+- [web3 1.2.6 リファレンス](https://web3js.readthedocs.io/en/v1.2.6/web3-utils.html#towei)
+- [AWS SKD nodejs API仕様書](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#invokeAsync-property)
+- [JavaScript リファレンス](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference)
+- [スタイルシートの例など](https://webparts.cman.jp/string/blink/)
+
+- [AWS CLI:AWS Command Line Interface ユーザガイド](https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/cli-chap-welcome.html)
+- [Reac ドキュメント](https://ja.reactjs.org/docs/getting-started.html)
+- [リロードしてもデータを保持するためには「localStorage」](https://qiita.com/Ryusou/items/8bce84e7b036114b8d72)
+- [Geth コンソールコマンド一覧](https://qiita.com/Yuto421/items/2e13e1706d708321d356)
+- [Ethereum Geth コンソールコマンド一覧](https://qiita.com/toshikase/items/fa7a826db483177d1e80)
+- [Ethereum入門](https://book.ethereum-jp.net/)
+- [Ethereum Solidity](https://24karamawariken.gitbook.io/ethereum-solidity/)
+
 ## サンプルアプリの機能
 React の Web 画面で下記の事を確認している。
   - 画面遷移
@@ -36,6 +50,7 @@ React の Web 画面で下記の事を確認している。
   - Reack でリストの表示、絞り込み、詳細表示画面へのデータ渡し
   - Reack でブラウザへのデータ保存
   - ブラウザでのブロックチェーン操作
+  
 
 ## web3 のインストール注意点
   1. 先にインストールするパッケージが有る(2020/12/20)
@@ -53,6 +68,8 @@ React の Web 画面で下記の事を確認している。
     $ web3.eth.sendTransaction({from: own, to: cli, value: '1000000000000000000'})
     $ web3.eth.getBalance(own)
     $ web3.eth.getBalance(cli)
+    
+## AWS
 
 ## バージョン情報の自動挿入と表示
 - コミットするたびに .env の VERSION が自動で書き換わる

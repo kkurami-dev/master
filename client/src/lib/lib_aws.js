@@ -15,6 +15,7 @@ AWS.config.update( config );
 
 const kmsClient = new AWS.KMS({ region: 'ap-northeast-1', apiVersion: '2014-11-01' });
 const lambdaClient = new AWS.Lambda({apiVersion: '2015-03-31'});
+const cloudwatchlogs = new AWS.CloudWatchLogs({apiVersion: '2014-03-28'});
 
 export function getKmsClient() {
   let KeyId = config.kms_key;
@@ -23,6 +24,33 @@ export function getKmsClient() {
 }
 export function getLambdaClient() {
   return { lambdaClient };
+}
+
+export function getLambdaLog(cb) {
+  let nextToken;
+  do {
+    let params = {
+      logGroupName: '/aws/lambda/mySendToken',
+      nextToken
+    }
+    cloudwatchlogs.filterLogEvents(params, function(err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
+      else {
+        console.log(data)
+        if(nextToken){
+          let ev = data.events;
+          //console.log(JSON.stringify(data))
+          for(let i = 0; i < ev.length; i++){
+            let {timestamp, logStreamName, message} = ev[i];
+            //let t = new Date( timestamp );
+            //let j = JSON.pase( message );
+            console.log(data.events[i].message);
+          }
+          if(data.nextToken) nextToken = data.nextToken;
+        }
+      }
+    });
+  } while(cb());
 }
 
 export function callLambdaTest(Payload, cb) {
