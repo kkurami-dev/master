@@ -3,6 +3,22 @@
  */
 import React, { Component } from 'react';
 /**
+   web3.version : 1.2.6
+   truffle develop で確認
+    前準備： デプロイを実行できるようにトークンを渡しておく
+      $ turffle develop
+
+      chorme の metamask で truffle に接続
+       http://localhost:8545
+       他の項目は自動で入るか、適当
+
+      truffle(develop)> own = accounts[0]
+      truffle(develop)> cli = "0xFFFFFFFFFFFFF"
+      truffle(develop)> web3.eth.getBalance(own)
+      truffle(develop)> web3.eth.getBalance(cli)
+      truffle(develop)> web3.eth.sendTransaction({from: own, to: cli, value: '1000000000000000000'})
+      ※ 1ETH 渡している
+
    Ethereum
    Lamda sign
 
@@ -22,48 +38,24 @@ import getWeb3 from "../lib/getWeb3";
 
 import "../App.css";
 
-//import metaTransactionClient from "../metatx/metaTransactionClient";
-//import metaTransactionServer from "../metatx/metaTransactionServer";
-//import Transaction from "../metatx/transaction";
-
-// const metaTransactionClient = require("./metatx/metaTransactionClient");
-// const metaTransactionServer = require("./metatx/metaTransactionServer");
-// const Transaction = require("./metatx/transaction");
-
-//const fs = require("fs");
-//const solc = require('solc');
-
-// 定数
-//const BUFF_SIZE = 100;    // バッファーのサイズ
-//const BUFF_POS  = 0;      // バッファーの保存開始位置
-//const READ_SIZE = 3;      // 読み取るサイズ
-//const READ_POS  = 0;      // 読み取り開始位置
-
 async function DeployContract(web3, account, obj, cb) {
   console.log("DeployContract", web3, account, obj, cb);
 
-  // 入れ物準備
-  //const buff = Buffer.alloc(BUFF_SIZE);
-  //let str = "";
-  
-  // ファイルを同期的に開いて内容を取得
   try{
-    //const networkId = await web3.eth.net.getId();
-    //console.log(networkId)
-    //const deployedNetwork = obj.networks[networkId];
-    //console.log(deployedNetwork);
-
-    console.log("obj", obj);
-
     let bytecode = obj.bytecode;
     let abi = obj.abi;
     console.log("abi", abi);
 
     // デプロイに必要なGasを問い合わせる
     let gasprice = 0;
+    let nowEth = await web3.eth.getBalance(account);
     web3.eth.getGasPrice().then(console.log);
     let gasEstimate = await web3.eth.estimateGas({data: bytecode});
-    console.log(gasEstimate);
+    if(nowEth < gasEstimate ){
+      console.log(nowEth, "<", gasEstimate);
+      cb( "gas が不足している", null );
+      return;
+    }
 
     let ret;
     ret = await web3.eth.sendTransaction({
