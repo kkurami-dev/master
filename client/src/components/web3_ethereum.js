@@ -39,8 +39,8 @@ import "../App.css";
 //const READ_SIZE = 3;      // 読み取るサイズ
 //const READ_POS  = 0;      // 読み取り開始位置
 
-async function deployContract(web3, eth) {
-  console.log("deployContract", web3);
+async function DeployContract(web3, account, obj, cb) {
+  console.log("DeployContract", web3, account, obj, cb);
 
   // 入れ物準備
   //const buff = Buffer.alloc(BUFF_SIZE);
@@ -48,25 +48,37 @@ async function deployContract(web3, eth) {
   
   // ファイルを同期的に開いて内容を取得
   try{
-    const networkId = await web3.eth.net.getId();
-    console.log(networkId)
+    //const networkId = await web3.eth.net.getId();
+    //console.log(networkId)
     //const deployedNetwork = obj.networks[networkId];
     //console.log(deployedNetwork);
 
-    const obj = require("../contracts/TxRelay.json");
-    console.log(obj);
+    console.log("obj", obj);
 
     let bytecode = obj.bytecode;
     let abi = obj.abi;
-    console.log(obj, abi);
+    console.log("abi", abi);
 
     // デプロイに必要なGasを問い合わせる
-    let gasEstimate = web3.eth.estimateGas({data: bytecode});
+    let gasprice = 0;
+    web3.eth.getGasPrice().then(console.log);
+    let gasEstimate = await web3.eth.estimateGas({data: bytecode});
     console.log(gasEstimate);
+
+    let ret;
+    ret = await web3.eth.sendTransaction({
+      from: account,
+      data: bytecode // deploying a contracrt
+    }, function(error, hash){
+      if(error) console.error(error);
+      else console.log(hash);
+    });
+    cb( null, ret );
   }
   catch(e){
     console.log(e.message);
-  }  
+    cb( e, null );
+  }
 }
 
 export default class Web3Ethereum extends  Component {
@@ -93,19 +105,25 @@ export default class Web3Ethereum extends  Component {
     console.log("componentDidMount");
 
     try {
+      // Chorome の MetaMask 拡張機能でローカルの truffle に接続するので、このままで
       // Get network provider and web3 instance.
       const web3 = await getWeb3();
+      console.log("ok web3.version:", web3.version, web3);
 
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
+      console.log("accounts", accounts);
 
       // Get the contract instance.
       const networkId = await web3.eth.net.getId();
+      console.log("networkId", networkId);
       const deployedNetwork = SimpleStorageContract.networks[networkId];
+      console.log("deployedNetwork", deployedNetwork);
       const instance = new web3.eth.Contract(
         SimpleStorageContract.abi,
         deployedNetwork && deployedNetwork.address,
       );
+      console.log("instance", instance);
       
       let getNodeInfo = web3.eth.getNodeInfo();
       let log = {
@@ -113,11 +131,13 @@ export default class Web3Ethereum extends  Component {
         accounts, networkId, deployedNetwork, instance,
         getNodeInfo
       };
-      console.log(log);
+      console.log("Web3 OK ", log);
 
+      const obj = require("../contracts/TxRelay.json");
+      
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      //this.setState({ web3, accounts, contract: instance }, this.getDataFromApi);
+      this.setState({ web3, accounts, contract: instance , obj});
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -127,12 +147,20 @@ export default class Web3Ethereum extends  Component {
     }
   };
 
+  callDeploy(e){
+    console.log("callDeploy()", e );
+    
+    let {web3, accounts, obj} = this.state;
+    DeployContract(web3, accounts[0], obj, (error, result) => {
+      console.log("DeployContract", result);
+    });
+  }
+
   render() {
     if (!this.state.web3) {
       // web3 のインスタンスが入るまではここに入る
       return <div>Loading Web3, accounts, and contract...</div>;
     }
-
     return (
       <div>
         <h1>Good to Go!</h1>
@@ -147,7 +175,7 @@ export default class Web3Ethereum extends  Component {
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
 
-        <button onClick={deployContract.bind(this.state.web3)}>デプロイ</button><br/>
+        <button onClick={this.callDeploy.bind(this)}>デプロイ</button><br/>
       </div>
     );
   }

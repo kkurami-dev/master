@@ -37,6 +37,13 @@ React の Web 画面で下記の事を確認している。
   - Reack でブラウザへのデータ保存
   - ブラウザでのブロックチェーン操作
 
+## web3 のインストール注意点
+  1. 先にインストールするパッケージが有る(2020/12/20)
+    $ npm rm web3 web3-js websocket scrypt-js mkdirp-promise mkdirp
+    $ npm i websocket@1.0.31 scrypt-js mkdirp --save
+    $ npm i web3
+    ※ web3 の時エラーがでる websocket@1.0.30 のコンパイルの為、別途
+       websocket@1.0.31 以降をインストールして対応できるかな
 
 ## バージョン情報の自動挿入と表示
 - コミットするたびに .env の VERSION が自動で書き換わる
