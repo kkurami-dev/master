@@ -34,7 +34,7 @@ class Hello extends  Component {
 
   render() {
     return (
-      <div>Hello {this.props.location.query.name || 'World'}</div>
+      <div>Kms</div>
     );
   }
 }

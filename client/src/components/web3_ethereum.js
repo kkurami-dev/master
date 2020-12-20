@@ -4,6 +4,8 @@
 import React, { Component } from 'react';
 /**
    web3.version : 1.2.6
+   API: https://web3js.readthedocs.io/en/v1.2.6/web3-eth.html
+
    truffle develop で確認
     前準備： デプロイを実行できるようにトークンを渡しておく
       $ turffle develop
@@ -16,7 +18,7 @@ import React, { Component } from 'react';
       truffle(develop)> cli = "0xFFFFFFFFFFFFF"
       truffle(develop)> web3.eth.getBalance(own)
       truffle(develop)> web3.eth.getBalance(cli)
-      truffle(develop)> web3.eth.sendTransaction({from: own, to: cli, value: '1000000000000000000'})
+      truffle(develop)> web3.eth.sendTransaction({from: own, to: cli, value:'1000000000000000000'})
       ※ 1ETH 渡している
 
    Ethereum

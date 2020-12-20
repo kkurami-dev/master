@@ -44,6 +44,15 @@ React の Web 画面で下記の事を確認している。
     $ npm i web3
     ※ web3 の時エラーがでる websocket@1.0.30 のコンパイルの為、別途
        websocket@1.0.31 以降をインストールして対応できるかな
+  1. truffle の準備
+    $ truffle develop
+    $ own = accounts[0]
+    $ cli = "0xXXXXXXXXXXX"
+    $ web3.eth.getBalance(own)
+    $ web3.eth.getBalance(cli)
+    $ web3.eth.sendTransaction({from: own, to: cli, value: '1000000000000000000'})
+    $ web3.eth.getBalance(own)
+    $ web3.eth.getBalance(cli)
 
 ## バージョン情報の自動挿入と表示
 - コミットするたびに .env の VERSION が自動で書き換わる

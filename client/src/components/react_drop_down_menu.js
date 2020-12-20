@@ -9,16 +9,17 @@ import history from '../history';
 
 /** メニュー項目(json でファイルにしてもよい) */
 const menuList = [
-  {name:"/welcom",  title:"welcom へ"},
-  {name:'/hello',   title:"hello へ"},
-  {name:"/form",    title:"form へ"},
-  {name:"/aws_cwl", title:"CloudWatch Logs"},
-  {name:"/aws_ddb", title:"DynamoDB"},
-  {name:"/aws_kms", title:"AWS Key Management Service"},
-  {name:"/input",   title:"Reack の入力"},
-  {name:"/storage", title:"Reack ブラウザストーレジ"},
-  {name:"/data",    title:"Reack Jsonデータ一覧"},
-  {name:"/eth",     title:"Web3 Ethereum"},
+  {name:"/welcom",     title:"welcom へ"},
+  {name:'/hello',      title:"hello へ"},
+  {name:"/form",       title:"form へ"},
+  {name:"/aws_cwl",    title:"CloudWatch Logs"},
+  {name:"/aws_ddb",    title:"DynamoDB"},
+  {name:"/aws_lambda", title:"AWS Lambda 関数の実行"},
+  {name:"/aws_kms",    title:"AWS Key Management Service"},
+  {name:"/input",      title:"Reack の入力"},
+  {name:"/storage",    title:"Reack ブラウザストーレジ"},
+  {name:"/data",       title:"Reack Jsonデータ一覧"},
+  {name:"/eth",        title:"Web3 Ethereum"},
 ];
 
 class DropDownMenu extends React.Component {

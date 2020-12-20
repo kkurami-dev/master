@@ -40,7 +40,7 @@ zipUpload(){
     #     --log-type Tail
 }
 
-zipUpload myHelloWorld
+#zipUpload myHelloWorld
 zipUpload mySendToken
 
 

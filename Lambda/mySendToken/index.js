@@ -102,7 +102,7 @@ async function setup() {
     web3 = new Web3( provider );
     prop.web3 = web3;
     prop.account = account;
-    console.log("new Web3 OK;");
+    console.log("new Web3 OK;", web3.version);
   }
 
   

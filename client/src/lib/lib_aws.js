@@ -6,6 +6,7 @@ import axios from 'axios';
 var AWS = require('aws-sdk');
 const API_BASE_URL = 'https://4r3ki42pi3.execute-api.ap-northeast-1.amazonaws.com/prod/';
 
+
 export function getDataFromApi() {
   let params = {
     params: { address: this.state.place },

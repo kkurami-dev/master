@@ -22,6 +22,7 @@ import Form from './components/form';
 
 import CloudWatch from './components/aws_cloud_watch';
 import DynamoDB from './components/aws_dynamodb';
+import Lambda from './components/aws_lambda';
 import Kms from './components/aws_cloud_watch';
 import DropDownMenu from './components/react_drop_down_menu';
 import Input from './components/react_input';
@@ -70,6 +71,7 @@ export default class App extends Component {
             <Route path="/aws_cwl" component={CloudWatch} />
             <Route path="/aws_ddb" component={DynamoDB} />
             <Route path="/aws_kms" component={Kms} />
+            <Route path="/aws_lambda" component={Lambda} />
 
             <Route path="/input" component={Input} />
             <Route path="/storage" component={Storage} />
