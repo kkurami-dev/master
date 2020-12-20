@@ -2,8 +2,7 @@
  * 
  */
 import React, { Component } from 'react';
-
-var AWS = require('aws-sdk');
+import { getKmsClient } from '../lib/lib_aws';
 
 var token;
 var kmsEncyptedToken = "CiC**********************************************************************************************I=";
@@ -12,12 +11,10 @@ class Hello extends  Component {
 
   runKms = async () => {
     const { accounts, contract } = this.state;
+    const {KeyId, kmsClient} = getKmsClient();
 
     let response;
-    const kmsClient = new AWS.KMS({ region: 'ap-northeast-1',
-                                    apiVersion: '2014-11-01' });
     // Encrypt a data key
-    const KeyId = 'arn:aws:kms:ap-northeast-1:176264229023:key/01f9ef3a-7f13-4fb8-b70c-f60d76f924ab';
     let base64txt = new Buffer(kmsEncyptedToken).toString();
     kmsClient.encrypt({ KeyId, Plaintext: base64txt }, (err, data) => {
       if (err) {

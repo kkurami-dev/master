@@ -49,7 +49,6 @@ async function DeployContract(web3, account, obj, cb) {
     console.log("abi", abi);
 
     // デプロイに必要なGasを問い合わせる
-    let gasprice = 0;
     let nowEth = await web3.eth.getBalance(account);
     web3.eth.getGasPrice().then(console.log);
     let gasEstimate = await web3.eth.estimateGas({data: bytecode});

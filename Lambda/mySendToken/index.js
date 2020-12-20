@@ -8,8 +8,8 @@ var AWS = require('aws-sdk');
 //   }
 // });
 var Web3 = require('web3'),
-    kap = require('aws-kms-provider'),
-    ssAbi = require('SimpleStorageAbi.json');
+    kap = require('aws-kms-provider');
+    //ssAbi = require('./SimpleStorageAbi.json');
 
 // レシート解析
 // in-app-purchase
@@ -231,10 +231,9 @@ async function deploy_contract(prop) {
       });
   console.log("gasEstimate:", gasEstimate);
 
-  let TestContract = web3.eth.contract(ssAbi);
-
-  TestContract.new({from: prop.account, data:bytecode });
-  console.log("gasEstimate:", TestContract);
+  // let TestContract = web3.eth.contract(ssAbi);
+  // TestContract.new({from: prop.account, data:bytecode });
+  // console.log("gasEstimate:", TestContract);
 
   let newssAddress;
 

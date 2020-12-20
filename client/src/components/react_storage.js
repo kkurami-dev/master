@@ -31,6 +31,7 @@ class Hello extends  Component {
 
   render() {
     let data = this.state.data;
+    console.log(initialState);
 
     return (
       <div>
