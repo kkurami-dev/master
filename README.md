@@ -1,6 +1,6 @@
 -*- coding: utf-8-unix -*-
 
-# React Native のもろもろ
+# React のもろもろ
 ## バージョン
   | soft | version |
   | --- | --- |
@@ -25,6 +25,18 @@ $ npm version
   v8: '6.8.275.32-node.45',
   zlib: '1.2.11' }
 ```
+
+## サンプルアプリの機能
+React の Web 画面で下記の事を確認している。
+  - 画面遷移
+  - CloudWatch Logs の監視
+  - DynamoDB の操作
+  - AWS Key Management Service の利用
+  - Reack での文字入力
+  - Reack でリストの表示、絞り込み、詳細表示画面へのデータ渡し
+  - Reack でブラウザへのデータ保存
+  - ブラウザでのブロックチェーン操作
+
 
 ## バージョン情報の自動挿入と表示
 - コミットするたびに .env の VERSION が自動で書き換わる
