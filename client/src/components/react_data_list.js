@@ -10,12 +10,14 @@
  */
 import React from 'react';
 import { For } from 'react-loops';
+import 'react-widgets/dist/css/react-widgets.css';
+import DropdownList from 'react-widgets/lib/DropdownList';
 
 import "../App.css";
 import history from '../history';
 
-/** メニュー項目(json でファイルにしてもよい) */
-const itemList = [
+/** リスト項目(DynamoDB や json でファイルにしてもよい) */
+let itemList = [
   {name:"/welcom",  title:"welcom へ"},
   {name:'/hello',   title:"hello へ"},
   {name:"/form",    title:"form へ"},
@@ -46,46 +48,122 @@ const itemList = [
 ];
 
 export default class DataList extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      listOpen: false,
+      search:[{}],
+      items: ['name', 'title'], /** この項目は固定なので json などから読み込んだり */
+    }
+  }
+
+  /** フィルターの指定と判定 
+   *    配列操作: https://www.sejuku.net/blog/22295
+   */
+  /**
+   * 検索項目の追加
+   */
+  addSearch = (e) => {
+    let search = this.state.search;
+    search.unshift({word:"", row:""});
+    this.setState({ search });
+  }
+  /**
+   * 検索項目の削除
+   */
+  delSearch = (e, val) => {
+    let search = this.state.search;
+    //console.log(e.target.value, val);
+    search.splice(val, 1);
+    this.setState({ search });
+  }
+  /**
+   * 検索項目の内容を設定
+   */
+  setSearch = (val, key) => {
+    console.log(val, key, val.target);
+
+    let search = this.state.search;
+    if(val.target) search[key].word = val.target.value;
+    else           search[key].row = val;
+    this.setState({ search });
+  }
+  /**
+   * 検索項目に従って、リストを表示/非表示の判定を実施
+   *   e.name === e[ 'name ' ] が同じ意味の為
+   */
+  filter = (e) => {
+    //console.log("input", e);
+    let search = this.state.search;
+    for(let i = 0; i < search.length; i++ ){
+      let elm = search[i];
+      if ( !elm.row || !elm.word ) continue;
+      //  例：e.name.indexOf( 'aws ' ) のような評価を行っている
+      if ( e[elm.row].indexOf( elm.word ) === -1) return false;
+    }
+    return true;
+  }
+
   /**
    * リストの選択時の処理
    */
   item_edit = (e) => {
     let val = e.target.name;
-    // this.setState({
-    //   listOpen: false,
-    // })
     console.log("data", val);
-    history.push({ pathname: '/detail', state: { talbe:1, ...itemList[val] }});
+    history.push({ pathname: '/detail', state: { talbe:1, ...itemList[val] }});// 遷移先とパラメータを指定
   }
   item_delete = (e) => {
     let val = e.target.name;
-    // this.setState({
-    //   listOpen: false,
-    // })
     console.log("data", val);
     history.push({ pathname: '/detail', state: { talbe:1, ...itemList[val] }});
   }
 
   render() {
+    let search = this.state.search;
+    let data = this.state.items;
     return (
-      <table className="type06">
-        <thead>
-          <tr>  <th >位置</th>  <th >メニュー</th> <th >説明</th> <th colspan="2" >操作</th> </tr>
-        </thead>
-        <tbody>
-          <For of={itemList} ifEmpty={<div>no items</div>}>
-            {(item, {isLast, key}) => (
-              <tr>
-                <td>{key}{isLast && '(最後)'}</td>
-                <td>{item.name}</td>
-                <td>{item.title} </td>
-                <td><button onClick={this.item_edit} name={key}>編集</button></td>
-                <td><button onClick={this.item_delete} name={key}>削除</button></td>
-              </tr>
-            )}
-          </For>
-        </tbody>
-      </table>
+      <div>
+        <br/>
+        <table className="type06">
+          <thead>
+            <tr><th>検索条件指定</th></tr>
+          </thead>
+          <tbody>
+            <For of={search} ifEmpty={<div>no items</div>}>
+              {(item, {isLast, key}) => isLast
+               ? (<tr>
+                    <td colSpan="2"></td><td><button onClick={e => this.addSearch(e)}>検索条件の追加</button></td>
+                  </tr>)
+               : (<tr>
+                    <td>列: <DropdownList data={data} onChange={e => this.setSearch(e, key)} /></td>
+                    <td>内容:<input type="text" value={search[key].word} onChange={e => this.setSearch(e, key)} /></td>
+                    <td><button onClick={e => this.delSearch(e, {key})}>削除</button></td>
+                  </tr>)
+              }
+            </For>
+          </tbody>
+        </table>
+        <br/>
+        <table className="type06">
+          <thead>
+            <tr><th>位置</th><th>名前(name)</th><th>タイトル(title)</th><th colSpan="2" >操作</th></tr>
+          </thead>
+          <tbody>
+            <For of={itemList} ifEmpty={<div>no items</div>}>
+              {(item, {isLast, key}) => this.filter(item)
+               && (
+                 <tr>
+                   <td>{key}{isLast && '(最後)'}</td>
+                   <td>{item.name}</td>
+                   <td>{item.title} </td>
+                   <td><button onClick={this.item_edit} name={key}>編集</button></td>
+                   <td><button onClick={this.item_delete} name={key}>削除</button></td>
+                 </tr>
+               )}
+            </For>
+          </tbody>
+        </table>
+      </div>
     );
   }
 }

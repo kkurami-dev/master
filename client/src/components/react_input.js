@@ -30,6 +30,7 @@ class Hello extends  Component {
     switch(e.target.name){
     case "1": data.val1 = e.target.value; break;
     case "2": data.val2 = e.target.value; break;
+    default:  data.val1 = e.target.value; break;
     }
     this.setState({ data });
     //this.setState({ some_code: e.target.value });
