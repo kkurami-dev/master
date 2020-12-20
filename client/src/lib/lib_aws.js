@@ -28,29 +28,33 @@ export function getLambdaClient() {
 
 export function getLambdaLog(cb) {
   let nextToken;
-  do {
-    let params = {
-      logGroupName: '/aws/lambda/mySendToken',
-      nextToken
-    }
+  let params = { logGroupName: '/aws/lambda/mySendToken', nextToken };
+
+  const myWait = new Promise( (resolve, reject) => {
     cloudwatchlogs.filterLogEvents(params, function(err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-      else {
-        console.log(data)
-        if(nextToken){
-          let ev = data.events;
-          //console.log(JSON.stringify(data))
-          for(let i = 0; i < ev.length; i++){
-            let {timestamp, logStreamName, message} = ev[i];
-            //let t = new Date( timestamp );
-            //let j = JSON.pase( message );
-            console.log(data.events[i].message);
-          }
-          if(data.nextToken) nextToken = data.nextToken;
-        }
+      if (err) {
+        console.log(err, err.stack); // an error occurred
+        reject( err );
+      } else {
+//        console.log(data);
+        for(let i = 0; i < data.events.length; i++)
+          console.log(data.events[i].message);
+        if(data.nextToken) nextToken = data.nextToken;
+        resolve( {nextToken, data} );
       }
     });
-  } while(cb());
+  });
+
+  const myLogLoop = async() => {
+    let nextloop = true
+    do {
+      const {next, data} = await myWait();
+      params.nextToken = next;
+      nextloop = cb( data );
+    } while(nextloop);
+  }
+
+  myLogLoop();
 }
 
 export function callLambdaTest(Payload, cb) {

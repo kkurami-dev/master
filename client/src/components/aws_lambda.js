@@ -35,7 +35,10 @@ export default class Lambda extends  Component {
       this.setState({ logs: false });
     } else {
       this.setState({ logs: true });
-      getLambdaLog(() => this.state.logs);
+      getLambdaLog((log) => {
+        console.log(this.state.logs);
+        return this.state.logs;
+      });
     }
   }
 
