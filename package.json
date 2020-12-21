@@ -21,6 +21,7 @@
     "ganache-cli": "^6.11.0",
     "mkdirp": "^1.0.4",
     "scrypt-js": "^3.0.1",
+    "sleep-async": "^1.0.5",
     "truffle-hdwallet-provider": "^1.0.17",
     "web3": "^1.2.6",
     "websocket": "^1.0.33"

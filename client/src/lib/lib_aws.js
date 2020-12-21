@@ -84,6 +84,9 @@ export function getLambdaLog(func, cb) {
                 
                 if(!last_data || last_data.timestamp <= now_data.timestamp){
                   let str = now_data.message;
+
+                  // 正規表現
+                  //   https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Regular_Expressions
                   let arr = str.match(/\{[\s\S]*\}/);
                   if(arr) console.log(arr);
                   else console.log(str);

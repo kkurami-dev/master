@@ -36,7 +36,6 @@ export default class Lambda extends  Component {
     } else {
       this.setState({ logs: true });
       getLambdaLog("mySendToken", (io) => {
-        //console.log(this.state.logs);
         return this.state.logs;
       });
       console.log("getLambdaLog()");
@@ -47,6 +46,7 @@ export default class Lambda extends  Component {
     return (
       <div>Lambda
         <p className="attention">{this.state.exec && "Lambda 関数実行中"}</p>
+        <p className="attention">{this.state.logs && "Lambda 関数ログ取得中"}</p>
         <button className="box" onClick={this.handleClick} name="send">mySendToken の実行</button><br/>
         <button className="box" onClick={this.handleLogs} name="send">ログ取得</button><br/>
         <p>{this.state.logs}</p>
