@@ -27,9 +27,12 @@
 
 .boxContainer {
   overflow: hidden;
+  position: absolute;           /* 重ねる部品 */
+  display: table;               /* ブロックレベル要素をTableと同じように表示する */
 }
 .box{
   float:left;
+  display: table-cell;
 }
 
 .title {
