@@ -27,6 +27,19 @@ export function getLambdaClient() {
   return { lambdaClient };
 }
 
+/**
+ * CloudWatch LogsのログをJavaScriptで取得する
+ *   https://wp-kyoto.net/get-cloudwatchlogs-data-by-javascript/
+ */
+const black   = '\u001b[30m';
+const red     = '\u001b[31m';
+const green   = '\u001b[32m';
+const yellow  = '\u001b[33m';
+const blue    = '\u001b[34m';
+const magenta = '\u001b[35m';
+const cyan    = '\u001b[36m';
+const white   = '\u001b[37m';
+const reset   = '\u001b[0m';
 export function getLambdaLog(func, cb) {
   console.log("getLambdaLog() call");
   let last_data;
@@ -68,8 +81,14 @@ export function getLambdaLog(func, cb) {
             if(new_line !== old_line){
               for(let i = 0; i < data.events.length; i++){
                 let now_data = data.events[i];
-                if(!last_data || last_data.timestamp <= now_data.timestamp)
-                  console.log(now_data.message);
+                
+                if(!last_data || last_data.timestamp <= now_data.timestamp){
+                  let str = now_data.message;
+                  let arr = str.match(/\{[\s\S]*\}/);
+                  if(arr) console.log(arr);
+                  else console.log(str);
+                  //console.log(now_data.message);
+                }
               }
               last_data = data.events[data.events.length - 1];
             }
