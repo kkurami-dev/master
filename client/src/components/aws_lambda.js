@@ -35,10 +35,11 @@ export default class Lambda extends  Component {
       this.setState({ logs: false });
     } else {
       this.setState({ logs: true });
-      getLambdaLog((log) => {
-        console.log(this.state.logs);
+      getLambdaLog("mySendToken", (io) => {
+        //console.log(this.state.logs);
         return this.state.logs;
       });
+      console.log("getLambdaLog()");
     }
   }
 

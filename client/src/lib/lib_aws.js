@@ -2,6 +2,7 @@
  * 
  */
 import axios from 'axios';
+const sleep = require('sleep-async')();
 const config = require('../configs/config');
 const API_BASE_URL = config.api_base_url;
 var AWS = require('aws-sdk');
@@ -26,35 +27,67 @@ export function getLambdaClient() {
   return { lambdaClient };
 }
 
-export function getLambdaLog(cb) {
-  let nextToken;
-  let params = { logGroupName: '/aws/lambda/mySendToken', nextToken };
+export function getLambdaLog(func, cb) {
+  console.log("getLambdaLog() call");
+  let last_data;
+  let nextloop = true
+  let nextToken1;
+  let nextToken2;
+  let io;
+  let new_line = 0;
+  let old_line = 1;
+  let params1 = { logGroupName: '/aws/lambda/'+func,
+                  descending: true,
+                  orderBy: "LastEventTime" };
+  let params2 = { logGroupName: '/aws/lambda/'+func };
 
-  const myWait = new Promise( (resolve, reject) => {
-    cloudwatchlogs.filterLogEvents(params, function(err, data) {
-      if (err) {
-        console.log(err, err.stack); // an error occurred
-        reject( err );
-      } else {
-//        console.log(data);
-        for(let i = 0; i < data.events.length; i++)
-          console.log(data.events[i].message);
-        if(data.nextToken) nextToken = data.nextToken;
-        resolve( {nextToken, data} );
-      }
-    });
-  });
+  console.log("getLambdaLog() start");
+  io = setInterval(() => {
+    if(!cb(null) && io){
+      console.log("getLambdaLog() A:stop ", nextloop, nextToken2, io);
+      clearInterval(io);
+      return;
+    }
+    if(nextloop)
+      // ログの一覧の取得
+      cloudwatchlogs.describeLogStreams(params1, function(err, data1) {
+        const {logStreamName} = data1.logStreams[0];
+        params2.logStreamName = logStreamName;
 
-  const myLogLoop = async() => {
-    let nextloop = true
-    do {
-      const {next, data} = await myWait();
-      params.nextToken = next;
-      nextloop = cb( data );
-    } while(nextloop);
-  }
+        // 最新のログの取得
+        cloudwatchlogs.getLogEvents(params2, (err, data) => {
+          if (err) {
+            console.log(err);
 
-  myLogLoop();
+          } else if(data.events.length > 0){
+            if(data.nextToken2) params2.nextToken = data.nextToken;
+            old_line = new_line;
+            new_line = data.events[ data.events.length - 1].timestamp;
+            console.log("time", old_line, new_line, logStreamName);
+
+            if(new_line !== old_line){
+              for(let i = 0; i < data.events.length; i++){
+                let now_data = data.events[i];
+                if(!last_data || last_data.timestamp <= now_data.timestamp)
+                  console.log(now_data.message);
+              }
+              last_data = data.events[data.events.length - 1];
+            }
+            if(0 === old_line) old_line = new_line;
+
+          } else {
+            console.log("getLambdaLog() wait", logStreamName, nextloop, data);
+          }
+          nextloop = cb({io, data});
+
+          if (!nextloop && io) {
+            console.log("getLambdaLog() B:stop ", nextloop, nextToken2, io);
+            clearInterval(io);
+          }
+        });
+      });
+    nextloop = false;
+  }, 1000);
 }
 
 export function callLambdaTest(Payload, cb) {
