@@ -11,24 +11,35 @@ export default class Lambda extends  Component {
     super(props)
     this.state = {
       modalIsOpen: true,
+      modalNotClose: false,
     }
   }
 
-  modalOpen = (e) => {
+  modalOpen = () => {
     this.setState({modalIsOpen: true});
   }
 
-  modalWaltClose = (e) => {
-    this.setState({modalIsOpen: true});
+  modalWaltClose = () => {
+    this.setState({modalIsOpen: true, timeId:0});
     let timeId = setTimeout(() => {
-      this.setState({modalIsOpen: false});
+      this.setState({modalIsOpen: false, timeId});
+      clearTimeout(timeId);
+    }, 3000);
+  }
+  modalWaltCloseFace = () => {
+    this.setState({modalIsOpen: true, modalNotClose:true, timeId:0});
+    let timeId = setTimeout(() => {
+      this.setState({modalIsOpen: false, modalNotClose:false, timeId});
       clearTimeout(timeId);
     }, 3000);
   }
 
-  modalCallBack = (e) => {
-    console.log("modalCallBack()", e);
-    this.setState({modalIsOpen: e});
+  modalCallBack = ( modalIsOpen ) => {
+    let {timeId} = this.state;
+    console.log("modalCallBack()", modalIsOpen, timeId);
+
+    if(timeId) clearTimeout(timeId);
+    this.setState({modalIsOpen, timeId: 0});
   }
 
   render() {
@@ -36,12 +47,16 @@ export default class Lambda extends  Component {
       <div>Lambda
         <ModalWindow modalIsOpen={this.state.modalIsOpen}
                      modalCallBack={this.modalCallBack}
+                     modalNotClose={this.state.modalNotClose}
         /><br/>
         <button className="box" onClick={this.modalOpen} name="send">
           モーダルの表示
         </button><br/>
         <button className="box" onClick={this.modalWaltClose} name="send">
           モーダルの表示(3秒で閉じる)
+        </button><br/>
+        <button className="box" onClick={this.modalWaltCloseFace} name="send">
+          モーダルの表示(3秒で閉じる)手動で閉じない
         </button><br/>
         <p>{this.state.logs}</p>
       </div>
