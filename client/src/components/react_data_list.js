@@ -11,7 +11,8 @@
 import React from 'react';
 import { For } from 'react-loops';
 import 'react-widgets/dist/css/react-widgets.css';
-import DropdownList from 'react-widgets/lib/DropdownList';
+//import DropdownList from 'react-widgets/lib/DropdownList';
+import { DropdownList } from 'react-widgets'
 
 import "../App.css";
 import history from '../history';
@@ -53,7 +54,7 @@ export default class DataList extends React.Component {
     this.state = {
       listOpen: false,
       search:[{}],
-      items: ['name', 'title'], /** この項目は固定なので json などから読み込んだり */
+      items:    [{name:'name', id:0}, {name:'title',id:1}], /** この項目は固定なので json などから読み込んだり */
     }
   }
 
@@ -80,13 +81,23 @@ export default class DataList extends React.Component {
   /**
    * 検索項目の内容を設定
    */
-  setSearch = (val, key) => {
-    console.log(val, key, val.target);
+  setSearch = (val, key, v) => {
+    console.log("setSearch()", val, key, v);
+    if(v){
+      //console.log(v.originalEvent.currentTarget());
+    }
 
+    let ret_val;
     let search = this.state.search;
-    if(val.target) search[key].word = val.target.value;
-    else           search[key].row = val;
+    if(val.target) {
+      search[key].word = val.target.value;
+      ret_val = val.target.value;
+    } else {
+      search[key].row = val.name;
+      ret_val = val.name;
+    }
     this.setState({ search });
+    return ret_val;
   }
   /**
    * 検索項目に従って、リストを表示/非表示の判定を実施
@@ -118,9 +129,26 @@ export default class DataList extends React.Component {
     history.push({ pathname: '/detail', state: { talbe:1, ...itemList[val] }});
   }
 
+  ListDataKey = (a, b, c, d) => {
+    console.log("ListDataKey()", a, b, c, d);
+    return a.item.name;
+  }
+
+  SelectItem = (item) => {
+    console.log("SelectItem()", item);
+    // return (
+    //   <span>
+    //     <strong>{item.id}</strong>
+    //     {" " + item.name}
+    //   </span>
+    // )
+    this.setState({ select_item: item });
+  };
+
   render() {
     let search = this.state.search;
     let data = this.state.items;
+    let select_item = this.state.select_item;
     return (
       <div>
         <br/>
@@ -135,7 +163,12 @@ export default class DataList extends React.Component {
                     <td colSpan="2"></td><td><button onClick={e => this.addSearch(e)}>検索条件の追加</button></td>
                   </tr>)
                : (<tr>
-                    <td>列: <DropdownList data={data} onChange={e => this.setSearch(e, key)} /></td>
+                    <td>列: <DropdownList /* readOnly */
+                                          data={data}
+                                          value={(select_item && select_item.name) || ""}
+                                          onSelect={this.SelectItem}
+                                          renderListItem={this.ListDataKey}
+                                          onChange={(e, v)=> this.setSearch(e, key, v)} /></td>
                     <td>内容:<input type="text" value={search[key].word} onChange={e => this.setSearch(e, key)} /></td>
                     <td><button onClick={e => this.delSearch(e, {key})}>削除</button></td>
                   </tr>)
