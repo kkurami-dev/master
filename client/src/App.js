@@ -25,6 +25,7 @@ import DynamoDB from './components/aws_dynamodb';
 import Lambda from './components/aws_lambda';
 import Kms from './components/aws_cloud_watch';
 import DropDownMenu from './components/react_drop_down_menu';
+import Modal from './components/react_modal';
 import Input from './components/react_input';
 import Storage from './components/react_storage';
 import DataList from './components/react_data_list';
@@ -76,6 +77,7 @@ export default class App extends Component {
             <Route path="/input" component={Input} />
             <Route path="/storage" component={Storage} />
             <Route path="/data" component={DataList} />
+            <Route path="/modal" component={Modal} />
             <Route path="/detail" component={DetaDetail} />
 
             <Route path="/eth" component={Web3Ethereum} />

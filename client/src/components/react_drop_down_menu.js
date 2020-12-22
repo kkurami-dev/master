@@ -19,6 +19,7 @@ const menuList = [
   {name:"/input",      title:"Reack の入力"},
   {name:"/storage",    title:"Reack ブラウザストーレジ"},
   {name:"/data",       title:"Reack Jsonデータ一覧"},
+  {name:"/modal",      title:"Reack モーダル（PopUp）"},
   {name:"/eth",        title:"Web3 Ethereum"},
 ];
 
