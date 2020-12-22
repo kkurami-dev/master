@@ -6,13 +6,30 @@ import { callLambdaSendToken, getLambdaLog } from '../lib/lib_aws';
 
 import "../App.css";
 
+const STORAGE_KEY = "lambdaContents";
+
 export default class Lambda extends  Component {
   constructor(props) {
     super(props)
     this.state = {
       exec: false,
       logs: false,
+      contents: JSON.parse(localStorage.getItem(STORAGE_KEY)) || []
     }
+  }
+
+  handleSubmit = () => {
+    let contentArray = this.state.contents;
+    contentArray.push({
+      // 省略
+      // 投稿内容
+    });
+ 
+    this.setState({
+      contents: contentArray
+    }, () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state.contents))
+    });
   }
 
   handleClick = () => {
