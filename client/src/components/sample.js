@@ -1,6 +1,12 @@
 import React from 'react';
 import Modal from 'react-modal';
 
+/**
+   読み込む pops
+     modalIsOpen
+     modalNotClose
+     modalCallBack
+ */
 Modal.setAppElement('#root') //任意のアプリを設定する　create-react-appなら#root
 class ModalWindow extends React.Component {
   constructor(props) {
@@ -11,13 +17,13 @@ class ModalWindow extends React.Component {
     this.openModal = this.openModal.bind(this);
     this.afterOpenModal = this.afterOpenModal.bind(this);
     this.closeModal = this.closeModal.bind(this);
-
   }
+
   componentDidMount() {
     console.log("props", this.props);
-    let {modalIsOpen, modalCallBack} = this.props;
+    let {modalIsOpen} = this.props;
 
-    this.setState({modalIsOpen, modalCallBack});
+    this.setState({modalIsOpen});
   }
   /**
    * React.Component のマニュアル
@@ -25,7 +31,7 @@ class ModalWindow extends React.Component {
    */
   componentDidUpdate(){
     console.log("componentDidUpdate()", this.state.modalIsOpen, this.props);
-    let {modalIsOpen, modalCallBack} = this.props;
+    let {modalIsOpen} = this.props;
 
     /* 非表示中に親コンポーネントからの表示指示に対応 */
     if (!this.state.modalIsOpen && modalIsOpen)

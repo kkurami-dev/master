@@ -165,9 +165,11 @@ export default class DataList extends React.Component {
                : (<tr>
                     <td>列: <DropdownList /* readOnly */
                                           data={data}
-                                          value={(select_item && select_item.name) || ""}
-                                          onSelect={this.SelectItem}
-                                          renderListItem={this.ListDataKey}
+                                          /* value={(select_item && select_item.name) || ""} */
+                                          /* onSelect={this.SelectItem} */
+                                          /* valueField='id' */
+                                          textField='name'
+                                          /* renderListItem={this.ListDataKey} */
                                           onChange={(e, v)=> this.setSearch(e, key, v)} /></td>
                     <td>内容:<input type="text" value={search[key].word} onChange={e => this.setSearch(e, key)} /></td>
                     <td><button onClick={e => this.delSearch(e, {key})}>削除</button></td>

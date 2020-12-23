@@ -2,7 +2,7 @@
  * 
  */
 import axios from 'axios';
-const sleep = require('sleep-async')();
+//const sleep = require('sleep-async')();
 const config = require('../configs/config');
 const API_BASE_URL = config.api_base_url;
 var AWS = require('aws-sdk');
@@ -31,6 +31,7 @@ export function getLambdaClient() {
  * CloudWatch LogsのログをJavaScriptで取得する
  *   https://wp-kyoto.net/get-cloudwatchlogs-data-by-javascript/
  */
+/*
 const black   = '\u001b[30m';
 const red     = '\u001b[31m';
 const green   = '\u001b[32m';
@@ -40,11 +41,12 @@ const magenta = '\u001b[35m';
 const cyan    = '\u001b[36m';
 const white   = '\u001b[37m';
 const reset   = '\u001b[0m';
+*/
 export function getLambdaLog(func, cb) {
   console.log("getLambdaLog() call");
   let last_data;
   let nextloop = true
-  let nextToken1;
+  //let nextToken1;
   let nextToken2;
   let io;
   let new_line = 0;
@@ -90,7 +92,6 @@ export function getLambdaLog(func, cb) {
                   let arr = str.match(/\{[\s\S]*\}/);
                   if(arr) console.log(arr);
                   else console.log(str);
-                  //console.log(now_data.message);
                 }
               }
               last_data = data.events[data.events.length - 1];

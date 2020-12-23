@@ -3,26 +3,29 @@
  */
 import React, { Component } from 'react';
 
-const APP_KEY = "ReactApp001";
-const appState = localStorage.getItem( APP_KEY );
-const initialState = appState ? JSON.parse(appState) : {
-  events: [],
-  operationLogs: []
-};
-
-class Hello extends  Component {
-   constructor() {
-     super();
+const KEY = 'savedContents';
+export default class Storage extends  Component {
+   constructor(props) {
+     super(props);
      this.state = {
-       data:{
-         val1:"",
-         val2:"",
-       },
-       some_code: "",
-       alert_message: ""
+       contents: JSON.parse(localStorage.getItem( KEY )) || [],
      };
    }
 
+  handleSubmit = () => {
+    let contentArray = this.state.contents;
+    contentArray.push({
+      // 省略
+      // 投稿内容
+    });
+    
+    this.setState({
+      contents: contentArray
+    }, () => {
+      let {contents} = this.state;
+      localStorage.setItem(KEY, JSON.stringify(contents))
+    });
+  }
 
   /**
    * ブラウザ内にデータを保持する
@@ -31,8 +34,6 @@ class Hello extends  Component {
 
   render() {
     let data = this.state.data;
-    console.log(initialState);
-
     return (
       <div>
         {/* 文字出力のサンプル */}
@@ -47,4 +48,3 @@ class Hello extends  Component {
   }
 }
 
-export default Hello;
