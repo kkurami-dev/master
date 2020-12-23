@@ -41,7 +41,8 @@ zipUpload(){
 }
 
 #zipUpload myHelloWorld
-zipUpload mySendToken
+#zipUpload mySendToken
+zipUpload BlockChainMain
 
 
 #arn:aws:lambda:ap-northeast-1:176264229023:function:myHelloWorld
