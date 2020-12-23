@@ -32,13 +32,21 @@ $ npm version
 - [JavaScript リファレンス](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference)
 - [スタイルシートの例など](https://webparts.cman.jp/string/blink/)
 
+
 - [AWS CLI:AWS Command Line Interface ユーザガイド](https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/cli-chap-welcome.html)
+
+
 - [Reac ドキュメント](https://ja.reactjs.org/docs/getting-started.html)
+- [REACT パフォーマンス最適化](https://ja.reactjs.org/docs/optimizing-performance.html)
+- [初めてReactを触ってみたが、ログイン周りの決定打が見つからなかったので自分で書いてみた。](https://qiita.com/ginban22/items/a36d01b41deaeedd581e)
+
+
 - [リロードしてもデータを保持するためには「localStorage」](https://qiita.com/Ryusou/items/8bce84e7b036114b8d72)
 - [Geth コンソールコマンド一覧](https://qiita.com/Yuto421/items/2e13e1706d708321d356)
 - [Ethereum Geth コンソールコマンド一覧](https://qiita.com/toshikase/items/fa7a826db483177d1e80)
 - [Ethereum入門](https://book.ethereum-jp.net/)
 - [Ethereum Solidity](https://24karamawariken.gitbook.io/ethereum-solidity/)
+
 
 ## サンプルアプリの機能
 React の Web 画面で下記の事を確認している。
@@ -54,12 +62,15 @@ React の Web 画面で下記の事を確認している。
 
 ## web3 のインストール注意点
   1. 先にインストールするパッケージが有る(2020/12/20)
+  ```
     $ npm rm web3 web3-js websocket scrypt-js mkdirp-promise mkdirp
     $ npm i websocket@1.0.33 scrypt-js mkdirp --save
     $ npm i web3
+  ```
     ※ web3 の時エラーがでる websocket@1.0.30 のコンパイルの為、別途
        websocket@1.0.31 以降をインストールして対応できるかな
   1. truffle の準備
+  ```
     $ truffle develop
     $ own = accounts[0]
     $ cli = "0xXXXXXXXXXXX"
@@ -68,6 +79,7 @@ React の Web 画面で下記の事を確認している。
     $ web3.eth.sendTransaction({from: own, to: cli, value: '1000000000000000000'})
     $ web3.eth.getBalance(own)
     $ web3.eth.getBalance(cli)
+  ```
     
 ## AWS
 
