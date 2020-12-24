@@ -66,6 +66,7 @@ export function getLambdaLog(func, cb) {
     if(nextloop)
       // ログの一覧の取得
       cloudwatchlogs.describeLogStreams(params1, function(err, data1) {
+        if(!data1) return;
         const {logStreamName} = data1.logStreams[0];
         params2.logStreamName = logStreamName;
 
@@ -107,6 +108,7 @@ export function getLambdaLog(func, cb) {
             console.log("getLambdaLog() B:stop ", nextloop, nextToken2, io);
             clearInterval(io);
           }
+          params2.startTime = old_line;
         });
       });
     nextloop = false;
@@ -123,14 +125,14 @@ export function callLambdaTest(Payload, cb) {
   lambdaClient.invoke(params, cb);
 }
 
-export async function callLambdaBlockChainMain(payload) {
+export async function callLambda(FunctionName, payload) {
   let call = new Promise((resolve, reject) => {
     let Payload = JSON.stringify( payload );
     var params = {
-      FunctionName: "BlockChainMain",
+      FunctionName,
       Payload,
     };
-    lambdaClient.invokeAsync(params, (err, data) => {
+    lambdaClient.invoke(params, (err, data) => {
       if(err) reject( err );
       else {
         if(data.Payload){

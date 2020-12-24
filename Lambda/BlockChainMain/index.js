@@ -8,33 +8,42 @@ var kms = new AWS.KMS({apiVersion: '2014-11-01'}),
 const endpoint = 'https://rpc-mumbai.matic.today',
       region = "ap-northeast-1",
       ssAddress = '0xD5E3b6A8Ebe3c55c05318B264b865b990EBb242C';
+const txrObj = require("./TxRelay.json");
 
-var web3;
-
-async function DeployContract(web3, account, obj, param ) {
-  console.log("DeployContract s");
+async function DeployContract(web3, account, obj, param, now_time ) {
+  if( !obj ){
+    console.error("DeployContract obj is null");
+    return null;
+  }
 
   try{
     let bytecode = obj.bytecode;
     let abi = obj.abi;
     let ret_hash;
-    console.log("abi", abi);
+    //console.log("abi", abi);
 
     // デプロイに必要なGasを問い合わせる
     let nowEth = web3.eth.getBalance(account);
     web3.eth.getGasPrice().then(console.log);
     let gasEstimate = web3.eth.estimateGas({data: bytecode});
+    console.log("nowEth", nowEth, "gasEstimate", gasEstimate,);
     if(nowEth < gasEstimate ){
-      console.log(nowEth, "<", gasEstimate, "gas が不足している");
+      console.error("gas が不足している:", Date.now() - now_time);
       return null;
     }
 
+    console.log("Promise: ", Date.now() - now_time);
     let call = new Promise((resolve, reject) => {
+      console.log("sendTransaction: ", Date.now() - now_time);
       web3.eth.sendTransaction({
         from: account,
         data: bytecode, // deploying a contracrt
         arguments: param
-      }, (error, hash) => resolve( hash ));
+      }, (error, hash) => {
+        console.log("sendTransaction callback: ", Date.now() - now_time);
+        resolve( hash );
+      });
+
     });
     await call.then((value) => ret_hash = value );
 
@@ -48,56 +57,65 @@ async function DeployContract(web3, account, obj, param ) {
 }
 
 async function Contract(web3, account, in_param, ret_hash){
-  var receipt;
-
-  
-  if(ret_hash){
-    console.log("getTransactionReceipt()");
-    await web3.eth.getTransactionReceipt(ret_hash).then((result) => receipt = result);
-    //console.log("Contract() A", receipt );
-    if(!receipt)
-      return { out_param: in_param, hash: ret_hash, receipt };
-  }
-
   console.log("Contract() B", in_param, in_param.length);
   if(in_param.length === 0)
-    return {out_param:in_param, hash:null, receipt };
-  
-  let {obj, tx_param, act} = in_param.shift();
-  let hash = await DeployContract(web3, account, obj, tx_param );
-  return {out_param:in_param, hash, receipt };
+    return {out_param:[], hash:null, receipt:null };
+
+  let {obj, tx_param, act, now_time} = in_param.shift();
+  let out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
+  console.log("Contract() C", out_hash);
+  return {out_param:in_param, out_hash, receipt:null };
 }
 
 async function BlockChainMain( event ){
-  if (web3){
-    web3.currentProvider.engine.start();
-  } else {
-    const provider = new kap.KmsProvider(
-      endpoint,
-      { region, keyIds: [ process.env.KMS_KEY ]},
-      //"ropsten",
-    );
-    web3 = new Web3( provider );
-  }
-  
-  const accounts = await web3.eth.getAccounts();
-  console.log("kap.KmsProvider OK", accounts[0]);
+  const now_time = Date.now()
 
-  const {in_param, hash} = event;
-  const obj = require("../contracts/TxRelay.json");
-  for(let i = 0; i < in_param.lenght; i++){
-    in_param[i].obj = obj;
+  let {in_param, hash} = event;
+  // バイナリ設定処理（ 本当は S3 から取得とか）
+  for(let i = 0; i < in_param.length; i++){
+    in_param[i].obj = txrObj;
+    if(i == 0) in_param[0].now_time = now_time;
+    //console.log("in_param[i]", in_param[i]);
   }
-  
-  web3.currentProvider.engine.stop();
+  console.log("BlockChainMain() event", in_param.length, hash);
+
+  // 処理中と判断し、状況確認を実施
+  if (hash){
+    const provider = new Web3.providers.HttpProvider( endpoint );
+    const web3h = new Web3( provider );
+
+    console.log("getTransactionReceipt()");
+    let receipt;
+    await web3h.eth.getTransactionReceipt(hash).then((result) => receipt = result);
+
+    console.log("BlockChainMain() A", receipt );
+    if(receipt)
+      return { out_param: in_param, out_hash: null, receipt };
+    else
+      return { out_param: in_param, out_hash: hash, receipt:"" };
+  }
+
+  // 書き込みは KMS で処理が必用
+  const provider = new kap.KmsProvider(endpoint, { region, keyIds: [ process.env.KMS_KEY ], timeout: 1000});
+  const web3k = new Web3( provider, {timeout: 1000} );
+  const accounts = await web3k.eth.getAccounts();
+  console.log("kap.KmsProvider OK", accounts[0], Date.now() - now_time);
+
+  // 書き込み処理の実施
+  let result = await Contract(web3k, accounts[0], in_param, hash );
+  web3k.currentProvider.engine.stop();
+  console.log("BlockChainMain() result", result, Date.now() - now_time);
+  return result;
 }
 
 exports.handler = async (event, context, callback) => {
-  await BlockChainMain( event );
-  // TODO implement
+  let target = await BlockChainMain( event );
   const response = {
     statusCode: 200,
     body: JSON.stringify('Hello from Lambda!'),
+    target
   };
+  
+  //callback( null, response);// 何かの終了を待つ為、アプリに応答が戻らない
   return response;
 };

@@ -36,7 +36,7 @@ import React, { Component } from 'react';
    Eventを返します。
   */
 import getWeb3 from "../lib/getWeb3";
-import {callLambdaBlockChainMain} from "../lib/lib_aws";
+import {callLambda} from "../lib/lib_aws";
 import "../App.css";
 
 async function DeployContract(web3, account, obj, param ) {
@@ -109,6 +109,7 @@ export default class Web3Ethereum extends  Component {
   componentDidMount = async () => {
     console.log("componentDidMount");
     try {
+
       // Chorome の MetaMask 拡張機能でローカルの truffle に接続するので、このままで
       const web3 = await getWeb3();
 
@@ -134,17 +135,36 @@ export default class Web3Ethereum extends  Component {
     } while(ret_hash || in_param.length);
     console.log("callDeploy() end" );
   }
+
   async callLambdaDeploy(e){
-    let in_param = [{tx_param:[], act:0}, {tx_param:[], act:0}, {tx_param:[], act:0}];
-    let hash, i;
+    let now_time = Date.now();
+    this.setState({ first: false });
+    let obj = "";
+    let in_param = [{tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0},
+                    {tx_param:[], act:0}];
+    let hash, i = 0;
     do {
-      console.log("callDeploy() loop", ++i );
-      let {out_param, out_hash, receipt} = await callLambdaBlockChainMain({in_param, hash});
-      console.log("callDeploy()", receipt);
+      let result = await callLambda("BlockChainMain", {in_param, hash});
+      ++i;
+      if(result.errorType || result.errorMessage) {
+        console.error("callDeploy() loop", Date.now() - now_time, i, result );
+        return;
+      }
+
+      let {out_param, out_hash, receipt} = result.target;
+      console.log("callDeploy()", Date.now() - now_time, out_param, out_hash, receipt);
       hash = out_hash;
       in_param = out_param;
     } while(hash || in_param.length);
-    console.log("callDeploy() end" );
+    console.log("callDeploy() end", Date.now() - now_time );
   }
 
   render() {
@@ -152,7 +172,7 @@ export default class Web3Ethereum extends  Component {
       // web3 のインスタンスが入るまではここに入る
       return <div>Loading Web3, accounts, and contract...</div>;
     }
-    //if(this.state.first)  this.callDeploy(this);
+    if(this.state.first)  this.callLambdaDeploy(this);
     return (
       <div>
         <h1>Good to Go!</h1>
