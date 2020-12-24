@@ -123,6 +123,28 @@ export function callLambdaTest(Payload, cb) {
   lambdaClient.invoke(params, cb);
 }
 
+export async function callLambdaBlockChainMain(payload) {
+  let call = new Promise((resolve, reject) => {
+    let Payload = JSON.stringify( payload );
+    var params = {
+      FunctionName: "BlockChainMain",
+      Payload,
+    };
+    lambdaClient.invokeAsync(params, (err, data) => {
+      if(err) reject( err );
+      else {
+        if(data.Payload){
+          let out = JSON.parse( data.Payload );
+          resolve( out );
+        }
+      }
+    });
+  });
+  let ret_val;
+  await call.then((value) => ret_val = value );
+  return ret_val;
+}
+
 export function callLambdaSendToken(payload, cb) {
   let Payload = JSON.stringify( payload );
   var params = {

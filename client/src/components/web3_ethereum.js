@@ -35,118 +35,116 @@ import React, { Component } from 'react';
    toBlockが'latest'やundefinedの時は、getをcallした時点までの
    Eventを返します。
   */
-import SimpleStorageContract from "../contracts/SimpleStorage.json";
 import getWeb3 from "../lib/getWeb3";
-
+import {callLambdaBlockChainMain} from "../lib/lib_aws";
 import "../App.css";
 
-async function DeployContract(web3, account, obj, cb) {
-  console.log("DeployContract", web3, account, obj, cb);
+async function DeployContract(web3, account, obj, param ) {
+  console.log("DeployContract s");
 
   try{
     let bytecode = obj.bytecode;
     let abi = obj.abi;
+    let ret_hash;
     console.log("abi", abi);
 
     // デプロイに必要なGasを問い合わせる
-    let nowEth = await web3.eth.getBalance(account);
+    let nowEth = web3.eth.getBalance(account);
     web3.eth.getGasPrice().then(console.log);
-    let gasEstimate = await web3.eth.estimateGas({data: bytecode});
+    let gasEstimate = web3.eth.estimateGas({data: bytecode});
     if(nowEth < gasEstimate ){
-      console.log(nowEth, "<", gasEstimate);
-      cb( "gas が不足している", null );
-      return;
+      console.log(nowEth, "<", gasEstimate, "gas が不足している");
+      return null;
     }
 
-    let ret;
-    ret = await web3.eth.sendTransaction({
-      from: account,
-      data: bytecode // deploying a contracrt
-    }, function(error, hash){
-      if(error) console.error(error);
-      else console.log(hash);
+    let call = new Promise((resolve, reject) => {
+      web3.eth.sendTransaction({
+        from: account,
+        data: bytecode, // deploying a contracrt
+        arguments: param
+      }, (error, hash) => resolve( hash ));
     });
-    cb( null, ret );
+    await call.then((value) => ret_hash = value );
+
+    console.log("DeployContract e", ret_hash);
+    return ret_hash;
   }
   catch(e){
     console.log(e.message);
-    cb( e, null );
+    return null;
   }
 }
 
+async function Contract(web3, account, in_param, ret_hash){
+  var receipt;
+
+  
+  if(ret_hash){
+    console.log("getTransactionReceipt()");
+    await web3.eth.getTransactionReceipt(ret_hash).then((result) => receipt = result);
+    //console.log("Contract() A", receipt );
+    if(!receipt)
+      return { out_param: in_param, hash: ret_hash, receipt };
+  }
+
+  console.log("Contract() B", in_param, in_param.length);
+  if(in_param.length === 0)
+    return {out_param:in_param, hash:null, receipt };
+  
+  let {obj, tx_param, act} = in_param.shift();
+  let hash = await DeployContract(web3, account, obj, tx_param );
+  return {out_param:in_param, hash, receipt };
+}
+
+//////////////////////////////////////////////////////////////////////////////////
 export default class Web3Ethereum extends  Component {
   state = { storageValue: 0,
             web3: null,
             accounts: null,
-            contract: null
+            contract: null,
+            
+            first: true
           };
-
-  runExample = async () => {
-    const { accounts, contract } = this.state;
-
-    // Stores a given value, 5 by default.
-    await contract.methods.set(5).send({ from: accounts[0] });
-
-    // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call();
-
-    // Update state with the result.
-    this.setState({ storageValue: response });
-  };
 
   componentDidMount = async () => {
     console.log("componentDidMount");
-
     try {
       // Chorome の MetaMask 拡張機能でローカルの truffle に接続するので、このままで
-      // Get network provider and web3 instance.
       const web3 = await getWeb3();
-      console.log("ok web3.version:", web3.version, web3);
 
-      // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
-      console.log("accounts", accounts);
-
-      // Get the contract instance.
-      const networkId = await web3.eth.net.getId();
-      console.log("networkId", networkId);
-      const deployedNetwork = SimpleStorageContract.networks[networkId];
-      console.log("deployedNetwork", deployedNetwork);
-      const instance = new web3.eth.Contract(
-        SimpleStorageContract.abi,
-        deployedNetwork && deployedNetwork.address,
-      );
-      console.log("instance", instance);
-      
-      let getNodeInfo = web3.eth.getNodeInfo();
-      let log = {
-        web3, window,
-        accounts, networkId, deployedNetwork, instance,
-        getNodeInfo
-      };
-      console.log("Web3 OK ", log);
-
       const obj = require("../contracts/TxRelay.json");
-      
-      // Set web3, accounts, and contract to the state, and then proceed with an
-      // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance , obj});
+      this.setState({ web3, account: accounts[0], obj});
     } catch (error) {
-      // Catch any errors for any of the above operations.
-      alert(
-        `Failed to load web3, accounts, or contract. Check console for details.`,
-      );
+      alert(`Failed to load web3, accounts, or contract. Check console for details.`);
       console.error(error);
     }
   };
 
-  callDeploy(e){
-    console.log("callDeploy()", e );
-    
-    let {web3, accounts, obj} = this.state;
-    DeployContract(web3, accounts[0], obj, (error, result) => {
-      console.log("DeployContract", result);
-    });
+  async callDeploy(e){
+    let {web3, account, obj, ret_hash} = this.state;
+    let in_param = [{obj, tx_param:[], act:0}, {obj, tx_param:[], act:0}, {obj, tx_param:[], act:0}];
+    let i = 0;
+    do {
+      console.log("callDeploy() loop", ++i );
+      let {out_param, hash, receipt} = await Contract(web3, account, in_param, ret_hash);
+      console.log("callDeploy()", receipt);
+      ret_hash = hash;
+      in_param = out_param;
+    } while(ret_hash || in_param.length);
+    console.log("callDeploy() end" );
+  }
+  async callLambdaDeploy(e){
+    let in_param = [{tx_param:[], act:0}, {tx_param:[], act:0}, {tx_param:[], act:0}];
+    let hash, i;
+    do {
+      console.log("callDeploy() loop", ++i );
+      let {out_param, out_hash, receipt} = await callLambdaBlockChainMain({in_param, hash});
+      console.log("callDeploy()", receipt);
+      hash = out_hash;
+      in_param = out_param;
+    } while(hash || in_param.length);
+    console.log("callDeploy() end" );
   }
 
   render() {
@@ -154,6 +152,7 @@ export default class Web3Ethereum extends  Component {
       // web3 のインスタンスが入るまではここに入る
       return <div>Loading Web3, accounts, and contract...</div>;
     }
+    //if(this.state.first)  this.callDeploy(this);
     return (
       <div>
         <h1>Good to Go!</h1>
@@ -169,6 +168,7 @@ export default class Web3Ethereum extends  Component {
         </p>
 
         <button onClick={this.callDeploy.bind(this)}>デプロイ</button><br/>
+        <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
       </div>
     );
   }
