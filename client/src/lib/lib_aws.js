@@ -55,10 +55,54 @@ export function getLambdaLog(func, cb) {
                   descending: true,
                   orderBy: "LastEventTime" };
   let params2 = { logGroupName: '/aws/lambda/'+func };
+  let onlogStreamName;
 
+  // ログ取得後の制御
+  const getCloudwatchLog = (err, data) => {
+    if (err) {
+      console.log(err);
+
+    } else if(data.events.length > 0){
+      if(data.nextToken2) params2.nextToken = data.nextToken;
+      old_line = new_line;
+      new_line = data.events[ data.events.length - 1].timestamp;
+      console.log("time", old_line, new_line, onlogStreamName);
+      if(new_line !== old_line){
+        
+        // 一行ずつの処理開始
+        for(let i = 0; i < data.events.length; i++){
+          let now_data = data.events[i];
+          
+          if(!last_data || last_data.timestamp <= now_data.timestamp){
+            let str = now_data.message;
+
+            // 正規表現
+            //   https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Regular_Expressions
+            let arr = str.match(/\{[\s\S]*\}/);
+            if(arr) console.log(arr);
+            else console.log(str);
+          }
+        }
+        last_data = data.events[data.events.length - 1];
+      }
+      if(0 === old_line) old_line = new_line;
+
+    } else {
+      console.log("getLambdaLog() wait", onlogStreamName, nextloop, data);
+    }
+    nextloop = cb({io, data});
+
+    if (!nextloop && io) {
+      console.log("getLambdaLog() B:stop ", nextloop, nextToken2, io);
+      clearInterval(io);
+    }
+    params2.startTime = old_line;
+  }
+
+  // ログストリームの取得
   console.log("getLambdaLog() start");
   io = setInterval(() => {
-    if(!cb(null) && io){
+    if(!cb({io, data:null}) && io){
       console.log("getLambdaLog() A:stop ", nextloop, nextToken2, io);
       clearInterval(io);
       return;
@@ -69,47 +113,10 @@ export function getLambdaLog(func, cb) {
         if(!data1) return;
         const {logStreamName} = data1.logStreams[0];
         params2.logStreamName = logStreamName;
+        onlogStreamName = logStreamName;
 
         // 最新のログの取得
-        cloudwatchlogs.getLogEvents(params2, (err, data) => {
-          if (err) {
-            console.log(err);
-
-          } else if(data.events.length > 0){
-            if(data.nextToken2) params2.nextToken = data.nextToken;
-            old_line = new_line;
-            new_line = data.events[ data.events.length - 1].timestamp;
-            console.log("time", old_line, new_line, logStreamName);
-
-            if(new_line !== old_line){
-              for(let i = 0; i < data.events.length; i++){
-                let now_data = data.events[i];
-                
-                if(!last_data || last_data.timestamp <= now_data.timestamp){
-                  let str = now_data.message;
-
-                  // 正規表現
-                  //   https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Regular_Expressions
-                  let arr = str.match(/\{[\s\S]*\}/);
-                  if(arr) console.log(arr);
-                  else console.log(str);
-                }
-              }
-              last_data = data.events[data.events.length - 1];
-            }
-            if(0 === old_line) old_line = new_line;
-
-          } else {
-            console.log("getLambdaLog() wait", logStreamName, nextloop, data);
-          }
-          nextloop = cb({io, data});
-
-          if (!nextloop && io) {
-            console.log("getLambdaLog() B:stop ", nextloop, nextToken2, io);
-            clearInterval(io);
-          }
-          params2.startTime = old_line;
-        });
+        cloudwatchlogs.getLogEvents(params2, getCloudwatchLog);
       });
     nextloop = false;
   }, 1000);

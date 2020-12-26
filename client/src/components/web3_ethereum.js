@@ -37,6 +37,8 @@ import React, { Component } from 'react';
   */
 import getWeb3 from "../lib/getWeb3";
 import {callLambda} from "../lib/lib_aws";
+import history from '../history';
+
 import "../App.css";
 
 async function DeployContract(web3, account, obj, param ) {
@@ -96,15 +98,22 @@ async function Contract(web3, account, in_param, ret_hash){
   return {out_param:in_param, hash, receipt };
 }
 
+const obj = require("../contracts/TxRelay.json");
 //////////////////////////////////////////////////////////////////////////////////
 export default class Web3Ethereum extends  Component {
-  state = { storageValue: 0,
-            web3: null,
-            accounts: null,
-            contract: null,
-            
-            first: true
-          };
+  constructor(props) {
+    console.log("constructor(props)");
+    super(props);
+    this.state = {
+      storageValue: 0,
+      web3: null,
+      accounts: null,
+      contract: null,
+
+      loop: true,
+      first: false
+    };
+  }
 
   componentDidMount = async () => {
     console.log("componentDidMount");
@@ -112,9 +121,9 @@ export default class Web3Ethereum extends  Component {
 
       // Chorome の MetaMask 拡張機能でローカルの truffle に接続するので、このままで
       const web3 = await getWeb3();
-
       const accounts = await web3.eth.getAccounts();
-      const obj = require("../contracts/TxRelay.json");
+
+      console.log(web3);
       this.setState({ web3, account: accounts[0], obj});
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
@@ -136,9 +145,15 @@ export default class Web3Ethereum extends  Component {
     console.log("callDeploy() end" );
   }
 
-  async callLambdaDeploy(e){
+  componentWillUnmount(event, v2, v3) {
+    console.log("componentWillUnmount", event, v2, v3);
+    this.setState({ loop: false });
+  }
+
+  async callLambdaDeploy( event ){
+    console.log("callLambdaDeploy", event);
     let now_time = Date.now();
-    this.setState({ first: false });
+    this.setState({ first: false, loop: true });
     let obj = "";
     let in_param = [{tx_param:[], act:0},
                     {tx_param:[], act:0},
@@ -152,19 +167,28 @@ export default class Web3Ethereum extends  Component {
                     {tx_param:[], act:0}];
     let hash, i = 0;
     do {
+      let {loop} = this.state;
+      if (!loop) break;
+      let loop_time = Date.now();
       let result = await callLambda("BlockChainMain", {in_param, hash});
       ++i;
       if(result.errorType || result.errorMessage) {
-        console.error("callDeploy() loop", Date.now() - now_time, i, result );
+        console.error("callDeploy() loop", Date.now() - loop_time, i, result );
         return;
       }
 
       let {out_param, out_hash, receipt} = result.target;
-      console.log("callDeploy()", Date.now() - now_time, out_param, out_hash, receipt);
+      console.log("callDeploy()", Date.now() - loop_time, out_param, out_hash, receipt);
       hash = out_hash;
       in_param = out_param;
     } while(hash || in_param.length);
-    console.log("callDeploy() end", Date.now() - now_time );
+    console.log("callDeploy() end", (Date.now() - now_time)/1000 );
+  }
+
+  toLogWatch = (event) =>{
+    console.log("toLogWatch", event);
+    history.push('/aws_cwl');
+    this.setState({ first: false, loop: false });
   }
 
   render() {
@@ -187,8 +211,9 @@ export default class Web3Ethereum extends  Component {
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
 
-        <button onClick={this.callDeploy.bind(this)}>デプロイ</button><br/>
-        <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
+        <button onClick={this.callDeploy.bind}>デプロイ</button><br/>
+        <button onClick={this.callLambdaDeploy.bind}>デプロイ(Lambda)</button><br/>
+        <button onClick={this.toLogWatch}>ログ監視</button><br/>
       </div>
     );
   }
