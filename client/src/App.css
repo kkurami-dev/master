@@ -60,6 +60,7 @@
   position: relative;
   text-align: left;
   padding: 3px 5px;
+  z-index: 1;
 }
 .menuButton {
   display: inline;
@@ -68,19 +69,28 @@
   padding: 3px 5px;
 }
 .menuBox {
+  /* background-color: #cae4ff; */
+  background-color: #ffffff;
   position: absolute;
-  top: 23px;
-  width: 120px;
-  zIndex: 1;
-  cursor: pointer;
-  border: 1px solid black;
+  /* top: 23px; */
+  /* width: 120px; */
+  z-Index: 1;
+  /* cursor: pointer; */
+  /* border: 1px solid black; */
+  /* --- 文字情報設定 ------------------------------ */
+  font-size      : 11pt;         /* 文字サイズ       */
+  letter-spacing : 0em;          /* 文字間隔         */
+  line-height    : 1em;          /* 行間隔（1行高さ）*/
 }
 .menuContent {
   padding: 3px 5px;
-  borderBottom: 1px solid black;
+  /* borderBottom: 1px solid black; */
 }
 .lastMenuContent {
   padding: 3px 5px;
+}
+.menuContent:hover {
+  background-color: rgb(230, 230, 240);
 }
 
 table, th, td {

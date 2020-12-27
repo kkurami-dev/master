@@ -75,14 +75,16 @@ class DropDownMenu extends React.Component {
            * 場合だけメニューの内容作成が実行される(if文的)
            */
           listOpen &&
-            (<div className="menuBox">
+            (<table className="menuBox">
                { /* リストの処理全体の処理を記載  */
                  menuList.map(item => (
-                   <div className="menuContent" key={item.name}>
-                     <div onClick={this.handleClickMenu.bind(this, item.name)}>{item.title}</div>
-                   </div>
+                   <tr className="menuContent" key={item.name}>
+                       <td className="lastMenuContent"
+                            onClick={this.handleClickMenu.bind(this, item.name)}>{item.title}
+                       </td>
+                   </tr>
                  ))}
-             </div>
+             </table>
           )
         }
       </div>
