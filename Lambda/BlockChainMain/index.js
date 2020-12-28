@@ -9,6 +9,7 @@ const endpoint = 'https://rpc-mumbai.matic.today',
       region = "ap-northeast-1",
       ssAddress = '0xD5E3b6A8Ebe3c55c05318B264b865b990EBb242C';
 const txrObj = require("./TxRelay.json");
+const tokenObj = require("./MyToken.json");
 
 async function DeployContract(web3, account, obj, param, now_time ) {
   if( !obj ){
@@ -57,12 +58,21 @@ async function DeployContract(web3, account, obj, param, now_time ) {
 }
 
 async function Contract(web3, account, in_param, ret_hash){
-  console.log("Contract() B", in_param, in_param.length);
+  console.log("Contract() B in_param", in_param.length);
   if(in_param.length === 0)
     return {out_param:[], hash:null, receipt:null };
 
   let {obj, tx_param, act, now_time} = in_param.shift();
-  let out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
+
+  // アクションに従った操作の選択
+  let out_hash;
+  switch(act){
+  case 0:
+  case 1:
+    out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
+    break;
+  }
+
   console.log("Contract() C", out_hash);
   return {out_param:in_param, out_hash, receipt:null };
 }
@@ -71,9 +81,19 @@ async function BlockChainMain( event ){
   const now_time = Date.now()
 
   let {in_param, hash} = event;
-  // バイナリ設定処理（ 本当は S3 から取得とか）
+
+  // アクションに従ったオブジェクト変更
   for(let i = 0; i < in_param.length; i++){
-    in_param[i].obj = txrObj;
+    // バイナリ設定処理（ 本当は S3 から取得とか）
+    switch(in_param[i].act){
+    case 0:
+      in_param[i].obj = txrObj;
+      break;
+    case 1:
+      in_param[i].obj = tokenObj;
+      break;
+    }
+    
     if(i == 0) in_param[0].now_time = now_time;
     //console.log("in_param[i]", in_param[i]);
   }

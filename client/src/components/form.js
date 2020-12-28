@@ -14,7 +14,7 @@ const exec = require('child_process').exec;
 //const mktemp = require('mktemp');
 const moment = require('moment');
 const pdf = require('html-pdf');
-const mkdirp = require('mkdirp');
+//const mkdirp = require('mkdirp');
 //const tmp = require('tmp');
 
 // LambdaでサーバーレスにhtmlをPDFに変換しよう

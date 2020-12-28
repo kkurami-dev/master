@@ -156,19 +156,10 @@ export default class Web3Ethereum extends  Component {
     this.setState({ first: false, loop: true });
     let obj = "";
     let in_param = [{tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0},
-                    {tx_param:[], act:0}];
+                    {tx_param:["ExampleToken", "EGT", 10000000], act:1}];
     let hash, i = 0;
     do {
-      let {loop} = this.state;
-      if (!loop) break;
+      if (!this.state.loop) break;
       let loop_time = Date.now();
       let result = await callLambda("BlockChainMain", {in_param, hash});
       ++i;
@@ -196,6 +187,7 @@ export default class Web3Ethereum extends  Component {
       // web3 のインスタンスが入るまではここに入る
       return <div>Loading Web3, accounts, and contract...</div>;
     }
+    
     if(this.state.first)  this.callLambdaDeploy(this);
     return (
       <div>
@@ -210,10 +202,11 @@ export default class Web3Ethereum extends  Component {
         <p>
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
-
-        <button onClick={this.callDeploy.bind}>デプロイ</button><br/>
-        <button onClick={this.callLambdaDeploy.bind}>デプロイ(Lambda)</button><br/>
-        <button onClick={this.toLogWatch}>ログ監視</button><br/>
+        <p>
+          <button onClick={this.callDeploy.bind(this)}>デプロイ</button><br/>
+          <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
+        </p>
+        <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button><br/>
       </div>
     );
   }

@@ -148,7 +148,7 @@ export default class DataList extends React.Component {
   render() {
     let search = this.state.search;
     let data = this.state.items;
-    let select_item = this.state.select_item;
+    // let select_item = this.state.select_item;
     return (
       <div>
         <br/>

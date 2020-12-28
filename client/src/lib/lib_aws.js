@@ -44,59 +44,83 @@ const reset   = '\u001b[0m';
 */
 export function getLambdaLog(func, cb) {
   console.log("getLambdaLog() call");
-  let last_data;
   let nextloop = true
-  //let nextToken1;
   let nextToken2;
   let io;
-  let new_line = 0;
-  let old_line = 1;
+  let last_time = 0;
   let params1 = { logGroupName: '/aws/lambda/'+func,
                   descending: true,
                   orderBy: "LastEventTime" };
   let params2 = { logGroupName: '/aws/lambda/'+func };
-  let onlogStreamName;
 
   // ログ取得後の制御
   const getCloudwatchLog = (err, data) => {
-    if (err) {
-      console.log(err);
-
-    } else if(data.events.length > 0){
-      if(data.nextToken2) params2.nextToken = data.nextToken;
-      old_line = new_line;
-      new_line = data.events[ data.events.length - 1].timestamp;
-      console.log("time", old_line, new_line, onlogStreamName);
-      if(new_line !== old_line){
-        
-        // 一行ずつの処理開始
-        for(let i = 0; i < data.events.length; i++){
-          let now_data = data.events[i];
-          
-          if(!last_data || last_data.timestamp <= now_data.timestamp){
-            let str = now_data.message;
-
-            // 正規表現
-            //   https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Regular_Expressions
-            let arr = str.match(/\{[\s\S]*\}/);
-            if(arr) console.log(arr);
-            else console.log(str);
-          }
-        }
-        last_data = data.events[data.events.length - 1];
-      }
-      if(0 === old_line) old_line = new_line;
-
-    } else {
-      console.log("getLambdaLog() wait", onlogStreamName, nextloop, data);
-    }
+    // 上位コンポーネントからの終了判定
     nextloop = cb({io, data});
-
     if (!nextloop && io) {
       console.log("getLambdaLog() B:stop ", nextloop, nextToken2, io);
       clearInterval(io);
+      return;
     }
-    params2.startTime = old_line;
+
+    // ログ取得出来たか判定
+    if (err) {
+      console.log(err);
+      return;
+    } else if(data.events.length === 0){
+      return;
+    }
+
+    // ログが取得
+    if(data.nextToken2) params2.nextToken = data.nextToken;
+
+    //console.log("time", old_line, new_line, onlogStreamName);
+    if(last_time === data.events[ 0 ].timestamp){
+      //console.log("getLambdaLog() wait", onlogStreamName, nextloop, data);
+      return;
+    }
+
+    // 一行ずつの処理開始
+    for(let i = 0; i < data.events.length; i++){
+      let org = data.events[i].message;
+
+      // 正規表現
+      //   https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Regular_Expressions
+      let str = org
+          .replace(/  +/g, ' ')
+          .replace(/\n/g, '')
+          .replace(/'\{/g, '{')
+          .replace(/\}'/g, '}')
+          .replace(/'/g, '"')
+          .replace(/" + "/g, '')
+          //.replace(/([io0-9\-;:]{20})[io0-9\-:;]{30,}/g, '$1...')
+          //.replace(/(0x.{20}).+/g, '$1...')
+          .replace(/(Array|Object)/g, '"$1"')
+          .replace(/(?!")([A-Za-z0-9_\-./.:;]+)(?!"): /g, '"$1": ')
+          .replace(/": ([^"][A-Za-z0-9_\-/.:;]+[^"]),/g, '": "$1",')
+          .replace(/: "(null|true|false|[0-9]+)"/g, ': $1')
+          ;
+      let arr = str.match(/[[{][\s\S]*[}\]]/g);
+      if(arr) {
+        for(let i = 0; i < arr.length; i++){
+          try {
+            console.log(JSON.parse(arr[i]));
+          } catch( e ){
+            //console.log(org);
+            let out = org
+                .replace(/,/g, ',\n\t')
+                .replace(/([io0-9\-;:]{20})[io0-9\-:;]{30,}/g, '$1...')
+                .replace(/(0x.{20}).+/g, '$1...');
+            console.log(out);
+          }
+        }
+      } else {
+        console.log(str);
+      }
+    }
+
+    last_time = data.events[ data.events.length - 1 ].timestamp;
+    params2.startTime = last_time;
   }
 
   // ログストリームの取得
@@ -113,7 +137,6 @@ export function getLambdaLog(func, cb) {
         if(!data1) return;
         const {logStreamName} = data1.logStreams[0];
         params2.logStreamName = logStreamName;
-        onlogStreamName = logStreamName;
 
         // 最新のログの取得
         cloudwatchlogs.getLogEvents(params2, getCloudwatchLog);
