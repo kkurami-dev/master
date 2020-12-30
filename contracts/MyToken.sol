@@ -11,9 +11,9 @@ contract MyToken is ERC20, ERC20Detailed {
     // This is for debug purpose
     event Log(address from, string message);
 
-    constructor (symbol, token, amount) public ERC20Detailed(symbol, token, amount) {
+    constructor (string memory symbol, string memory token, uint8 amount) public ERC20Detailed(symbol, token, amount) {
         _mint( msg.sender,
-               10000 * (10 ** uint256(decimals()))
+               amount * (10 ** uint256(decimals()))
                );
     }
 

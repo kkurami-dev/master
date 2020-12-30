@@ -91,14 +91,16 @@ async function Contract(web3, account, in_param, ret_hash){
 
   console.log("Contract() B", in_param, in_param.length);
   if(in_param.length === 0)
-    return {out_param:in_param, hash:null, receipt };
+    return {out_param:in_param, out_hash:null, receipt };
   
   let {obj, tx_param, act} = in_param.shift();
-  let hash = await DeployContract(web3, account, obj, tx_param );
-  return {out_param:in_param, hash, receipt };
+  let hash;
+  if( act === 0 )
+    hash = await DeployContract(web3, account, obj, tx_param );
+  return {out_param:in_param, out_hash: hash, receipt };
 }
 
-const obj = require("../contracts/TxRelay.json");
+const objTxRelay = require("../contracts/TxRelay.json");
 //////////////////////////////////////////////////////////////////////////////////
 export default class Web3Ethereum extends  Component {
   constructor(props) {
@@ -124,7 +126,7 @@ export default class Web3Ethereum extends  Component {
       const accounts = await web3.eth.getAccounts();
 
       console.log(web3);
-      this.setState({ web3, account: accounts[0], obj});
+      this.setState({ web3, account: accounts[0], objTxRelay});
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
       console.error(error);
@@ -137,9 +139,9 @@ export default class Web3Ethereum extends  Component {
     let i = 0;
     do {
       console.log("callDeploy() loop", ++i );
-      let {out_param, hash, receipt} = await Contract(web3, account, in_param, ret_hash);
+      let {out_param, out_hash, receipt} = await Contract(web3, account, in_param, ret_hash);
       console.log("callDeploy()", receipt);
-      ret_hash = hash;
+      ret_hash = out_hash;
       in_param = out_param;
     } while(ret_hash || in_param.length);
     console.log("callDeploy() end" );
@@ -154,9 +156,8 @@ export default class Web3Ethereum extends  Component {
     console.log("callLambdaDeploy", event);
     let now_time = Date.now();
     this.setState({ first: false, loop: true });
-    let obj = "";
     let in_param = [{tx_param:[], act:0},
-                    {tx_param:["ExampleToken", "EGT", 10000000], act:1}];
+                    {tx_param:["ExampleToken", "EGT", 10000], act:1}];
     let hash, i = 0;
     do {
       if (!this.state.loop) break;

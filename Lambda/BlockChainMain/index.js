@@ -41,8 +41,13 @@ async function DeployContract(web3, account, obj, param, now_time ) {
         data: bytecode, // deploying a contracrt
         arguments: param
       }, (error, hash) => {
-        console.log("sendTransaction callback: ", Date.now() - now_time);
-        resolve( hash );
+        if(error) {
+          console.error("sendTransaction callback: ", error, Date.now() - now_time);
+          reject( error );
+        } else {
+          console.log("sendTransaction callback: ", Date.now() - now_time);
+          resolve( hash );
+        }
       });
 
     });

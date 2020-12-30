@@ -4,11 +4,6 @@
   "private": true,
   "dependencies": {
     "aws-sdk": "^2.759.0",
-    "eslint-plugin-import": "^2.22.1",
-    "firebase": "^8.0.2",
-    "html-pdf": "^2.2.0",
-    "mkdirp": "^1.0.4",
-    "mktemp": "^1.0.0",
     "react": "16.11.0",
     "react-bootstrap": "^1.4.0",
     "react-dom": "16.11.0",
@@ -29,9 +24,6 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
   },
   "browserslist": {
     "production": [
