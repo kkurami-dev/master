@@ -6,7 +6,7 @@ var MessageBox = artifacts.require("./MessageBox.sol");
 module.exports = function(deployer) {
   let log = deployer.deploy(SimpleStorage);
   console.log(log);
-  // deployer.deploy(TxRelay);
-  // deployer.deploy(MyToken);
+  deployer.deploy(TxRelay);
+  deployer.deploy(MyToken, "MyToken", "GET", 8);
   // deployer.deploy(MessageBox, "Hello from message box");
 };

@@ -17,32 +17,40 @@ async function DeployContract(web3, account, obj, param, now_time ) {
     return null;
   }
 
-  try{
+  try {
     let bytecode = obj.bytecode;
     let abi = obj.abi;
     let ret_hash;
     //console.log("abi", abi);
 
     // デプロイに必要なGasを問い合わせる
-    let nowEth = web3.eth.getBalance(account);
+    let nowEth = await web3.eth.getBalance(account);
+    console.log("getBalance");
     web3.eth.getGasPrice().then(console.log);
-    let gasEstimate = web3.eth.estimateGas({data: bytecode});
-    console.log("nowEth", nowEth, "gasEstimate", gasEstimate,);
-    if(nowEth < gasEstimate ){
-      console.error("gas が不足している:", Date.now() - now_time);
-      return null;
-    }
+    console.log("getGasPrice", bytecode.length );
+    // let gasEstimate = await web3.eth.estimateGas({data: bytecode});
+    // console.log("nowEth", nowEth, "gasEstimate", gasEstimate,);
+    // if(nowEth < gasEstimate ){
+    //   console.error("gas It is insufficient:", Date.now() - now_time);
+    //   return null;
+    // }
 
-    console.log("Promise: ", Date.now() - now_time);
-    let call = new Promise((resolve, reject) => {
-      console.log("sendTransaction: ", Date.now() - now_time);
-      web3.eth.sendTransaction({
-        from: account,
-        data: bytecode, // deploying a contracrt
+    console.log("Promise: ", Date.now() - now_time, param);
+    const call = new Promise((resolve, reject) => {
+      console.log("new Copntract: ", Date.now() - now_time, param);
+      const contract = new web3.eth.Contract( abi );
+      
+      console.log("deploy send ", Date.now() - now_time, param);
+      contract.deploy({
+        data: bytecode,
         arguments: param
+      })
+        .send({
+          from: account,
+          gas: '2000000'
       }, (error, hash) => {
         if(error) {
-          console.error("sendTransaction callback: ", error, Date.now() - now_time);
+          console.error("sendTransaction callback: ", error.message, error, Date.now() - now_time);
           reject( error );
         } else {
           console.log("sendTransaction callback: ", Date.now() - now_time);
@@ -53,11 +61,11 @@ async function DeployContract(web3, account, obj, param, now_time ) {
     });
     await call.then((value) => ret_hash = value );
 
-    console.log("DeployContract e", ret_hash);
+    console.log("DeployContract ok", ret_hash);
     return ret_hash;
   }
   catch(e){
-    console.log(e.message);
+    console.error("DeployContract ex", e.message, e);
     return null;
   }
 }
@@ -68,6 +76,7 @@ async function Contract(web3, account, in_param, ret_hash){
     return {out_param:[], hash:null, receipt:null };
 
   let {obj, tx_param, act, now_time} = in_param.shift();
+  console.log("Contract() D in_param", tx_param, act);
 
   // アクションに従った操作の選択
   let out_hash;

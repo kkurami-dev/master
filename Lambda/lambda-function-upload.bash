@@ -19,13 +19,13 @@ zipUpload(){
     UZIP=${UZIP#/i}
 
     echo "# ${FPATH} の圧縮、アップロード、削除の一連処理"
-    7z a -tzip -r ${ZIP} ./${FPATH}/* > /dev/null
+    7z a -tzip -r ${ZIP} ./${FPATH}/*
     aws lambda update-function-code \
         --function-name ${FPATH} \
         --zip-file fileb://${UZIP} \
         --region "ap-northeast-1" \
-        --publish  > /dev/null
-    rm ${ZIP}
+        --publish 
+    rm -rf ${ZIP}
 
     # echo "# Lambda関数 ${FPATH} の直接実行"
     # aws lambda invoke --function-name ${FPATH} out \

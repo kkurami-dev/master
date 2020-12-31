@@ -157,7 +157,8 @@ export default class Web3Ethereum extends  Component {
     let now_time = Date.now();
     this.setState({ first: false, loop: true });
     let in_param = [{tx_param:[], act:0},
-                    {tx_param:["ExampleToken", "EGT", 10000], act:1}];
+                    {tx_param:["MyToken", "EGT", 8], act:1}];
+    // let in_param = [{tx_param:["MyToken", "EGT", 8], act:1}];
     let hash, i = 0;
     do {
       if (!this.state.loop) break;

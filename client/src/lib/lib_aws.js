@@ -47,7 +47,7 @@ export function getLambdaLog(func, cb) {
   let nextloop = true
   let nextToken2;
   let io;
-  let last_time = 0;
+  let last_time = 0, last_message;
   let params1 = { logGroupName: '/aws/lambda/'+func,
                   descending: true,
                   orderBy: "LastEventTime" };
@@ -71,14 +71,18 @@ export function getLambdaLog(func, cb) {
       return;
     }
 
-    // ログが取得
+    // ログを取得
+    //console.log(params2, data);
     if(data.nextToken2) params2.nextToken = data.nextToken;
-
-    //console.log("time", old_line, new_line, onlogStreamName);
-    if(last_time === data.events[ 0 ].timestamp){
+    if(last_time === data.events[ 0 ].timestamp &&
+       last_message === data.events[ data.events.length - 1 ].message ){
       //console.log("getLambdaLog() wait", onlogStreamName, nextloop, data);
       return;
     }
+    last_time = data.events[ data.events.length - 1 ].timestamp;
+    last_message = data.events[ data.events.length - 1 ].message;
+    params2.startTime = last_time;
+    //return;
 
     // 一行ずつの処理開始
     for(let i = 0; i < data.events.length; i++){
@@ -118,9 +122,6 @@ export function getLambdaLog(func, cb) {
         console.log(str);
       }
     }
-
-    last_time = data.events[ data.events.length - 1 ].timestamp;
-    params2.startTime = last_time;
   }
 
   // ログストリームの取得
@@ -163,8 +164,12 @@ export async function callLambda(FunctionName, payload) {
       Payload,
     };
     lambdaClient.invoke(params, (err, data) => {
-      if(err) reject( err );
-      else {
+      if(err) {
+        console.error(err);
+        reject( err );
+      } else {
+        if(!data)
+          resolve( data );
         if(data.Payload){
           let out = JSON.parse( data.Payload );
           resolve( out );
