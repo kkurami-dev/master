@@ -163,9 +163,9 @@ export default class Web3Ethereum extends  Component {
     console.log("callLambdaDeploy", event);
     let now_time = Date.now();
     this.setState({ first: false, loop: true });
-    let in_param = [{tx_param:[], act:0},
-                    {tx_param:["MyToken", "EGT", 8], act:1}];
-    // let in_param = [{tx_param:["MyToken", "EGT", 8], act:1}];
+    // let in_param = [{tx_param:[], act:0},
+    //                 {tx_param:["MyToken", "EGT", 8], act:1}];
+    let in_param = [{tx_param:["MyToken", "EGT", 8], act:1}];
     let hash, i = 0;
     do {
       if (!this.state.loop) break;
@@ -182,10 +182,11 @@ export default class Web3Ethereum extends  Component {
       hash = out_hash;
       in_param = out_param;
     } while(hash || in_param.length);
+    getLambdaDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: '0'}}, console.log);
     console.log("callDeploy() end", (Date.now() - now_time)/1000 );
   }
 
-  DynamoDBtest = (event) =>{
+  checkLambdaDB = (event) =>{
     //let data = '0x00' + Date.now();
     let Key = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
     //getLambdaDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: '0'}}, console.log);
@@ -205,7 +206,7 @@ export default class Web3Ethereum extends  Component {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
 
-    if(this.state.first)  this.DynamoDBtest(this);
+    if(this.state.first)  this.checkLambdaDB(this);
     //if(this.state.first)  this.callLambdaDeploy(this);
     return (
       <div>
@@ -225,6 +226,7 @@ export default class Web3Ethereum extends  Component {
           <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
         </p>
         <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button><br/>
+        <button onClick={(e) => this.checkLambdaDB(e)}>DB確認</button><br/>
       </div>
     );
   }

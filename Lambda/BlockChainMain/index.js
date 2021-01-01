@@ -3,32 +3,37 @@ const AWS = require('aws-sdk'),
       kap = require('aws-kms-provider');
 
 const kms = new AWS.KMS({apiVersion: '2014-11-01'}),
-      docClient = new AWS.DynamoDB.DocumentClient();
+      docClient = new AWS.DynamoDB();
 
 const txrObj = require("./TxRelay.json");
 const tokenObj = require("./MyToken.json");
+
+const TableName = process.env.DB_NAME;
+const tableKey  = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
 
 async function getDynamoDB(web3, account, obj, param, now_time ) {
 }
 async function updateLambdaDB(TableName, Key, AttributeUpdates) {
   let params ={ AttributeUpdates, Key, TableName, ReturnValues: 'ALL_NEW' };
+  //console.log("DynamoDB updateItem inparam", JSON.stringify(params));
+  //if(1) return;
   let call = new Promise((resolve, reject) => {
     try {
       docClient.updateItem(params, function(err, data) {
         if (err) {
-          console.error("DynamoDB updateItem", err, err.stack);
-          reject( null );
+          console.error("DynamoDB updateItem", JSON.stringify(params), err, err.stack);
+          reject( err );
         } else {
-          console.log("DynamoDB updateItem", data);
+          //console.log("DynamoDB updateItem", data);
           resolve( data );
         }
       });
     } catch (error){
-      console.error("DynamoDB updateItem try/catch", error );
-      reject( null );
+      console.error("DynamoDB updateItem try/catch", JSON.stringify(params), error );
+      reject( error );
     }
   });
-  await call.then( console.log );
+  await call.then( (data) => console.log );
 }
 async function DeployContract(web3, account, obj, param, now_time ) {
   if( !obj ){
@@ -110,23 +115,26 @@ async function Contract(web3, account, in_param, ret_hash){
   return {out_param:in_param, out_hash, receipt:null };
 }
 
-function PostProcessing(param, receipt){
-  let TableName = process.env.DB_NAME;
+async function PostProcessing(param, receipt){
+  console.log("PostProcessing() D");
   let DB_key = '';
   let act = 0;
   switch(param.act){
   case 0:
-    DB_key = 'txrAddr';
+    DB_key = "txrAddr";
     act = 1;
     break;
   case 1:
-    DB_key = 'tokAddr';
+    DB_key = "tokAddr";
     act = 1;
     break;
   }
 
+  let db_data = {};
   if( act === 1 ){
-    
+    let data = receipt.contractAddress;
+    db_data[DB_key] = {Value:{S: data}, Action:"PUT"};
+    await updateLambdaDB(TableName, tableKey, db_data);
   }
 }
 
@@ -165,7 +173,7 @@ async function BlockChainMain( event, config ){
 
     console.log("BlockChainMain() A", receipt );
     if(receipt) {
-      PostProcessing(in_param[0], receipt);
+      await PostProcessing(in_param[0], receipt);
       in_param.shift();
       return { out_param: in_param, out_hash: null, receipt };
     } else {
