@@ -17,14 +17,87 @@ AWS.config.update( config );
 const kmsClient = new AWS.KMS({ region: 'ap-northeast-1', apiVersion: '2014-11-01' });
 const lambdaClient = new AWS.Lambda({apiVersion: '2015-03-31'});
 const cloudwatchlogs = new AWS.CloudWatchLogs({apiVersion: '2014-03-28'});
+const docClient = new AWS.DynamoDB();
 
 export function getKmsClient() {
   let KeyId = config.kms_key;
   let url   = config.api_base_url;
   return {kmsClient, KeyId, url};
 }
+
 export function getLambdaClient() {
   return { lambdaClient };
+}
+
+function KeyToVal( data ) {
+  let ret_val = {};
+  for( let key in data ){
+    let v = data[key];
+
+    if( v.S ) ret_val[key] = v.S;
+    if( v.N ) ret_val[key] = parseInt(v.N, 10);
+  }
+  return ret_val;
+}
+
+export function getLambdaDB( TableName, Key, cb) {
+  let params ={ TableName, Key  };
+  try {
+    docClient.getItem(params, function(err, data) {
+      if (err) {
+        console.error("DynamoDB getItem", params, err, err.stack);
+      } else {
+        let Item = KeyToVal( data.Item );
+        cb( Item );
+      }
+    });
+  } catch (error){
+    console.error("DynamoDB getItem try/catch", error );
+    cb( error );
+  }
+}
+export function puttLambdaDB(TableName, HashKeyElement, RangeKeyElement, cb) {
+  let params ={
+    Key: { HashKeyElement, RangeKeyElement },
+    TableName
+  };
+
+  try {
+    docClient.getItem(params, function(err, data) {
+      if (err) {
+        console.error("DynamoDB getItem", err, err.stack);
+      } else {
+        console.log("DynamoDB getItem", data);
+        cb( data.Item );
+      }
+    });
+  } catch (error){
+    console.error("DynamoDB getItem try/catch", error );
+    cb( error );
+  }
+}
+export function updateLambdaDB(TableName, Key, AttributeUpdates, cb) {
+  let params ={
+    AttributeUpdates,
+    Key,
+    TableName,
+    ReturnValues: 'ALL_NEW'
+  };
+
+  try {
+    docClient.updateItem(params, function(err, data) {
+      if (err) {
+        console.error("DynamoDB updateItem", err, err.stack);
+      } else {
+        console.log("DynamoDB updateItem", data);
+        let Item = KeyToVal( data.Attributes );
+        cb( Item );
+      }
+    });
+  } catch (error){
+    console.error("DynamoDB updateItem try/catch", error );
+    cb( error );
+  }
 }
 
 /**

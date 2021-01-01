@@ -36,10 +36,17 @@ import React, { Component } from 'react';
    Eventを返します。
   */
 import getWeb3 from "../lib/getWeb3";
-import {callLambda} from "../lib/lib_aws";
+import { callLambda,
+         getLambdaDB,
+         //putLambdaDB,
+         //updateLambdaDB
+       } from "../lib/lib_aws";
 import history from '../history';
 
 import "../App.css";
+
+const config = require("../configs/config.json");
+const table_name = config.db_name;
 
 async function DeployContract(web3, account, obj, param ) {
   console.log("DeployContract s");
@@ -113,7 +120,7 @@ export default class Web3Ethereum extends  Component {
       contract: null,
 
       loop: true,
-      first: false
+      first: true
     };
   }
 
@@ -178,6 +185,14 @@ export default class Web3Ethereum extends  Component {
     console.log("callDeploy() end", (Date.now() - now_time)/1000 );
   }
 
+  DynamoDBtest = (event) =>{
+    //let data = '0x00' + Date.now();
+    let Key = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
+    //getLambdaDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: '0'}}, console.log);
+    //updateLambdaDB(table_name, Key, {txaddr:{Value:{S: data}, Action:"PUT"}},console.log);
+    getLambdaDB(table_name, Key, console.log);
+  }
+  
   toLogWatch = (event) =>{
     console.log("toLogWatch", event);
     history.push('/aws_cwl');
@@ -189,8 +204,9 @@ export default class Web3Ethereum extends  Component {
       // web3 のインスタンスが入るまではここに入る
       return <div>Loading Web3, accounts, and contract...</div>;
     }
-    
-    if(this.state.first)  this.callLambdaDeploy(this);
+
+    if(this.state.first)  this.DynamoDBtest(this);
+    //if(this.state.first)  this.callLambdaDeploy(this);
     return (
       <div>
         <h1>Good to Go!</h1>

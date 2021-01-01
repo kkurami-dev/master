@@ -1,16 +1,35 @@
-var AWS = require('aws-sdk'),
-    Web3 = require('web3'),
-    kap = require('aws-kms-provider');
+const AWS = require('aws-sdk'),
+      Web3 = require('web3'),
+      kap = require('aws-kms-provider');
 
-var kms = new AWS.KMS({apiVersion: '2014-11-01'}),
-    docClient = new AWS.DynamoDB.DocumentClient();
+const kms = new AWS.KMS({apiVersion: '2014-11-01'}),
+      docClient = new AWS.DynamoDB.DocumentClient();
 
-const endpoint = 'https://rpc-mumbai.matic.today',
-      region = "ap-northeast-1",
-      ssAddress = '0xD5E3b6A8Ebe3c55c05318B264b865b990EBb242C';
 const txrObj = require("./TxRelay.json");
 const tokenObj = require("./MyToken.json");
 
+async function getDynamoDB(web3, account, obj, param, now_time ) {
+}
+async function updateLambdaDB(TableName, Key, AttributeUpdates) {
+  let params ={ AttributeUpdates, Key, TableName, ReturnValues: 'ALL_NEW' };
+  let call = new Promise((resolve, reject) => {
+    try {
+      docClient.updateItem(params, function(err, data) {
+        if (err) {
+          console.error("DynamoDB updateItem", err, err.stack);
+          reject( null );
+        } else {
+          console.log("DynamoDB updateItem", data);
+          resolve( data );
+        }
+      });
+    } catch (error){
+      console.error("DynamoDB updateItem try/catch", error );
+      reject( null );
+    }
+  });
+  await call.then( console.log );
+}
 async function DeployContract(web3, account, obj, param, now_time ) {
   if( !obj ){
     console.error("DeployContract obj is null");
@@ -75,7 +94,7 @@ async function Contract(web3, account, in_param, ret_hash){
   if(in_param.length === 0)
     return {out_param:[], hash:null, receipt:null };
 
-  let {obj, tx_param, act, now_time} = in_param.shift();
+  let {obj, tx_param, act, now_time} = in_param[0];
   console.log("Contract() D in_param", tx_param, act);
 
   // アクションに従った操作の選択
@@ -91,10 +110,32 @@ async function Contract(web3, account, in_param, ret_hash){
   return {out_param:in_param, out_hash, receipt:null };
 }
 
-async function BlockChainMain( event ){
+function PostProcessing(param, receipt){
+  let TableName = process.env.DB_NAME;
+  let DB_key = '';
+  let act = 0;
+  switch(param.act){
+  case 0:
+    DB_key = 'txrAddr';
+    act = 1;
+    break;
+  case 1:
+    DB_key = 'tokAddr';
+    act = 1;
+    break;
+  }
+
+  if( act === 1 ){
+    
+  }
+}
+
+async function BlockChainMain( event, config ){
   const now_time = Date.now()
+  const timeout = 1000;
 
   let {in_param, hash} = event;
+  const {endpoint, region, keyIds } = config;
 
   // アクションに従ったオブジェクト変更
   for(let i = 0; i < in_param.length; i++){
@@ -123,15 +164,18 @@ async function BlockChainMain( event ){
     await web3h.eth.getTransactionReceipt(hash).then((result) => receipt = result);
 
     console.log("BlockChainMain() A", receipt );
-    if(receipt)
+    if(receipt) {
+      PostProcessing(in_param[0], receipt);
+      in_param.shift();
       return { out_param: in_param, out_hash: null, receipt };
-    else
+    } else {
       return { out_param: in_param, out_hash: hash, receipt:"" };
+    }
   }
 
   // 書き込みは KMS で処理が必用
-  const provider = new kap.KmsProvider(endpoint, { region, keyIds: [ process.env.KMS_KEY ], timeout: 1000});
-  const web3k = new Web3( provider, {timeout: 1000} );
+  const provider = new kap.KmsProvider(endpoint, { region, keyIds, timeout});
+  const web3k = new Web3( provider, {timeout} );
   const accounts = await web3k.eth.getAccounts();
   console.log("kap.KmsProvider OK", accounts[0], Date.now() - now_time);
 
@@ -143,7 +187,12 @@ async function BlockChainMain( event ){
 }
 
 exports.handler = async (event, context, callback) => {
-  let target = await BlockChainMain( event );
+  const config = {
+    region: "ap-northeast-1",
+    endpoint: 'https://rpc-mumbai.matic.today',
+    keyIds: [ process.env.KMS_KEY ]
+  };
+  let target = await BlockChainMain( event, config );
   const response = {
     statusCode: 200,
     body: JSON.stringify('Hello from Lambda!'),
