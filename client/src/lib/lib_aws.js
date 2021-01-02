@@ -33,9 +33,8 @@ function KeyToVal( data ) {
   let ret_val = {};
   for( let key in data ){
     let v = data[key];
-
     if( v.S ) ret_val[key] = v.S;
-    if( v.N ) ret_val[key] = parseInt(v.N, 10);
+    else if( v.N ) ret_val[key] = parseInt(v.N, 10);
   }
   return ret_val;
 }

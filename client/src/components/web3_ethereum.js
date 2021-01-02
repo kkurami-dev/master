@@ -36,6 +36,8 @@ import React, { Component } from 'react';
    Eventを返します。
   */
 import getWeb3 from "../lib/getWeb3";
+import { getBalanceOf,
+       } from "../lib/lib_web3";
 import { callLambda,
          getLambdaDB,
          //putLambdaDB,
@@ -160,12 +162,19 @@ export default class Web3Ethereum extends  Component {
   }
 
   async callLambdaDeploy( event ){
-    console.log("callLambdaDeploy", event);
-    let now_time = Date.now();
-    this.setState({ first: false, loop: true });
+    // 登録
     // let in_param = [{tx_param:[], act:0},
     //                 {tx_param:["MyToken", "EGT", 8], act:1}];
-    let in_param = [{tx_param:["MyToken", "EGT", 8], act:1}];
+    // 
+    let in_param = [{tx_param:[], act:0},
+                    {tx_param:["MyToken", "EGT", 8], act:1}];
+    await this.callLambdaDeploy_sub( in_param );
+  }
+
+  async callLambdaDeploy_sub( in_param ){
+    let now_time = Date.now();
+    this.setState({ first: false, loop: true });
+
     let hash, i = 0;
     do {
       if (!this.state.loop) break;
@@ -181,8 +190,8 @@ export default class Web3Ethereum extends  Component {
       console.log("callDeploy()", Date.now() - loop_time, out_param, out_hash, receipt);
       hash = out_hash;
       in_param = out_param;
+
     } while(hash || in_param.length);
-    getLambdaDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: '0'}}, console.log);
     console.log("callDeploy() end", (Date.now() - now_time)/1000 );
   }
 
@@ -192,6 +201,9 @@ export default class Web3Ethereum extends  Component {
     //getLambdaDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: '0'}}, console.log);
     //updateLambdaDB(table_name, Key, {txaddr:{Value:{S: data}, Action:"PUT"}},console.log);
     getLambdaDB(table_name, Key, console.log);
+    getBalanceOf(this.state.web3, "token", (item) => {
+      console.log("checkLambdaDB", item);
+    });
   }
   
   toLogWatch = (event) =>{

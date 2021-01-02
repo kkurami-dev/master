@@ -11,10 +11,41 @@ const tokenObj = require("./MyToken.json");
 const TableName = process.env.DB_NAME;
 const tableKey  = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
 
-async function getDynamoDB(web3, account, obj, param, now_time ) {
+async function getDynamoDB( TableName, Key ) {
+  // DynamoDBへのアクセスロジック
+  let params = { Key, TableName };
+  let call = new Promise((resolve, reject) => {
+    try {
+      docClient.getItem(params, function(err, data) {
+        if (err) {
+          console.error("DynamoDB getItem", JSON.stringify(params), err, err.stack);
+          reject( err );
+        } else {
+          resolve( data );
+        }
+      });
+    } catch (error){
+      console.error("DynamoDB getItem try/catch", JSON.stringify(params), error );
+      reject( error );
+    }
+  });
+
+  // 実行と結果取り出し
+  let ret_data;
+  await call.then( (data) => ret_data = data );
+
+  // 内容を修正
+  let ret_val = {};
+  for( let key in ret_data ){
+    let v = ret_data[key];
+    if( v.S ) ret_val[key] = v.S;
+    if( v.N ) ret_val[key] = parseInt(v.N, 10);
+  }
+  return ret_val;
 }
+
 async function updateLambdaDB(TableName, Key, AttributeUpdates) {
-  let params ={ AttributeUpdates, Key, TableName, ReturnValues: 'ALL_NEW' };
+  let params = { AttributeUpdates, Key, TableName, ReturnValues: 'ALL_NEW' };
   //console.log("DynamoDB updateItem inparam", JSON.stringify(params));
   //if(1) return;
   let call = new Promise((resolve, reject) => {
@@ -35,6 +66,7 @@ async function updateLambdaDB(TableName, Key, AttributeUpdates) {
   });
   await call.then( (data) => console.log );
 }
+
 async function DeployContract(web3, account, obj, param, now_time ) {
   if( !obj ){
     console.error("DeployContract obj is null");
@@ -91,6 +123,13 @@ async function DeployContract(web3, account, obj, param, now_time ) {
   catch(e){
     console.error("DeployContract ex", e.message, e);
     return null;
+  }
+}
+
+async function ContractSend(web3, account, obj, address, param, now_time ) {
+  try {
+    let abi = obj.abi;
+  } catch(err){
   }
 }
 
