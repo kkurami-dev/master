@@ -97,22 +97,23 @@ async function DeployContract(web3, account, obj, param, now_time ) {
       const contract = new web3.eth.Contract( abi );
       
       console.log("deploy send ", Date.now() - now_time, param);
-      contract.deploy({
-        data: bytecode,
-        arguments: param
-      })
+      contract
+        .deploy({
+          data: bytecode,
+          arguments: param
+        })
         .send({
           from: account,
           gas: '2000000'
-      }, (error, hash) => {
-        if(error) {
-          console.error("sendTransaction callback: ", error.message, error, Date.now() - now_time);
-          reject( error );
-        } else {
-          console.log("sendTransaction callback: ", Date.now() - now_time);
-          resolve( hash );
-        }
-      });
+        }, (error, hash) => {
+          if(error) {
+            console.error("sendTransaction callback: ", error.message, error, Date.now() - now_time);
+            reject( error );
+          } else {
+            console.log("sendTransaction callback: ", Date.now() - now_time);
+            resolve( hash );
+          }
+        });
 
     });
     await call.then((value) => ret_hash = value );
@@ -126,19 +127,47 @@ async function DeployContract(web3, account, obj, param, now_time ) {
   }
 }
 
-async function ContractSend(web3, account, obj, address, param, now_time ) {
-  try {
-    let abi = obj.abi;
-  } catch(err){
-  }
+async function SendContract(web3, account, abi, func_name, param, now_time){
+  let func_abi, ret_hash, to;
+  for( let i = 0; i < abi.length; i++ )
+    if(abi[i].name === func_name)
+      func_abi = param.abi[i];
+
+  let keyIds = await getDynamoDB(TableName, tableKey);
+  if (func_name.indeOF("Relay") === -1)
+    to = keyIds.tokAddr;
+  else
+    to = keyIds.txrAddr;
+
+  console.log("Promise: ", Date.now() - now_time, param);
+  const call = new Promise((resolve, reject) => {
+    try {
+      console.log("new Copntract: ", Date.now() - now_time, param);
+      let data = web3.eth.abi.encodeFunctionCall(func_abi, param);
+      web3.eth.sendTransaction({ to, data }, function(err, data) {
+        if (err){
+          console.error("DynamoDB sendTransaction", JSON.stringify(param), err, err.stack);
+          reject( err );
+        } else {
+          resolve( data );
+        }
+      });
+    } catch(error){
+      console.error("DynamoDB updateItem try/catch", JSON.stringify(param), error );
+      reject( error );
+    }
+  });
+
+  await call.then((value) => ret_hash = value );
+  return ret_hash;
 }
 
 async function Contract(web3, account, in_param, ret_hash){
-  console.log("Contract() B in_param", in_param.length);
-  if(in_param.length === 0)
-    return {out_param:[], hash:null, receipt:null };
+  console.log("Contract() B in_param", in_param.act);
+  if( !in_param )
+    return {out_param: [], hash: null, receipt: null };
 
-  let {obj, tx_param, act, now_time} = in_param[0];
+  let {obj, tx_param, act, now_time} = in_param;
   console.log("Contract() D in_param", tx_param, act);
 
   // アクションに従った操作の選択
@@ -148,10 +177,13 @@ async function Contract(web3, account, in_param, ret_hash){
   case 1:
     out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
     break;
+  case 10:
+    out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time );
+    break;
   }
 
   console.log("Contract() C", out_hash);
-  return {out_param:in_param, out_hash, receipt:null };
+  return {out_param: in_param, out_hash, receipt: null };
 }
 
 async function PostProcessing(param, receipt){
@@ -227,7 +259,7 @@ async function BlockChainMain( event, config ){
   console.log("kap.KmsProvider OK", accounts[0], Date.now() - now_time);
 
   // 書き込み処理の実施
-  let result = await Contract(web3k, accounts[0], in_param, hash );
+  let result = await Contract(web3k, accounts[0], in_param[0], hash );
   web3k.currentProvider.engine.stop();
   console.log("BlockChainMain() result", result, Date.now() - now_time);
   return result;

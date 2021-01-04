@@ -205,7 +205,7 @@ export default class Web3Ethereum extends  Component {
       console.log("checkLambdaDB", item);
     });
   }
-  
+
   toLogWatch = (event) =>{
     console.log("toLogWatch", event);
     history.push('/aws_cwl');
