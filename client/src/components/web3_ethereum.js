@@ -166,8 +166,7 @@ export default class Web3Ethereum extends  Component {
     // let in_param = [{tx_param:[], act:0},
     //                 {tx_param:["MyToken", "EGT", 8], act:1}];
     // 
-    let in_param = [{tx_param:[], act:0},
-                    {tx_param:["MyToken", "EGT", 8], act:1}];
+    let in_param = [{tx_param:[], act:2}];
     await this.callLambdaDeploy_sub( in_param );
   }
 
@@ -192,7 +191,46 @@ export default class Web3Ethereum extends  Component {
       in_param = out_param;
 
     } while(hash || in_param.length);
-    console.log("callDeploy() end", (Date.now() - now_time)/1000 );
+    //console.log("callDeploy() end", (Date.now() - now_time)/1000 );
+  }
+
+  callLambdaDeploy_batch = async ( ) => {
+    console.log("callLambdaDeploy_batch start");
+    const web3 = this.state.web3;
+    if (!web3) {
+      return;
+    }
+    let now_time = Date.now();
+
+    let callback1 = (error, result) =>{
+      console.log("callback1", Date.now() - now_time, error, result);
+    }
+    let callback2 = (error, result) =>{
+      console.log("callback2", Date.now() - now_time, error, result);
+    }
+    let callback3 = (error, result) =>{
+      console.log("callback3", Date.now() - now_time, error, result);
+    }
+
+    const abi = require("../contracts/MyToken").abi,
+          account = this.state.account,
+          func_name = "balanceOf",
+          from = config.user1_addr,
+          to = config.tokAddr,
+          cli = config.user2_addr;
+    let func_abi;
+
+    console.log("callLambdaDeploy_batch abi", abi);
+
+    let contract = new web3.eth.Contract(abi, to);
+    
+    let batch = new web3.BatchRequest();
+    batch.add(web3.eth.getBalance.request(from, 'latest', callback1));
+    batch.add(web3.eth.getBalance.request(to, 'latest', callback2));
+    batch.add(contract.methods.transfer(to, "3").call.request({ from }, callback3));
+    let result = batch.execute();
+
+    console.log("callLambdaDeploy_batch end");
   }
 
   checkLambdaDB = (event) =>{
@@ -236,6 +274,7 @@ export default class Web3Ethereum extends  Component {
         <p>
           <button onClick={this.callDeploy.bind(this)}>デプロイ</button><br/>
           <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
+          <button onClick={(e) => this.callLambdaDeploy_batch(e)}>batch request の確認</button><br/>
         </p>
         <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button><br/>
         <button onClick={(e) => this.checkLambdaDB(e)}>DB確認</button><br/>

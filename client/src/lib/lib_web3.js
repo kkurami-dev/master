@@ -16,6 +16,13 @@ const params = {
   }
 };
 
+async function checkTransaction(web3, hash){
+  console.log("checkTransaction()");
+  let receipt;
+  await web3.eth.getTransactionReceipt(hash).then((result) => receipt = result);
+  return receipt;
+}
+
 async function getDynamoDB(table_name, table_key){
   let ret_val;
   let call = new Promise((resolve, reject) => {
@@ -63,10 +70,14 @@ export function getBalanceOf( web3, name, cb ) {
 }
 
 export async function SendContract(web3, account, abi, func_name, param, now_time){
+  // 関数に対応したABIの選択
   let func_abi, ret_hash, to;
   for( let i = 0; i < abi.length; i++ )
     if(abi[i].name === func_name)
       func_abi = param.abi[i];
+  if(!func_abi){
+    console.error("not ABI ", func_name, param);
+  }
 
   let keyIds = await getDynamoDB(TableName, tableKey);
   if (func_name.indeOF("Relay") === -1)

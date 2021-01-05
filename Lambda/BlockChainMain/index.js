@@ -10,6 +10,7 @@ const tokenObj = require("./MyToken.json");
 
 const TableName = process.env.DB_NAME;
 const tableKey  = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
+const getKey    = "";
 
 async function getDynamoDB( TableName, Key ) {
   // DynamoDBへのアクセスロジック
@@ -127,6 +128,47 @@ async function DeployContract(web3, account, obj, param, now_time ) {
   }
 }
 
+async function SendTransfer(web3, from, abi, func_name, param){
+  console.log("callLambdaDeploy_batch start");
+  let now_time = Date.now();
+
+  let keyIds = await getDynamoDB(TableName, getKey);
+  let addr = keyIds.txrAddr;
+
+  let call = new Promise((resolve, reject) => {
+    let callback1 = (error, result) => {
+      console.log("callback1", Date.now() - now_time, error, result);
+    }
+    let callback2 = (error, result) => {
+      console.log("callback2", Date.now() - now_time, error, result);
+    }
+    let callback3 = (error, result) => {
+      console.log("callback3", Date.now() - now_time, error, result);
+      resolve(result);
+    }
+
+    const to =  process.env.ADDR_USER1,
+          cli = process.env.ADDR_USER2;
+    console.log("SendTransfer", addr, to, cli, keyIds, now_time);
+    let contract = new web3.eth.Contract(abi, addr);
+    
+    let batch = new web3.BatchRequest();
+    batch.add(contract.methods.transfer(to,  "10000").send.request({ from }, callback1));
+    batch.add(contract.methods.transfer(cli, "10000").send.request({ from }, callback2));
+    batch.add(contract.methods.transfer(to,  "10000").send.request({ from }, callback3));
+    let result = batch.execute();
+  });
+
+  let result;
+  await call.then( (data) => {
+    result = data;
+    console.log("SendTransfer", data);
+  });
+
+  console.log("callLambdaDeploy_batch end");
+  return result;
+}
+
 async function SendContract(web3, account, abi, func_name, param, now_time){
   let func_abi, ret_hash, to;
   for( let i = 0; i < abi.length; i++ )
@@ -134,7 +176,7 @@ async function SendContract(web3, account, abi, func_name, param, now_time){
       func_abi = param.abi[i];
 
   let keyIds = await getDynamoDB(TableName, tableKey);
-  if (func_name.indeOF("Relay") === -1)
+  if (func_name.indexOF("Relay") === -1)
     to = keyIds.tokAddr;
   else
     to = keyIds.txrAddr;
@@ -176,6 +218,9 @@ async function Contract(web3, account, in_param, ret_hash){
   case 0:
   case 1:
     out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
+    break;
+  case 2:
+    out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time );
     break;
   case 10:
     out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time );
@@ -224,6 +269,7 @@ async function BlockChainMain( event, config ){
       in_param[i].obj = txrObj;
       break;
     case 1:
+    case 2:
       in_param[i].obj = tokenObj;
       break;
     }
