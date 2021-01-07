@@ -9,7 +9,7 @@ const txrObj = require("./TxRelay.json");
 const tokenObj = require("./MyToken.json");
 
 const TableName = process.env.DB_NAME;
-const tableKey  = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
+const tableKey  = {BuildID: {S: 'b0001'}, now_time:{N: '0'}};
 const getKey    = "";
 
 async function getDynamoDB( TableName, Key ) {
@@ -33,7 +33,8 @@ async function getDynamoDB( TableName, Key ) {
 
   // 実行と結果取り出し
   let ret_data;
-  await call.then( (data) => ret_data = data );
+  await call.then( (data) => ret_data = data.Item );
+  console.log("getDynamoDB()", ret_data);
 
   // 内容を修正
   let ret_val = {};
@@ -132,8 +133,8 @@ async function SendTransfer(web3, from, abi, func_name, param){
   console.log("callLambdaDeploy_batch start");
   let now_time = Date.now();
 
-  let keyIds = await getDynamoDB(TableName, getKey);
-  let addr = keyIds.txrAddr;
+  let keyIds = await getDynamoDB(TableName, tableKey);
+  let addr = keyIds.tokAddr;
 
   let call = new Promise((resolve, reject) => {
     let callback1 = (error, result) => {
@@ -159,13 +160,27 @@ async function SendTransfer(web3, from, abi, func_name, param){
     let result = batch.execute();
   });
 
-  let result;
+  let hash;
   await call.then( (data) => {
-    result = data;
+    hash = data;
     console.log("SendTransfer", data);
   });
 
-  console.log("callLambdaDeploy_batch end");
+  let receipt;
+  do{
+    await web3.eth.getTransactionReceipt(hash).then((result) => receipt = result);
+    console.log('getTransactionReceipt');
+  } while(!receipt);
+
+  let result;
+  if(receipt.status){
+    let ret_data = receipt.logs[0].data;
+    result = parseInt(ret_data, 16);
+    console.log("callLambdaDeploy_batch end", ret_data, result, receipt);
+  } else {
+    console.error("callLambdaDeploy_batch ", receipt);
+    new Error( receipt );
+  }
   return result;
 }
 
@@ -281,6 +296,7 @@ async function BlockChainMain( event, config ){
 
   // 処理中と判断し、状況確認を実施
   if (hash){
+    console.log("hash check", hash);
     const provider = new Web3.providers.HttpProvider( endpoint );
     const web3h = new Web3( provider );
 
