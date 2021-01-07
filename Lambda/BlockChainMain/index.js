@@ -181,7 +181,7 @@ async function SendTransfer(web3, from, abi, func_name, param){
     console.error("callLambdaDeploy_batch ", receipt);
     new Error( receipt );
   }
-  return result;
+  return null;
 }
 
 async function SendContract(web3, account, abi, func_name, param, now_time){
