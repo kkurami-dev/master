@@ -129,56 +129,76 @@ async function DeployContract(web3, account, obj, param, now_time ) {
   }
 }
 
+function TimeLog( th ){
+  let str = ' ';
+  if(th.now)
+    str = 't:' + (Date.now() - th.now);
+  else
+    th.now = Date.now();
+  if(th.diff){
+    let diff = Date.now();
+    str = str + '/' + (diff - th.diff);
+    th.diff = diff;
+  } else {
+    th.diff = Date.now();
+  }
+  return str;
+}
+
 async function SendTransfer(web3, from, abi, func_name, param){
   console.log("callLambdaDeploy_batch start");
-  let now_time = Date.now();
+  let th = {};
+  TimeLog( th );
 
   let keyIds = await getDynamoDB(TableName, tableKey);
   let addr = keyIds.tokAddr;
 
   let call = new Promise((resolve, reject) => {
     let callback1 = (error, result) => {
-      console.log("callback1", Date.now() - now_time, error, result);
+      console.log("callback1", TimeLog( th ), error, result);
     }
     let callback2 = (error, result) => {
-      console.log("callback2", Date.now() - now_time, error, result);
+      console.log("callback2", TimeLog( th ), error, result);
     }
     let callback3 = (error, result) => {
-      console.log("callback3", Date.now() - now_time, error, result);
+      console.log("callback3", TimeLog( th ), error, result);
       resolve(result);
     }
 
     const to =  process.env.ADDR_USER1,
           cli = process.env.ADDR_USER2;
-    console.log("SendTransfer", addr, to, cli, keyIds, now_time);
+    console.log("SendTransfer", TimeLog( th ), addr, to, cli, keyIds);
     let contract = new web3.eth.Contract(abi, addr);
     
     let batch = new web3.BatchRequest();
-    batch.add(contract.methods.transfer(to,  "10000").send.request({ from }, callback1));
-    batch.add(contract.methods.transfer(cli, "10000").send.request({ from }, callback2));
-    batch.add(contract.methods.transfer(to,  "10000").send.request({ from }, callback3));
+    batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback1));
+    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
+    batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
+    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
+    batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
+    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback3));
     let result = batch.execute();
   });
 
   let hash;
   await call.then( (data) => {
     hash = data;
-    console.log("SendTransfer", data);
+    console.log("SendTransfer", TimeLog( th ), data);
   });
 
   let receipt;
   do{
     await web3.eth.getTransactionReceipt(hash).then((result) => receipt = result);
-    console.log('getTransactionReceipt');
+    console.log('getTransactionReceipt', TimeLog( th ));
   } while(!receipt);
 
   let result;
   if(receipt.status){
     let ret_data = receipt.logs[0].data;
     result = parseInt(ret_data, 16);
-    console.log("callLambdaDeploy_batch end", ret_data, result, receipt);
+    console.log("callLambdaDeploy_batch end", TimeLog( th ), ret_data, result, receipt);
   } else {
-    console.error("callLambdaDeploy_batch ", receipt);
+    console.error("callLambdaDeploy_batch ", TimeLog( th ), receipt);
     new Error( receipt );
   }
   return null;
@@ -269,6 +289,9 @@ async function PostProcessing(param, receipt){
   }
 }
 
+function MakeData( ){
+}
+
 async function BlockChainMain( event, config ){
   const now_time = Date.now()
   const timeout = 1000;
@@ -287,6 +310,9 @@ async function BlockChainMain( event, config ){
     case 2:
       in_param[i].obj = tokenObj;
       break;
+    case 3:
+      MakeData();
+      return;
     }
     
     if(i == 0) in_param[0].now_time = now_time;
