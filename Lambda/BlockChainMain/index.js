@@ -147,11 +147,32 @@ function TimeLog( th ){
 
 async function SendTransfer(web3, from, abi, func_name, param){
   console.log("callLambdaDeploy_batch start");
-  let th = {};
+  let th = {}, result;
   TimeLog( th );
 
   let keyIds = await getDynamoDB(TableName, tableKey);
   let addr = keyIds.tokAddr;
+
+  const to =  process.env.ADDR_USER1,
+        cli = process.env.ADDR_USER2;
+  const contract = new web3.eth.Contract(abi, addr);
+  console.log("SendTransfer", TimeLog( th ), addr, to, cli, keyIds);
+
+  // トークン不足でエラーになるので、チェックに使える
+  const checkcall = (err, data) => {
+    if(err) {
+      console.log("transfer callback", TimeLog( th ), err);
+      throw err;
+    }
+  };
+  
+  // 自分のトランザクションを確認する場合
+  //contract.methods.transfer(to, "10000000000").call({ from }, checkcall);
+
+  // 取得したトランザクションの実行確認をする場合
+  let data = contract.methods.transfer(to, "10000000000").encodeABI();
+  result = web3.eth.call({to:addr, from, data}, checkcall);
+  console.log("call", TimeLog( th ), result, data);
 
   let call = new Promise((resolve, reject) => {
     let callback1 = (error, result) => {
@@ -165,14 +186,8 @@ async function SendTransfer(web3, from, abi, func_name, param){
       resolve(result);
     }
 
-    const to =  process.env.ADDR_USER1,
-          cli = process.env.ADDR_USER2;
-    console.log("SendTransfer", TimeLog( th ), addr, to, cli, keyIds);
-    let contract = new web3.eth.Contract(abi, addr);
-    
     let batch = new web3.BatchRequest();
-    batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback1));
-    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
+    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback1));
     batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
     batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
     batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
@@ -192,7 +207,6 @@ async function SendTransfer(web3, from, abi, func_name, param){
     console.log('getTransactionReceipt', TimeLog( th ));
   } while(!receipt);
 
-  let result;
   if(receipt.status){
     let ret_data = receipt.logs[0].data;
     result = parseInt(ret_data, 16);
@@ -248,18 +262,23 @@ async function Contract(web3, account, in_param, ret_hash){
   console.log("Contract() D in_param", tx_param, act);
 
   // アクションに従った操作の選択
-  let out_hash;
-  switch(act){
-  case 0:
-  case 1:
-    out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
-    break;
-  case 2:
-    out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time );
-    break;
-  case 10:
-    out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time );
-    break;
+  let out_hash = null;
+  try{
+    switch(act){
+    case 0:
+    case 1:
+      out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
+      break;
+    case 2:
+      out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time );
+      break;
+    case 10:
+      out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time );
+      break;
+    }
+  } catch(err){
+    console.error("Contract() D", err);
+    throw err;
   }
 
   console.log("Contract() C", out_hash);

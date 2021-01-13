@@ -167,7 +167,9 @@ export default class Web3Ethereum extends  Component {
     //                 {tx_param:["MyToken", "EGT", 8], act:1}];
     // 
     let in_param = [{tx_param:[], act:2}];
+    let now_time = Date.now();
     await this.callLambdaDeploy_sub( in_param );
+    console.log("callLambdaDeploy()", Date.now() - now_time);
   }
 
   async callLambdaDeploy_sub( in_param ){
@@ -186,7 +188,8 @@ export default class Web3Ethereum extends  Component {
       }
 
       let {out_param, out_hash, receipt} = result.target;
-      console.log("callDeploy()", Date.now() - loop_time, out_param, out_hash, receipt);
+      console.log("callDeploy()", Date.now() - loop_time, result);
+      if(!in_param.length) break;
       hash = out_hash;
       in_param = out_param;
 
