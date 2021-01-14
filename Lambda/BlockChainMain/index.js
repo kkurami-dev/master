@@ -156,7 +156,6 @@ async function SendTransfer(web3, from, abi, func_name, param){
   const to =  process.env.ADDR_USER1,
         cli = process.env.ADDR_USER2;
   const contract = new web3.eth.Contract(abi, addr);
-  console.log("SendTransfer", TimeLog( th ), addr, to, cli, keyIds);
 
   // トークン不足でエラーになるので、チェックに使える
   const checkcall = (err, data) => {
@@ -168,11 +167,15 @@ async function SendTransfer(web3, from, abi, func_name, param){
     }
   };
 
+  console.log("SendTransfer", TimeLog( th ), addr, to, cli, keyIds);
+
   // 正常にトランザクションを処理できる場合
   result = await contract.methods.transfer(to, "100").call({ from });
   console.log("call", TimeLog( th ), result);
   let data = contract.methods.transfer(to, "100").encodeABI();
   result = await web3.eth.call({to:addr, from, data});
+  console.log("call", TimeLog( th ), result);
+  result = await contract.methods.transfer(to, "100").call({ from });
   console.log("call", TimeLog( th ), result);
   
   // 自分のトランザクションを確認する場合
