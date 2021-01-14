@@ -161,18 +161,32 @@ async function SendTransfer(web3, from, abi, func_name, param){
   // トークン不足でエラーになるので、チェックに使える
   const checkcall = (err, data) => {
     if(err) {
-      console.log("transfer callback", TimeLog( th ), err);
+      console.log("callback", TimeLog( th ), err);
       throw err;
+    } else {
+      console.log("callback", TimeLog( th ), data);
     }
   };
+
+  // 正常にトランザクションを処理できる場合
+  result = await contract.methods.transfer(to, "100").call({ from });
+  console.log("call", TimeLog( th ), result);
+  let data = contract.methods.transfer(to, "100").encodeABI();
+  result = await web3.eth.call({to:addr, from, data});
+  console.log("call", TimeLog( th ), result);
   
   // 自分のトランザクションを確認する場合
   //contract.methods.transfer(to, "10000000000").call({ from }, checkcall);
 
   // 取得したトランザクションの実行確認をする場合
-  let data = contract.methods.transfer(to, "10000000000").encodeABI();
-  result = web3.eth.call({to:addr, from, data}, checkcall);
-  console.log("call", TimeLog( th ), result, data);
+  data = contract.methods.transfer(to, "10000000000").encodeABI();
+  try{
+    result = await web3.eth.call({to:addr, from, data});
+    console.log("transfer", TimeLog( th ), result);
+  } catch(err){
+    console.error("transfer", TimeLog( th ), err);
+    throw err;
+  }
 
   let call = new Promise((resolve, reject) => {
     let callback1 = (error, result) => {
