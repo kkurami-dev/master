@@ -1,6 +1,26 @@
 const AWS = require('aws-sdk'),
       Web3 = require('web3'),
-      kap = require('aws-kms-provider');
+      kap = require('aws-kms-provider');// 0.2.1
+/*
+    "aws-kms-provider": {
+      "version": "0.2.1",
+      "resolved": "https://registry.npmjs.org/aws-kms-provider/-/aws-kms-provider-0.2.1.tgz",
+      "integrity": "sha512-fMdf0Q3PY0GKOVuCgXwTFvNMyUTqKjS+4pg9nTy2a2pPrD7zugFoUcs7F+xaHrvXwI7pj4Ggs4ltw/bsFFugNA==",
+      "requires": {
+        "asn1js": "^2.0.26",
+        "bn.js": "^5.1.1",
+        "ethereumjs-common": "^1.5.0",
+        "ethereumjs-tx": "^2.1.2",
+        "ethereumjs-util": "^7.0.3",
+        "jayson": "^3.3.3",
+        "keccak": "^3.0.0",
+        "secp256k1": "4.0",
+        "web3": "^1.2.6",
+        "web3-provider-engine": "^15.0.6"
+      },
+
+
+*/
 
 const kms = new AWS.KMS({apiVersion: '2014-11-01'}),
       docClient = new AWS.DynamoDB();
@@ -182,18 +202,18 @@ async function SendTransfer(web3, from, abi, func_name, param){
   //contract.methods.transfer(to, "10000000000").call({ from }, checkcall);
 
   // 取得したトランザクションの実行確認をする場合
-  data = contract.methods.transfer(to, "10000000000").encodeABI();
-  try{
-    result = await web3.eth.call({to:addr, from, data});
-    console.log("transfer", TimeLog( th ), result);
-  } catch(err){
-    console.error("transfer", TimeLog( th ), err);
-    throw err;
-  }
+  //data = contract.methods.transfer(to, "10000000000").encodeABI();
+  // try{
+  //   result = await web3.eth.call({to:addr, from, data});
+  //   console.log("transfer", TimeLog( th ), result);
+  // } catch(err){
+  //   console.error("transfer", TimeLog( th ), err);
+  //   throw err;
+  // }
 
   let call = new Promise((resolve, reject) => {
     let callback1 = (error, result) => {
-      console.log("callback1", TimeLog( th ), error, result);
+      console.log("sendTransaction callback1", TimeLog( th ), error, result);
     }
     let callback2 = (error, result) => {
       console.log("callback2", TimeLog( th ), error, result);
@@ -203,10 +223,11 @@ async function SendTransfer(web3, from, abi, func_name, param){
       resolve(result);
     }
 
+    // https://docs.blocto.app/blocto-app/web3-provider/batch-transaction
     let batch = new web3.BatchRequest();
-    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback1));
-    batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
-    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
+    batch.add(web3.eth.sendTransaction.request({from, to, data }, callback1));
+    // batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
+    // batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
     batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
     batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback3));
     let result = batch.execute();
@@ -333,6 +354,7 @@ async function BlockChainMain( event, config ){
   const timeout = 1000;
 
   let {in_param, hash} = event;
+  let out_param = [...in_param];
   const {endpoint, region, keyIds } = config;
 
   // アクションに従ったオブジェクト変更
@@ -348,7 +370,7 @@ async function BlockChainMain( event, config ){
       break;
     case 3:
       MakeData();
-      return;
+      return {};
     }
     
     if(i == 0) in_param[0].now_time = now_time;
@@ -369,10 +391,10 @@ async function BlockChainMain( event, config ){
     console.log("BlockChainMain() A", receipt );
     if(receipt) {
       await PostProcessing(in_param[0], receipt);
-      in_param.shift();
-      return { out_param: in_param, out_hash: null, receipt };
+      out_param.shift();
+      return { out_param, out_hash: null, receipt };
     } else {
-      return { out_param: in_param, out_hash: hash, receipt:"" };
+      return { out_param, out_hash: hash, receipt:"" };
     }
   }
 

@@ -175,7 +175,7 @@ export default class Web3Ethereum extends  Component {
   async callLambdaDeploy_sub( in_param ){
     let now_time = Date.now();
     this.setState({ first: false, loop: true });
-
+    console.log("callLambdaDeploy_sub()", Date.now() - now_time);
     let hash, i = 0;
     do {
       if (!this.state.loop) break;
@@ -194,6 +194,7 @@ export default class Web3Ethereum extends  Component {
       in_param = out_param;
 
     } while(hash || in_param.length);
+    console.log("callLambdaDeploy_sub()", Date.now() - now_time);
     //console.log("callDeploy() end", (Date.now() - now_time)/1000 );
   }
 
