@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk'),
       Web3 = require('web3'),
       util = require("ethereumjs-util"),
+      asn1js = require("asn1js"),
       kap = require('aws-kms-provider');// 0.2.1
 /*
     "aws-kms-provider": {
@@ -205,11 +206,13 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
   console.log("GetSignTx hash", hash);
   
   const kms_key_tmp = await kms.getPublicKey({KeyId: 'alias/test_bc01'}).promise();
-  const kms_key = kms_key_tmp.PublicKey.toString('hex', 0, kms_key_tmp.PublicKey.length);
-  const sig = util.ecsign(Buffer.from(util.stripHexPrefix(hash), 'hex'),
-                          Buffer.from(util.stripHexPrefix(kms_key), 'hex') );
+  const { result } = asn1js.fromBER(kms_key_tmp.PublicKey);
+  const values = result.valueBlock.value;
+  const value = values[1];
+  // const sig = util.ecsign(Buffer.from(util.stripHexPrefix(hash), 'hex'),
+  //                         value );
 
-  const out_param = { sig, from, to, data };
+  const out_param = { sig:"", from, to, data, value, result };
   console.log("GetSignTx in hash", data, nonce, hashInput, out_param);
   return out_param;
 }
