@@ -204,34 +204,14 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
   let hash = web3.utils.sha3(hashInput);
   console.log("GetSignTx hash", hash);
   
-  //const resut1 = await kms.describeKey({KeyId: 'alias/test_bc01'}, console.log).promise();
-  const resut2 = await kms.getPublicKey({KeyId: 'alias/test_bc01'}, console.log).promise();
-  const pKey = resut2.PublicKey.toString('hex', 0, resut2.PublicKey.length);
+  const kms_key_tmp = await kms.getPublicKey({KeyId: 'alias/test_bc01'}).promise();
+  const kms_key = kms_key_tmp.PublicKey.toString('hex', 0, kms_key_tmp.PublicKey.length);
+  const sig = util.ecsign(Buffer.from(util.stripHexPrefix(hash), 'hex'),
+                          Buffer.from(util.stripHexPrefix(kms_key), 'hex') );
 
-  console.log("GetSignTx in hash", data, nonce, hashInput, hash, pKey, resut2.PublicKey);
-  
-  return new Promise((resolve, reject) => {
-    kms.sign({ KeyId: 'alias/test_bc01',
-               Message:hash,
-               MessageType: "DIGEST",
-               EncryptionAlgorithm:'RSAES_OAEP_SHA_256' }, (err, sig) => {
-      if (err) {
-        console.error('encrypt', err, err.stack);
-        reject( err );
-      } else {
-        console.log('encrypt', sig);
-
-        const r = "0x" + sig.slice(2, 66);
-        const s = "0x" + sig.slice(66, 130);
- 
-        let v = parseInt(sig.slice(130, 132), 16)
-        if (v < 27) v += 27
-        v = "0x" + v.toString(16)
-        
-        resolve({ sig:{r, s, v}, from, to, data });
-      }
-    });
-  });
+  const out_param = { sig, from, to, data };
+  console.log("GetSignTx in hash", data, nonce, hashInput, out_param);
+  return out_param;
 }
 
 async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
