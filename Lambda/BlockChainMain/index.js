@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk'),
       Web3 = require('web3'),
+      util = require("ethereumjs-util"),
       kap = require('aws-kms-provider');// 0.2.1
 /*
     "aws-kms-provider": {
@@ -22,11 +23,10 @@ const AWS = require('aws-sdk'),
 
 */
 
-const kms = new AWS.KMS({apiVersion: '2014-11-01'}),
-      docClient = new AWS.DynamoDB();
-
-const txrObj = require("./TxRelay.json");
-const tokenObj = require("./MyToken.json");
+var kms = new AWS.KMS(),
+    docClient = new AWS.DynamoDB(),
+    txrObj = require("./TxRelay.json"),
+    tokenObj = require("./MyToken.json");
 
 const TableName = process.env.DB_NAME;
 const tableKey  = {BuildID: {S: 'b0001'}, now_time:{N: '0'}};
@@ -165,7 +165,62 @@ function TimeLog( th ){
   return str;
 }
 
-async function SendTransfer(web3, from, abi, func_name, param){
+async function DynamoSign( Plaintext ){
+  // Encrypt a data key
+  //
+  // 以下のサンプルキー ARN を有効なキー ID に置き換える
+  const KeyId = process.env.KMS_KEY;
+  kms.encrypt({ KeyId, Plaintext }, (err, data) => {
+    if (err) console.error(err, err.stack);
+    else {
+      console.log(data);
+      const { CiphertextBlob } = data;
+    }
+  });
+}
+
+function GetSignTx( web3, input, nonce_offset=0 ){
+  const { contract, abi, fanc, from, to, param } = input;
+  
+  const data = web3.eth.abi.encodeFunctionCall({
+    name: fanc,
+    type: 'function',
+    inputs: abi
+  }, param );
+  
+  const nonce = web3.eth.getTransactionCount(from) + nonce_offset;
+  let hashInput = '0x1900'
+      + util.stripHexPrefix(contract)
+      + util.stripHexPrefix(from)
+      + nonce.toString(16)
+      + util.stripHexPrefix(to)
+      + util.stripHexPrefix(data);
+  let hash = web3.utils.sha3(hashInput);
+  
+  const KeyId = process.env.KMS_KEY;
+
+  return new Promise((resolve, reject) => {
+    kms.encrypt({ KeyId, hash }, (err, sig) => {
+      if (err) {
+        console.error('encrypt', err, err.stack);
+        reject( err );
+      } else {
+        console.log('encrypt', sig);
+
+        const r = "0x" + sig.slice(2, 66);
+        const s = "0x" + sig.slice(66, 130);
+ 
+        let v = parseInt(sig.slice(130, 132), 16)
+        if (v < 27) v += 27
+        v = "0x" + v.toString(16)
+        
+        resolve({ sig:{r, s, v}, from, to, data });
+      }
+    });
+  });
+}
+
+async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
   console.log("callLambdaDeploy_batch start");
   let th = {}, result;
   TimeLog( th );
@@ -176,6 +231,7 @@ async function SendTransfer(web3, from, abi, func_name, param){
   const to =  process.env.ADDR_USER1,
         cli = process.env.ADDR_USER2;
   const contract = new web3.eth.Contract(abi, addr);
+  let data = contract.methods.transfer(to, "100").encodeABI();
 
   // トークン不足でエラーになるので、チェックに使える
   const checkcall = (err, data) => {
@@ -191,13 +247,34 @@ async function SendTransfer(web3, from, abi, func_name, param){
 
   // 正常にトランザクションを処理できる場合
   result = await contract.methods.transfer(to, "100").call({ from });
-  console.log("call", TimeLog( th ), result);
-  let data = contract.methods.transfer(to, "100").encodeABI();
+  console.log("call 1", TimeLog( th ), result);
   result = await web3.eth.call({to:addr, from, data});
-  console.log("call", TimeLog( th ), result);
+  console.log("call 2", TimeLog( th ), result);
   result = await contract.methods.transfer(to, "100").call({ from });
-  console.log("call", TimeLog( th ), result);
-  
+  console.log("call 3", TimeLog( th ), result);
+
+  const callback1 = (error, result) => {
+    console.log("PendingTransactions callback", TimeLog( th ), error, result);
+  }
+  web3.eth.getPendingTransactions(callback1);
+
+  let kms_data;
+  let web3_data;
+  web3.eth.signTransaction({
+    from,
+    gasPrice: "20000000000",
+    gas: "21000",
+    to,
+    value: "1000000000000000000",
+    data: ""
+  }).then( (err, data) => {
+    console.log('signTransaction', err, data);
+    kms_data = data;
+  });
+  await web3.eth.call(kms_data);
+
+  if(1) return null;
+
   // 自分のトランザクションを確認する場合
   //contract.methods.transfer(to, "10000000000").call({ from }, checkcall);
 
@@ -225,9 +302,9 @@ async function SendTransfer(web3, from, abi, func_name, param){
 
     // https://docs.blocto.app/blocto-app/web3-provider/batch-transaction
     let batch = new web3.BatchRequest();
-    batch.add(web3.eth.sendTransaction.request({from, to, data }, callback1));
+    //batch.add(web3.eth.sendTransaction.request({from, to, data }, callback1));
     // batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
-    // batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
+    batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback2));
     batch.add(contract.methods.transfer(to,  "100").send.request({ from }, callback2));
     batch.add(contract.methods.transfer(cli, "100").send.request({ from }, callback3));
     let result = batch.execute();
@@ -291,7 +368,7 @@ async function SendContract(web3, account, abi, func_name, param, now_time){
   return ret_hash;
 }
 
-async function Contract(web3, account, in_param, ret_hash){
+async function Contract(web3, account, in_param, ret_hash, kms_flg){
   console.log("Contract() B in_param", in_param.act);
   if( !in_param )
     return {out_param: [], hash: null, receipt: null };
@@ -305,13 +382,13 @@ async function Contract(web3, account, in_param, ret_hash){
     switch(act){
     case 0:
     case 1:
-      out_hash = await DeployContract(web3, account, obj, tx_param, now_time );
+      out_hash = await DeployContract(web3, account, obj, tx_param, now_time, kms_flg );
       break;
     case 2:
-      out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time );
+      out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time, kms_flg );
       break;
     case 10:
-      out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time );
+      out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time, kms_flg );
       break;
     }
   } catch(err){
@@ -353,7 +430,7 @@ async function BlockChainMain( event, config ){
   const now_time = Date.now()
   const timeout = 1000;
 
-  let {in_param, hash} = event;
+  let {in_param, hash, kms_flg} = event;
   let out_param = [...in_param];
   const {endpoint, region, keyIds } = config;
 
@@ -369,6 +446,9 @@ async function BlockChainMain( event, config ){
       in_param[i].obj = tokenObj;
       break;
     case 3:
+      MakeData();
+      return {};
+    case 4:
       MakeData();
       return {};
     }
@@ -399,19 +479,32 @@ async function BlockChainMain( event, config ){
   }
 
   // 書き込みは KMS で処理が必用
-  const provider = new kap.KmsProvider(endpoint, { region, keyIds, timeout});
+  let provider;
+  if(kms_flg === false)
+    provider = new Web3.providers.HttpProvider(endpoint);
+  else {
+    provider = new kap.KmsProvider(endpoint, { region, keyIds, timeout});
+  }
   const web3k = new Web3( provider, {timeout} );
-  const accounts = await web3k.eth.getAccounts();
-  console.log("kap.KmsProvider OK", accounts[0], Date.now() - now_time);
+  let account = process.env.ACCOUNT;
+  let call = new Promise((resolve, reject) => {
+    web3k.eth.getAccounts((error, accounts) => {
+      if ( error ) throw error;
+      console.log("Provider OK", accounts, Date.now() - now_time);
+      resolve( accounts );
+    });
+  });
+  await call.then((data) => account = data[0]);
 
   // 書き込み処理の実施
-  let result = await Contract(web3k, accounts[0], in_param[0], hash );
+  let result = await Contract(web3k, account, in_param[0], hash, kms_flg );
   web3k.currentProvider.engine.stop();
   console.log("BlockChainMain() result", result, Date.now() - now_time);
   return result;
 }
 
 exports.handler = async (event, context, callback) => {
+  console.log("event", event);
   const config = {
     region: "ap-northeast-1",
     endpoint: 'https://rpc-mumbai.matic.today',

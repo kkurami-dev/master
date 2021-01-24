@@ -161,6 +161,13 @@ export default class Web3Ethereum extends  Component {
     this.setState({ loop: false });
   }
 
+  async sendLoop( event ){
+    let in_param = [{tx_param:[], act:2}];
+    let now_time = Date.now();
+    await this.callLambdaDeploy_sub( in_param );
+    console.log("callLambdaDeploy()", Date.now() - now_time);
+  }
+
   async callLambdaDeploy( event ){
     // 登録
     // let in_param = [{tx_param:[], act:0},
@@ -278,6 +285,7 @@ export default class Web3Ethereum extends  Component {
         <p>
           <button onClick={this.callDeploy.bind(this)}>デプロイ</button><br/>
           <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
+          <button onClick={(e) => this.sendLoop(e)}>送信の繰り返し</button><br/>
           <button onClick={(e) => this.callLambdaDeploy_batch(e)}>batch request の確認</button><br/>
         </p>
         <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button><br/>

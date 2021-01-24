@@ -1,9 +1,57 @@
-// Time-stamp: "2020-11-07 10:12:53 kuramitu"
+// Time-stamp: "2021-01-23 13:29:43 kuramitu"
 var AWS = require('aws-sdk');
 var docClient = new AWS.DynamoDB.DocumentClient({
   apiVersion: '2012-08-10',
   region: "ap-northeast-1"
 });
+var lambdaClient = new AWS.Lambda();
+
+function TimeLog( th ){
+  let str = ' ';
+  if(th.now)
+    str = 't:' + (Date.now() - th.now);
+  else
+    th.now = Date.now();
+  if(th.diff){
+    let diff = Date.now();
+    str = str + '/' + (diff - th.diff);
+    th.diff = diff;
+  } else {
+    th.diff = Date.now();
+  }
+  return str;
+}
+
+async function callLambda(FunctionName, payload) {
+  let th = {};
+  TimeLog( th );
+  console.log("callLambda start", TimeLog( th ));
+  let call = new Promise((resolve, reject) => {
+    let Payload = JSON.stringify( payload );
+    var params = {
+      FunctionName,
+      Payload,
+    };
+    lambdaClient.invoke(params, (err, data) => {
+      console.log("callLambda callback", TimeLog( th ));
+      if(err) {
+        console.error(err);
+        reject( err );
+      } else {
+        if(!data)
+          resolve( data );
+        if(data.Payload){
+          let out = JSON.parse( data.Payload );
+          resolve( out );
+        }
+      }
+    });
+  });
+  let ret_val;
+  await call.then((value) => ret_val = value );
+  console.log("callLambda await ok", TimeLog( th ));
+  return ret_val;
+}
 
 async function intervalCheckDB( RequestId, now_time ){
   const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
@@ -40,7 +88,7 @@ async function intervalCheckDB( RequestId, now_time ){
   clearTimeout(sleep);
 }
 
-exports.handler = async (event, context, callback) => {
+exports.queryTest = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
   const now_time = Date.now();
   const RequestId = '0x' + context.awsRequestId.replace(/-/g, '');
@@ -66,3 +114,15 @@ exports.handler = async (event, context, callback) => {
 
   callback(null, 0);
 };
+
+exports.handler = async (event, context, callback) => {
+  let th = {}, result;
+  TimeLog( th );
+  const payload = { in_param: [ { tx_param: [], act: 2 }, { tx_param: [], act: 2 } ] }
+  result = await callLambda('BlockChainMain', payload);
+  console.log("callLambda 1", TimeLog( th ), result);
+  result = await callLambda('BlockChainMain', payload);
+  console.log("callLambda 2", TimeLog( th ), result);
+  result = await callLambda('BlockChainMain', payload);
+  console.log("callLambda 3", TimeLog( th ), result);
+}
