@@ -179,28 +179,42 @@ async function DynamoSign( Plaintext ){
   });
 }
 
-function GetSignTx( web3, input, nonce_offset=0 ){
-  const { contract, abi, fanc, from, to, param } = input;
+async function GetSignTx( web3, input, nonce_offset=0 ){
+  const { addr, abi, fanc, from, to, param } = input;
   
-  const data = web3.eth.abi.encodeFunctionCall({
+  let inputs;
+  for( let i = 0; i < abi.length; i++ )
+    if(abi[i].name === fanc)
+      inputs = abi[i].inputs;
+  const in_param = {
     name: fanc,
     type: 'function',
-    inputs: abi
-  }, param );
+    inputs
+  };
+  console.log("GetSignTx in_param", in_param);
+  const data = web3.eth.abi.encodeFunctionCall(in_param, param );
   
-  const nonce = web3.eth.getTransactionCount(from) + nonce_offset;
+  const nonce = await web3.eth.getTransactionCount( from ) + nonce_offset;
   let hashInput = '0x1900'
-      + util.stripHexPrefix(contract)
+      + util.stripHexPrefix(addr)
       + util.stripHexPrefix(from)
       + nonce.toString(16)
       + util.stripHexPrefix(to)
       + util.stripHexPrefix(data);
   let hash = web3.utils.sha3(hashInput);
+  console.log("GetSignTx hash", hash);
   
-  const KeyId = process.env.KMS_KEY;
+  //const resut1 = await kms.describeKey({KeyId: 'alias/test_bc01'}, console.log).promise();
+  const resut2 = await kms.getPublicKey({KeyId: 'alias/test_bc01'}, console.log).promise();
+  const pKey = resut2.PublicKey.toString('hex', 0, resut2.PublicKey.length);
 
+  console.log("GetSignTx in hash", data, nonce, hashInput, hash, pKey, resut2.PublicKey);
+  
   return new Promise((resolve, reject) => {
-    kms.encrypt({ KeyId, hash }, (err, sig) => {
+    kms.sign({ KeyId: 'alias/test_bc01',
+               Message:hash,
+               MessageType: "DIGEST",
+               EncryptionAlgorithm:'RSAES_OAEP_SHA_256' }, (err, sig) => {
       if (err) {
         console.error('encrypt', err, err.stack);
         reject( err );
@@ -260,16 +274,29 @@ async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
 
   let kms_data;
   let web3_data;
-  web3.eth.signTransaction({
-    from,
-    gasPrice: "20000000000",
-    gas: "21000",
-    to,
-    value: "1000000000000000000",
-    data: ""
-  }).then( (err, data) => {
-    console.log('signTransaction', err, data);
-    kms_data = data;
+
+  let sig_call = await GetSignTx(web3, {addr, abi, fanc:'transfer', from, to, param:[to, '100'] });
+  await sig_call.then(data => web3_data = data);
+  console.log("GetSignTx", TimeLog( th ), web3_data);
+  kms_data = {...web3_data};
+  kms_data.sig = '';
+  
+  const make_call = new Promise((resolve, reject) => {
+    const param = {
+      from,
+      gasPrice: "20000000000",
+      gas: "21000",
+      to: addr,
+      value: 0,
+      data
+    };
+    web3.eth.signTransaction(kms_data).then( (err, data) => {
+      console.log('signTransaction', err, data);
+      resolve( data );
+    });
+  });
+  await make_call.then((data)=>{
+    kms_data = data.tx;
   });
   await web3.eth.call(kms_data);
 
