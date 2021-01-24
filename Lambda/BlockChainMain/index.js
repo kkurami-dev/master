@@ -196,13 +196,15 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
   const data = web3.eth.abi.encodeFunctionCall(in_param, param );
   
   const nonce = await web3.eth.getTransactionCount( from ) + nonce_offset;
-  let hashInput = '0x1900'
+  const hashInput = '0x1900'
       + util.stripHexPrefix(addr)
       + util.stripHexPrefix(from)
       + nonce.toString(16)
       + util.stripHexPrefix(to)
       + util.stripHexPrefix(data);
-  let hash = web3.utils.sha3(hashInput);
+  //const hash = web3.utils.sha3(hashInput);
+  // "Error: Invalid bytes characters 265"
+  const hash = web3.utils.soliditySha3(hashInput);
   console.log("GetSignTx hash", hash);
   
   // const kms_key_tmp = await kms.getPublicKey({KeyId: 'alias/test_bc01'}).promise();
@@ -228,12 +230,13 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
 
         const r = sig_tmp.slice(0, 31);
         const s = sig_tmp.slice(32, 63);
- 
-        let v = parseInt(sig_tmp.slice(64, 70), 16)
+
+        const v_tmp = sig_tmp.slice(64, 70).toString('hex', 0, 6)
+        let v = parseInt(v_tmp, 16)
         if (v < 27) v += 27
         v = "0x" + v.toString(16)
         
-        const out_param = { sig:{r, s, v}, from, to, data };
+        const out_param = { sig:{r, s, v}, from, to, data, v_tmp };
         console.log("sign in hash", sign_data, nonce, hashInput, out_param);
         resolve(out_param);
       }
