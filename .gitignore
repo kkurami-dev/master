@@ -155,3 +155,6 @@ local.properties
 /client/src/configs
 /back
 /Lambda/*/*.json
+/contracts/MyToken.sol
+/migrations/2_deploy_contracts.js
+/migrations/3_deploy_contracts.js
