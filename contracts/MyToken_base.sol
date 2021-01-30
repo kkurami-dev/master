@@ -2,20 +2,23 @@ pragma solidity >=0.4.22 <0.7.0;
 /* -*- mode: emacs-lisp; coding: utf-8-unix -*- */
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
-contract MyToken is ERC20, ERC20Detailed {
+contract MyToken is ERC20 {
 
     address txrel;
 
     // This is for debug purpose
     event Log(address from, string message);
 
-    constructor (string memory symbol, string memory token, uint8 amount) public ERC20Detailed(symbol, token, amount) {
+    constructor (string memory symbol, string memory token, uint8 amount) public ERC20(symbol, token, amount) {
         _mint( msg.sender,
                amount * (10 ** uint256(decimals()))
                );
     }
+
+    /* function setTxRelay(address _to) public returns (bool) { */
+    /*     return true; */
+    /* } */
 
     /**
      * @dev Transfer token for a specified address
