@@ -21,22 +21,11 @@ module.exports = {
     // $ truffle migrate --network goerli
     goerli:{
       provider: () => new HDWalletProvider(mnemonic, `https://rpc.goerli.mudit.blog/`),
-      // provider: () => new HDWalletProvider({
-      //   mnemonic:[ mnemonic ],
-      //   providerOrUrl: 'https://goerli.infura.io/v3/2ZPPNA7ZYD9YY5XNU2NXDBMWQAQINYAP68',
-      //   numberOfAddresses: 1,
-      //   shareNonce: true,
-      //   derivationPath: "m/44'/1'/0'/0/"
-      // }),
-      //provider: () => new HDWalletProvider(process.env.MNEMONIC, 'https://goerli.infura.io/v3/' + process.env.INFURA_API_KEY),
       network_id: 5,
       confirmations: 2,
       timeoutBlocks: 200,
-      //skipDryRun: true,
       gas: 4000000,
       gasPrice: 2000000000,
-      //gas: 4465030,
-      //gasPrice: 10000000000,
       networkCheckTimeout: 1800000
     },
     // マティック（ムンバイ）
