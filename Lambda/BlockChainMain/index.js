@@ -1,8 +1,11 @@
-const AWS = require('aws-sdk'),
-      Web3 = require('web3'),
-      util = require("ethereumjs-util"),
-      asn1js = require("asn1js"),
-      kap = require('aws-kms-provider');// 0.2.1
+const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
+
+var AWS = require('aws-sdk'),
+    Web3 = require('web3'),
+    util = require("ethereumjs-util"),
+    asn1js = require("asn1js"),
+    kap = require('aws-kms-provider');// 0.2.1
+
 /*
     "aws-kms-provider": {
       "version": "0.2.1",
@@ -258,10 +261,10 @@ async function SendDeposit(Contract, amount){
                  addr:"0x1a3200b9b30c81286fC01614F3Af7A1Ce84eb532",
               }
         },
-    DAI:{root: { abi:"Dai_Eth_Abi.json",
+    DAI:{root: { abi:"DAI_Eth_Abi.json",
                  addr: "0x2686eca13186766760a0347ee8eeb5a88710e11b"
                },
-         chil: { abi:"Dai_Mat_Abi.json",
+         chil: { abi:"DAI_Mat_Abi.json",
                  addr:"0x27a44456bEDb94DbD59D0f0A14fE977c777fC5C3",
               }
         },
@@ -281,7 +284,7 @@ async function SendDeposit(Contract, amount){
   const mainProvider = new kap.KmsProvider(conf.Eth_EndPoint, Kms_conf);
   const maticProvider = new kap.KmsProvider(conf.Mti_EndPoint, Kms_conf);
 
-  const cont = conf[Contract];
+  const cont = conf["DAI"];
   const rootTokenABI = require('./'+ cont.root.abi);
   const rootTokenAddress = cont.root.addr;
   const rootToken = rootTokenAddress;
@@ -292,24 +295,39 @@ async function SendDeposit(Contract, amount){
   // https://github.com/maticnetwork/matic.js/
   // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
   const rootChainManagerABI = '';
-  const rootChainManagerAddress = '';
-  const erc20Predicate = '';
+  const rootChainManagerAddress = '0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74';
+  const erc20Predicate = '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34';
 
-  const mainWeb3 = new Web3(mainProvider);
-  const maticWeb3 = new Web3(maticProvider);
-  const rootTokenContract = new mainWeb3.eth.Contract(rootTokenABI, rootTokenAddress);
-  const rootChainManagerContract = new mainWeb3.eth.Contract(rootChainManagerABI,
-                                                             rootChainManagerAddress);
-  const childTokenContract = new maticWeb3(childTokenABI, childTokenAddress);
+  const maticPOSClient = new MaticPOSClient({
+    network:'testnet',
+    version:'mumbai',
+    maticProvider:maticProvider,
+    parentProvider:mainProvider,
+    posRootChainManager:rootChainManagerAddress,
+    posERC20Predicate: '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34'
+  });
 
-  await rootTokenContract.methods
-    .approve(erc20Predicate, amount)
-    .send({ from: userAddress });
+  await maticPOSClient.approveERC20ForDeposit(
+  rootToken, // RootToken address,
+  amount, // Amount for approval (in wei)
+  options // transaction fields, can be skipped if default options are set
+  );
 
-  const depositData = mainWeb3.eth.abi.encodeParameter('uint256', amount)
-  await rootChainManagerContract.methods
-    .depositFor(userAddress, rootToken, depositData)
-    .send({ from: userAddress });
+  // const mainWeb3 = new Web3(mainProvider);
+  // const maticWeb3 = new Web3(maticProvider);
+  // const rootTokenContract = new mainWeb3.eth.Contract(rootTokenABI, rootTokenAddress);
+  // const rootChainManagerContract = new mainWeb3.eth.Contract(rootChainManagerABI,
+  //                                                            rootChainManagerAddress);
+  // const childTokenContract = new maticWeb3(childTokenABI, childTokenAddress);
+
+  // await rootTokenContract.methods
+  //   .approve(erc20Predicate, amount)
+  //   .call({ from: userAddress });
+
+  // const depositData = mainWeb3.eth.abi.encodeParameter('uint256', amount)
+  // await rootChainManagerContract.methods
+  //   .depositFor(userAddress, rootToken, depositData)
+  //   .call({ from: userAddress });
   
 }
 
@@ -611,6 +629,10 @@ async function BlockChainMain( event, config ){
 
 exports.handler = async (event, context, callback) => {
   console.log("event", event);
+  if(1){
+    return await SendDeposit("", 10);
+  }
+  
   const config = {
     region: "ap-northeast-1",
     endpoint: 'https://rpc-mumbai.matic.today',
