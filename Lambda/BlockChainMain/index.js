@@ -3,6 +3,7 @@
 //const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
 //const Matic = require('./matic.js'); // window がない（つまりブラウザでの実行が前提のようだ）
 //const MaticPOSClient = require('./matic.js').MaticPOSClient;
+//var axios = asn1js = require("/opt/nodejs/node_modules/axios");
 
 var AWS = require('aws-sdk'),
     Web3 = require('web3'),
@@ -292,10 +293,12 @@ async function SendDeposit(Contract, amount){
   const cont = conf["CHM"];
   const rootTokenABI = require('./'+ cont.root.abi);
   const rootTokenAddress = cont.root.addr;
-  const rootToken = rootTokenAddress;
+  //const rootToken = rootTokenAddress;
+  const rootToken = cont.root.addr;
   const childTokenABI = require('./'+ cont.chil.abi);
   const childTokenAddress = cont.chil.addr;
   const userAddress = process.env.ACCOUNT;
+  const from = process.env.ACCOUNT;
 
   // https://github.com/maticnetwork/matic.js/
   // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
@@ -303,105 +306,30 @@ async function SendDeposit(Contract, amount){
   const rootChainManagerABI = require('./RootChainManager.json');
   //const rootChainManagerAddress = '0x8829EC24A1BcaCdcF4a3CBDE3A4498172e9FCDcE';//x
   const rootChainManagerAddress = '0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74';
-  const erc20Predicate = '0x07f76e8EfaEAe05cb093AC79740e3546dC03FA93';
+  const erc20Predicate = '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34';
 
   const mainWeb3 = new Web3(mainProvider);// Ethereum
   const web3Client = new Web3(maticProvider);// Matic
 
-  /* examples/POS-client/ERC20/deposit.js
-  const config = require('../config')
-  const utils = require('../utils')
-  const maticPOSClient = utils.getMaticPOSClient()
-
-  const execute = async () => {
-    const tx = await maticPOSClient.depositERC20ForUser(config.root.DERC20,
-                                                        config.user.address,
-                                                        config.user.amount)
-  }
-  */
-
-  // --- copy matic.js( matic.js-master/examples/POS-client/utils.js )
-  // // const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient
-  // const MaticPOSClient = require('../../lib/index').MaticPOSClient
-  // const config = require('./config')
-  // const HDWalletProvider = require('@truffle/hdwallet-provider')
+  // --- 参考 matic.js( matic.js-master/examples/POS-client/utils.js )
+  const MaticPOSClient = require('./lib/index.js').MaticPOSClient;
   const maticPOSClient = new MaticPOSClient({
     network: 'testnet', // optional, default is testnet
     version: 'mumbai', // optional, default is mumbai
     parentProvider: mainWeb3,
     maticProvider: web3Client,
-    posRootChainManager: config.root.POSRootChainManager,
-    posERC20Predicate: config.root.posERC20Predicate, // optional, required only if working with ERC20 tokens
-    posERC721Predicate: config.root.posERC721Predicate, // optional, required only if working with ERC721 tokens
-    posERC1155Predicate: config.root.posERC1155Predicate, // optional, required only if working with ERC71155 tokens
-    parentDefaultOptions: { from: config.user.address }, // optional, can also be sent as last param while sending tx
-    maticDefaultOptions: { from: config.user.address }, // optional, can also be sent as last param while sending tx
+    posRootChainManager: rootChainManagerAddress,
+    posERC20Predicate: erc20Predicate,
+    parentDefaultOptions: { from },
+    maticDefaultOptions: { from },
   });
 
-  // --- copy matic.js ( matic.js-master/src/root/POSRootChainManager.ts: constructor )
-  const posRootChainManager = new web3Client.parentWeb3.eth.Contract(
-    options.network.abi('RootChainManager', 'pos'),
-    options.posRootChainManager || options.network.Main.POSContracts.RootChainManagerProxy
+  // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js) 
+  await maticPOSClient.depositERC20ForUser(
+    rootToken, // RootToken address ( Ethereum, Matic の両方にコントラクトがある )
+    from,      // 宛先
+    amount     // Amount for approval (in wei)
   );
-
-  // --- copy matic.js ( matic.js-master/src/root/POSRootChainManager.ts: depositERC20ForUser )
-  async function depositERC20ForUser(rootToken, amount, user, options=null) {
-    const depositData = abiCoder.encodeParameter('uint256', this.formatUint256(amount))
-    return this.depositFor(user, rootToken, depositData, options)
-  }
-
-  // --- copy matic.js ( matic.js-master/src/root/POSRootChainManager.ts: depositFor )
-  async function depositFor(user, rootToken, depositData, options=null) {
-    if (!posRootChainManager.options.address) {
-      throw new Error('posRootChainManager address not found. Set it while constructing MaticPOSClient.')
-    }
-    const txObject = posRootChainManager.methods.depositFor(user, rootToken, depositData)
-    const web3Options = await web3Client.fillOptions(txObject, true /* onRootChain */, options)
-    if (web3Options.encodeAbi) {
-      return Object.assign(web3Options, { data: txObject.encodeABI(),
-                                          to: posRootChainManager.options.address })
-    }
-    //web3Client.send(txObject, web3Options, options);
-    const result = web3Client.call(txObject, web3Options, options);
-
-    maticProvider.engine.stop();// @truffle/hdwallet-provider examples
-    return result;
-  }
-
-  // ----------------------------------------
-  // const maticPOSClient = new MaticPOSClient({
-  //   network:'testnet',
-  //   version:'mumbai',
-  //   maticProvider:maticProvider,
-  //   parentProvider:mainProvider,
-  //   posRootChainManager:rootChainManagerAddress,
-  //   posERC20Predicate: '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34'
-  // });
-
-  // ----------------------------------------
-  // await maticPOSClient.approveERC20ForDeposit(
-  // rootToken, // RootToken address,
-  // amount, // Amount for approval (in wei)
-  // options // transaction fields, can be skipped if default options are set
-  // );
-
-  // ----------------------------------------
-  // const mainWeb3 = new Web3(mainProvider);// Ethereum
-  // const maticWeb3 = new Web3(maticProvider);// Matic
-  // const rootTokenContract = new mainWeb3.eth.Contract(rootTokenABI, rootTokenAddress);
-  // const rootChainManagerContract = new mainWeb3.eth.Contract(rootChainManagerABI,
-  //                                                             rootChainManagerAddress); // deposit
-  // const childTokenContract = new maticWeb3(childTokenABI, childTokenAddress);// Burn
-
-  // await rootTokenContract.methods
-  //   .approve(erc20Predicate, amount)
-  //   .call({ from: userAddress });
-
-  // const depositData = mainWeb3.eth.abi.encodeParameter('uint256', amount)
-  // await rootChainManagerContract.methods
-  //   .depositFor(userAddress, rootToken, depositData)
-  //   .call({ from: userAddress });
-  
 }
 
 async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
