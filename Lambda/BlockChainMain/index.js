@@ -1,6 +1,6 @@
 //import Matic from '@maticnetwork/maticjs';
 // const Matic = require('@maticnetwork/maticjs');
-//const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
+const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
 //const Matic = require('./matic.js'); // window がない（つまりブラウザでの実行が前提のようだ）
 //const MaticPOSClient = require('./matic.js').MaticPOSClient;
 //var axios = asn1js = require("/opt/nodejs/node_modules/axios");
@@ -8,7 +8,6 @@
 var AWS = require('aws-sdk'),
     Web3 = require('web3'),
     util = require("ethereumjs-util"),
-    asn1js = require("asn1js"),
     kap = require('aws-kms-provider');// 0.2.1 // ブラウザからは実行できない(ローカルファイルの参照がある)
 
 /*
@@ -39,7 +38,6 @@ var kms = new AWS.KMS(),
 
 const TableName = process.env.DB_NAME;
 const tableKey  = {BuildID: {S: 'b0001'}, now_time:{N: '0'}};
-const getKey    = "";
 
 async function getDynamoDB( TableName, Key ) {
   // DynamoDBへのアクセスロジック
@@ -321,14 +319,27 @@ async function SendDeposit(Contract, amount){
     maticDefaultOptions: { from },
   });
 
-  // --- 参考 ( matic.js-master/examples/POS-client/ERC20/approve.js )
-  const approveTx = await maticPOSClient.approveERC20ForDeposit(rootToken, amount);
-  // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js )
-  const depositTx = await maticPOSClient.depositERC20ForUser(
-    rootToken, // RootToken address ( Ethereum, Matic の両方にコントラクトがある )
-    from,      // 宛先
-    amount     // Amount for approval (in wei)
-  );
+  try {
+    let receipt = [];
+    // --- 参考 ( matic.js-master/examples/POS-client/ERC20/approve.js )
+    //receipt.push( await maticPOSClient.approveERC20ForDeposit(rootToken, amount) );
+    // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js )
+    receipt.push( await maticPOSClient.depositERC20ForUser(
+      rootToken, // RootToken address ( Ethereum, Matic の両方にコントラクトがある )
+      from,      // 宛先
+      amount     // Amount for approval (in wei)
+    ));
+    for(let i = 0; i < receipt.length; i++){
+      let ret;
+      do{
+        await web3Client.eth.getTransactionReceipt(receipt[i]).then((result) => ret = result);
+        console.log('getTransactionReceipt');
+      } while(!ret);
+      console.log('getTransactionReceipt', ret);
+    }
+  } catch(err){
+    console.error("SendDeposit:", err);
+  }
 
   // @truffle/hdwallet-provider のサンプルに記載されている
   // At termination, `provider.engine.stop()' should be called to finish the process elegantly.
