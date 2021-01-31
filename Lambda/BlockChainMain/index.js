@@ -293,18 +293,15 @@ async function SendDeposit(Contract, amount){
   const cont = conf["CHM"];
   const rootTokenABI = require('./'+ cont.root.abi);
   const rootTokenAddress = cont.root.addr;
-  //const rootToken = rootTokenAddress;
   const rootToken = cont.root.addr;
   const childTokenABI = require('./'+ cont.chil.abi);
   const childTokenAddress = cont.chil.addr;
-  const userAddress = process.env.ACCOUNT;
   const from = process.env.ACCOUNT;
 
   // https://github.com/maticnetwork/matic.js/
   // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
   // https://github.com/maticnetwork/static/tree/master/network/testnet/mumbai
   const rootChainManagerABI = require('./RootChainManager.json');
-  //const rootChainManagerAddress = '0x8829EC24A1BcaCdcF4a3CBDE3A4498172e9FCDcE';//x
   const rootChainManagerAddress = '0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74';
   const erc20Predicate = '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34';
 
@@ -318,18 +315,25 @@ async function SendDeposit(Contract, amount){
     version: 'mumbai', // optional, default is mumbai
     parentProvider: mainWeb3,
     maticProvider: web3Client,
-    posRootChainManager: rootChainManagerAddress,
-    posERC20Predicate: erc20Predicate,
+    posRootChainManager: rootChainManagerAddress, // config.root.POSRootChainManager
+    posERC20Predicate: erc20Predicate, // config.root.posERC20Predicate
     parentDefaultOptions: { from },
     maticDefaultOptions: { from },
   });
 
-  // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js) 
-  await maticPOSClient.depositERC20ForUser(
+  // --- 参考 ( matic.js-master/examples/POS-client/ERC20/approve.js )
+  const approveTx = await maticPOSClient.approveERC20ForDeposit(rootToken, amount);
+  // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js )
+  const depositTx = await maticPOSClient.depositERC20ForUser(
     rootToken, // RootToken address ( Ethereum, Matic の両方にコントラクトがある )
     from,      // 宛先
     amount     // Amount for approval (in wei)
   );
+
+  // @truffle/hdwallet-provider のサンプルに記載されている
+  // At termination, `provider.engine.stop()' should be called to finish the process elegantly.
+  mainWeb3.engine.stop();
+  web3Client.engine.stop();
 }
 
 async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
