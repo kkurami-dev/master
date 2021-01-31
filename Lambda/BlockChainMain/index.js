@@ -192,21 +192,22 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
     type: 'function',
     inputs
   };
-  console.log("GetSignTx in_param", in_param);
+  console.log("GetSignTx in_param", in_param, param);
   const data = web3.eth.abi.encodeFunctionCall(in_param, param );
   
   const nonce = await web3.eth.getTransactionCount( from ) + nonce_offset;
   const hashInput = '0x1900'
-      + util.stripHexPrefix(addr)
-      + util.stripHexPrefix(from)
-      + nonce.toString(16)
-      + util.stripHexPrefix(to)
-      + util.stripHexPrefix(data);
+        + '000000000000000000000000' + util.stripHexPrefix(addr)
+        + '000000000000000000000000' + util.stripHexPrefix(from)
+        + nonce.toString(16)
+        + util.stripHexPrefix(to)
+        + util.stripHexPrefix(data);
+  console.log("GetSignTx hashInput", hashInput);
   //const hash = web3.utils.sha3(hashInput);
   // "Error: Invalid bytes characters 265"
   const hash = web3.utils.soliditySha3(hashInput);
   console.log("GetSignTx hash", hash);
-  
+  // 0x19007B0ba31777fd4eC2AB3c90b8B07a20Ad72Bb33985041Da2c2432ABD99AEBE874C18a326D95451ABC2f84A7C625A628981919f37E321A4f9E7C4a90AF15ca9059cbb0000000000000000000000004a7c625a628981919f37e321a4f9e7c4a90af15c0000000000000000000000000000000000000000000000000000000000000064
   // const kms_key_tmp = await kms.getPublicKey({KeyId: 'alias/test_bc01'}).promise();
   // const { result } = asn1js.fromBER(kms_key_tmp.PublicKey);
   // const values = result.valueBlock.value;
@@ -215,6 +216,7 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
   //                         value );
 
   return new Promise((resolve, reject) => {
+    // https://docs.aws.amazon.com/ja_jp/kms/latest/APIReference/API_Sign.html
     kms.sign({
       KeyId: 'alias/test_bc01',
       Message: hash,
@@ -228,6 +230,7 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
         console.log('encrypt', sign_data);
         const sig_tmp = sign_data.Signature;
 
+        // https://www.javadrive.jp/javascript/array/index14.html
         const r = sig_tmp.slice(0, 31);
         const s = sig_tmp.slice(32, 63);
 
@@ -242,6 +245,72 @@ async function GetSignTx( web3, input, nonce_offset=0 ){
       }
     });
   });  
+}
+
+async function SendDeposit(Contract, amount){
+  const conf = {
+    Eth_EndPoint: 'https://rpc.goerli.mudit.blog/',
+    Mti_EndPoint: 'https://rpc-mumbai.matic.today',
+    GEO:{root: { abi:"GEO_Eth_Abi.json",
+                 addr: "0xfa8b929171077C18ec0702c78D5E6002236001AE"
+               },
+         chil: { abi:"GEO_Mat_Abi.json",
+                 addr:"0x1a3200b9b30c81286fC01614F3Af7A1Ce84eb532",
+              }
+        },
+    DAI:{root: { abi:"Dai_Eth_Abi.json",
+                 addr: "0x2686eca13186766760a0347ee8eeb5a88710e11b"
+               },
+         chil: { abi:"Dai_Mat_Abi.json",
+                 addr:"0x27a44456bEDb94DbD59D0f0A14fE977c777fC5C3",
+              }
+        },
+    CHM:{ root: { abi:"CHM_Eth_Abi.json",
+                  addr:"0xB4F8414382A3286F962572b401dE0dD45F9116e0"
+                },
+          chil: { abi:"CHM_Mat_Abi.json",
+                  addr:"0xEd12B500491c2c291075f564cc6C496ad5268A93"
+                }
+    }
+  };
+
+  const Kms_conf = {
+    region: "ap-northeast-1",
+    keyIds: [ process.env.KMS_KEY ]
+  };
+  const mainProvider = new kap.KmsProvider(conf.Eth_EndPoint, Kms_conf);
+  const maticProvider = new kap.KmsProvider(conf.Mti_EndPoint, Kms_conf);
+
+  const cont = conf[Contract];
+  const rootTokenABI = require('./'+ cont.root.abi);
+  const rootTokenAddress = cont.root.addr;
+  const rootToken = rootTokenAddress;
+  const childTokenABI = require('./'+ cont.chil.abi);
+  const childTokenAddress = cont.chil.addr;
+  const userAddress = process.env.ACCOUNT;
+
+  // https://github.com/maticnetwork/matic.js/
+  // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
+  const rootChainManagerABI = '';
+  const rootChainManagerAddress = '';
+  const erc20Predicate = '';
+
+  const mainWeb3 = new Web3(mainProvider);
+  const maticWeb3 = new Web3(maticProvider);
+  const rootTokenContract = new mainWeb3.eth.Contract(rootTokenABI, rootTokenAddress);
+  const rootChainManagerContract = new mainWeb3.eth.Contract(rootChainManagerABI,
+                                                             rootChainManagerAddress);
+  const childTokenContract = new maticWeb3(childTokenABI, childTokenAddress);
+
+  await rootTokenContract.methods
+    .approve(erc20Predicate, amount)
+    .send({ from: userAddress });
+
+  const depositData = mainWeb3.eth.abi.encodeParameter('uint256', amount)
+  await rootChainManagerContract.methods
+    .depositFor(userAddress, rootToken, depositData)
+    .send({ from: userAddress });
+  
 }
 
 async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
