@@ -8,6 +8,7 @@ const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
 var AWS = require('aws-sdk'),
     Web3 = require('web3'),
     util = require("ethereumjs-util"),
+    ethereumjs_tx = require("ethereumjs-tx"),
     kap = require('aws-kms-provider');// 0.2.1 // ブラウザからは実行できない(ローカルファイルの参照がある)
 
 /*
@@ -157,17 +158,18 @@ async function DeployContract(web3, account, obj, param, now_time ) {
 }
 
 function TimeLog( th ){
+  if(!th) return Date.now();
   let str = ' ';
-  if(th.now)
-    str = 't:' + (Date.now() - th.now);
-  else
-    th.now = Date.now();
+  const now = Date.now();
+
+  if(th.now) str = 't:' + (now - th.now);
+  else       th.now = now;
+
   if(th.diff){
-    let diff = Date.now();
-    str = str + '/' + (diff - th.diff);
-    th.diff = diff;
+    str += '/' + (now - th.diff);
+    th.diff = now;
   } else {
-    th.diff = Date.now();
+    th.diff = now;
   }
   return str;
 }
@@ -318,6 +320,7 @@ async function SendDeposit(Contract, amount){
     parentDefaultOptions: { from },
     maticDefaultOptions: { from },
   });
+  // child.DERC20
 
   try {
     let receipt = [];
@@ -343,8 +346,8 @@ async function SendDeposit(Contract, amount){
 
   // @truffle/hdwallet-provider のサンプルに記載されている
   // At termination, `provider.engine.stop()' should be called to finish the process elegantly.
-  mainWeb3.engine.stop();
-  web3Client.engine.stop();
+  mainProvider.engine.stop();
+  maticProvider.engine.stop();
 }
 
 async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
@@ -508,6 +511,82 @@ async function SendContract(web3, account, abi, func_name, param, now_time){
   return ret_hash;
 }
 
+async function SendKmsSingTransaction(web3, abi, func_name, param, th){
+  let func_abi, to, KeyId = 'alias/test_bc01';
+  // nonce
+  let nonce = 0, count = 0;
+  do {
+    nonce = await web3.eth.getTransactionCount( process.env.ACCOUNT );
+    console.log("get nonce: ", TimeLog(th), nonce);
+  } while (nonce === 0 && count++ < 10);
+
+  // 送信先のコントラクトアドレス
+  const conf = await getDynamoDB(TableName, tableKey);
+  if (func_name.indexOF("Relay") === -1)
+    to = conf.tokAddr;
+  else
+    to = conf.txrAddr;
+  console.log("get to address: ", TimeLog(th), to);
+
+  // 送信データ作成
+  for( let i = 0; i < abi.length; i++ )
+    if(abi[i].name === func_name)
+      func_abi = abi[i];
+  const data = web3.eth.abi.encodeFunctionCall(func_abi, param);
+
+  // トランザクションの作成
+  //  
+  const txData = {
+    nonce, // def:web3.eth.getTransactionCount();
+    to,
+    gasPrice: "20000000000",
+    gas: "21000",
+    //chainId: // def:web3.eth.net.getId(),
+    //chain: // def:'mainnet',
+    data
+  };
+  const tx = await ethereumjs_tx.createTransaction(txData);
+  console.log("make tx: ", TimeLog(th), txData, tx);
+
+  // 署名の実施
+  // aws-kms-provider/dist/signer/kms-signer.js
+  // aws-kms-provider/dist/provider.js
+  var kms_params = {
+    KeyId,
+    Message: tx.hash(false),
+    SigningAlgorithm: 'ECDSA_SHA_256',
+    MessageType: 'DIGEST'
+  };
+  const signature = await kms.sign( kms_params );
+  console.log("kms.sign: ", TimeLog(th), kms_params, signature);
+
+  // ブロックチェーン用に署名を分割
+  const vStr = (signature.v + tx.getChainId() * 2 + 8).toString(16);
+  const length = vStr.length + (vStr.length % 2);
+  const v = Buffer.from(vStr.padStart(length, "0"), "hex");
+  tx.r = signature.r;
+  tx.s = signature.s;
+  tx.v = v;
+  const rawTx = `0x${tx.serialize().toString("hex")}`;
+  console.log("make tx: ", TimeLog(th), tx, rawTx);
+
+  // トランザクションの投入
+  const call_tx = new Promise((resolve, reject) => {
+    web3.eth.sendSignedTransaction(rawTx, function(err, data) {
+      if (err){
+        console.error("DynamoDB sendTransaction", TimeLog(th), JSON.stringify(param), err, err.stack);
+        reject( err );
+      } else {
+        console.log("Promise: ", TimeLog(th), data);
+        resolve( data );
+      }
+    });
+  });
+  let ret_hash;
+  await call_tx.then((value) => ret_hash = value );
+  return ret_hash;
+}
+
 async function Contract(web3, account, in_param, ret_hash, kms_flg){
   console.log("Contract() B in_param", in_param.act);
   if( !in_param )
@@ -525,6 +604,9 @@ async function Contract(web3, account, in_param, ret_hash, kms_flg){
       out_hash = await DeployContract(web3, account, obj, tx_param, now_time, kms_flg );
       break;
     case 2:
+      out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time, kms_flg );
+      break;
+    case 3:
       out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time, kms_flg );
       break;
     case 10:
@@ -621,7 +703,7 @@ async function BlockChainMain( event, config ){
   // 書き込みは KMS で処理が必用
   let provider;
   if(kms_flg === false)
-    provider = new Web3.providers.HttpProvider(endpoint);
+    provider = new Web3.providers.HttpProvider(endpoint, {timeout});
   else {
     provider = new kap.KmsProvider(endpoint, { region, keyIds, timeout});
   }

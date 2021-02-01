@@ -35,7 +35,8 @@ import React, { Component } from 'react';
    toBlockが'latest'やundefinedの時は、getをcallした時点までの
    Eventを返します。
   */
-import getWeb3 from "../lib/getWeb3";
+//import getWeb3 from "../lib/getWeb3";
+import Web3 from "web3";
 import { getBalanceOf,
        } from "../lib/lib_web3";
 import { callLambda,
@@ -131,10 +132,13 @@ export default class Web3Ethereum extends  Component {
     try {
 
       // Chorome の MetaMask 拡張機能でローカルの truffle に接続するので、このままで
-      const web3 = await getWeb3();
-      const accounts = await web3.eth.getAccounts();
-
+      //const web3 = await getWeb3();
+      //const provider = new Web3.providers.HttpProvider("http://127.0.0.1:8545");
+      const provider = new Web3.providers.HttpProvider('https://rpc-mumbai.matic.today');
+      const web3 = new Web3(provider);
       console.log(web3);
+
+      const accounts = await web3.eth.getAccounts();
       this.setState({ web3, account: accounts[0], objTxRelay});
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
@@ -160,7 +164,7 @@ export default class Web3Ethereum extends  Component {
     console.log("componentWillUnmount", event, v2, v3);
     this.setState({ loop: false });
   }
-
+"arn:aws:kms:ap-northeast-1:176264229023:key/01f9ef3a-7f13-4fb8-b70c-f60d76f924ab key usage is SIGN_VERIFY which is not valid for Encrypt."
   async sendLoop( event ){
     let in_param = [{tx_param:[], act:2}];
     let now_time = Date.now();
