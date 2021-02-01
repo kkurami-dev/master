@@ -520,7 +520,7 @@ async function SendContract(web3, account, abi, func_name, param, now_time){
 
 async function SendKmsSingTransaction(web3, abi, func_name, param, th){
   let func_abi, to, KeyId = 'alias/test_bc01';
-  // nonce
+  // nonce の取得
   let nonce = 0, count = 0;
   do {
     try {
@@ -598,11 +598,12 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th){
 }
 
 async function Contract(web3, account, in_param, ret_hash, kms_flg){
+  let th = {};
   console.log("Contract() B in_param", in_param.act);
   if( !in_param )
     return {out_param: [], hash: null, receipt: null };
 
-  let {obj, tx_param, act, now_time} = in_param;
+  let {obj, tx_param, act, now_time, func_name} = in_param;
   console.log("Contract() D in_param", tx_param, act);
 
   // アクションに従った操作の選択
@@ -617,7 +618,7 @@ async function Contract(web3, account, in_param, ret_hash, kms_flg){
       out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time, kms_flg );
       break;
     case 3:
-      out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time, kms_flg );
+      out_hash = await SendKmsSingTransaction(web3, obj.abi, func_name, tx_param, th );
       break;
     case 10:
       out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time, kms_flg );
@@ -662,7 +663,7 @@ async function BlockChainMain( event, config ){
   const now_time = Date.now()
   const timeout = 1000;
 
-  let {in_param, hash, kms_flg} = event;
+  let {in_param, hash, kms_flg, ws_flg} = event;
   let out_param = [...in_param];
   const {endpoint, region, keyIds } = config;
 
@@ -678,8 +679,9 @@ async function BlockChainMain( event, config ){
       in_param[i].obj = tokenObj;
       break;
     case 3:
-      MakeData();
-      return {};
+      endpoint =  'wss://ws-mumbai.matic.today';
+      ws_flg = true;
+      break;
     case 4:
       MakeData();
       return {};
@@ -690,10 +692,17 @@ async function BlockChainMain( event, config ){
   }
   console.log("BlockChainMain() event", in_param.length, hash);
 
+  let provider;
+  if(ws_flg === false)
+    provider = new Web3.providers.WebsocketProvider(endpoint);
+  else if(kms_flg === false || hash)
+    provider = new Web3.providers.HttpProvider(endpoint, {timeout, keepAlive:false});
+  else
+    provider = new kap.KmsProvider(endpoint, { region, keyIds });
+
   // 処理中と判断し、状況確認を実施
   if (hash){
     console.log("hash check", hash);
-    const provider = new Web3.providers.HttpProvider( endpoint );
     const web3h = new Web3( provider );
 
     console.log("getTransactionReceipt()");
@@ -711,13 +720,7 @@ async function BlockChainMain( event, config ){
   }
 
   // 書き込みは KMS で処理が必用
-  let provider;
-  if(kms_flg === false)
-    provider = new Web3.providers.HttpProvider(endpoint, {timeout});
-  else {
-    provider = new kap.KmsProvider(endpoint, { region, keyIds, timeout});
-  }
-  const web3k = new Web3( provider, {timeout} );
+  const web3k = new Web3( provider );
   let account = process.env.ACCOUNT;
   let call = new Promise((resolve, reject) => {
     web3k.eth.getAccounts((error, accounts) => {
@@ -730,7 +733,7 @@ async function BlockChainMain( event, config ){
 
   // 書き込み処理の実施
   let result = await Contract(web3k, account, in_param[0], hash, kms_flg );
-  web3k.currentProvider.engine.stop();
+  if(provider && provider.engine) provider.engine.stop();
   console.log("BlockChainMain() result", result, Date.now() - now_time);
   return result;
 }
