@@ -665,7 +665,7 @@ async function BlockChainMain( event, config ){
 
   let {in_param, hash, kms_flg, ws_flg} = event;
   let out_param = [...in_param];
-  const {endpoint, region, keyIds } = config;
+  const {endpoint, endpoint_ws, region, keyIds } = config;
 
   // アクションに従ったオブジェクト変更
   for(let i = 0; i < in_param.length; i++){
@@ -679,8 +679,6 @@ async function BlockChainMain( event, config ){
       in_param[i].obj = tokenObj;
       break;
     case 3:
-      endpoint =  'wss://ws-mumbai.matic.today';
-      ws_flg = true;
       break;
     case 4:
       MakeData();
@@ -693,8 +691,8 @@ async function BlockChainMain( event, config ){
   console.log("BlockChainMain() event", in_param.length, hash);
 
   let provider;
-  if(ws_flg === false)
-    provider = new Web3.providers.WebsocketProvider(endpoint);
+  if(ws_flg)
+    provider = new Web3.providers.WebsocketProvider(endpoint_ws);
   else if(kms_flg === false || hash)
     provider = new Web3.providers.HttpProvider(endpoint, {timeout, keepAlive:false});
   else
@@ -740,15 +738,22 @@ async function BlockChainMain( event, config ){
 
 exports.handler = async (event, context, callback) => {
   console.log("event", event);
+  const config = {
+    region:          'ap-northeast-1',
+    endpoint:        'https://rpc-mumbai.matic.today',
+    endpoint_ws:     'wss://ws-mumbai.matic.today',
+    endpoint_eth:    'https://goerli.infura.io/v3/'+ process.env.ETH_PROJECT_ID,
+    endpoint_eth_ws: 'wss://goerli.infura.io/ws/v3/'+ process.env.ETH_PROJECT_ID,
+    keyIds: [ process.env.KMS_KEY ]
+  };
+
+  if(event.test){
+    return null;
+  }
   if(1){
     return await SendDeposit("", 10);
   }
   
-  const config = {
-    region: "ap-northeast-1",
-    endpoint: 'https://rpc-mumbai.matic.today',
-    keyIds: [ process.env.KMS_KEY ]
-  };
   let target = await BlockChainMain( event, config );
   const response = {
     statusCode: 200,
