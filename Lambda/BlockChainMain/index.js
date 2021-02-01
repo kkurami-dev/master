@@ -266,6 +266,13 @@ async function SendDeposit(Contract, amount){
                  addr:"0x1a3200b9b30c81286fC01614F3Af7A1Ce84eb532",
               }
         },
+    GET2:{root: { abi:"GEO_Eth_Abi.json",
+                 addr: "0xADF8f27F2188C0D69610a3001aEEe766D525D58e"
+               },
+         chil: { abi:"GEO_Mat_Abi.json",
+                 addr:"0xDf97A8db02e250BA71C7B008A10beb7635980C1f",
+              }
+        }, // MyToken
     DAI:{root: { abi:"DAI_Eth_Abi.json",
                  addr: "0x2686eca13186766760a0347ee8eeb5a88710e11b"
                },
@@ -280,7 +287,7 @@ async function SendDeposit(Contract, amount){
                   //addr:"0xEd12B500491c2c291075f564cc6C496ad5268A93"//cont
                   addr:"0xEd12B500491c2c291075f564cc6C496ad5268A93"// Read Proxy
                 }
-    }
+    }// CheerMedal
   };
 
   const Kms_conf = {
@@ -290,7 +297,7 @@ async function SendDeposit(Contract, amount){
   const mainProvider = new kap.KmsProvider(conf.Eth_EndPoint, Kms_conf);
   const maticProvider = new kap.KmsProvider(conf.Mti_EndPoint, Kms_conf);
 
-  const cont = conf["CHM"];
+  const cont = conf["GET2"];
   const rootTokenABI = require('./'+ cont.root.abi);
   const rootTokenAddress = cont.root.addr;
   const rootToken = cont.root.addr;
