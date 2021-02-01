@@ -523,7 +523,9 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th){
   // nonce
   let nonce = 0, count = 0;
   do {
-    nonce = await web3.eth.getTransactionCount( process.env.ACCOUNT );
+    try {
+      nonce = await web3.eth.getTransactionCount( process.env.ACCOUNT );
+    } catch(err) {}
     console.log("get nonce: ", TimeLog(th), nonce);
   } while (nonce === 0 && count++ < 10);
 
@@ -550,6 +552,7 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th){
     gas: "21000",
     //chainId: // def:web3.eth.net.getId(),
     //chain: // def:'mainnet',
+    //value: 0,
     data
   };
   const tx = await ethereumjs_tx.createTransaction(txData);
