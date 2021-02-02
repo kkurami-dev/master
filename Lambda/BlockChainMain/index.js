@@ -728,7 +728,7 @@ async function BlockChainMain( event, config ){
   }
   console.log("BlockChainMain() event", in_param.length, hash);
 
-  const kmsProvider = new kap.KmsProvider(endpoint, { region, keyIds });
+  let kmsProvider;
   let provider;
   if(ws_flg) {
     provider = new Web3.providers.WebsocketProvider(endpoint_ws);
@@ -737,7 +737,7 @@ async function BlockChainMain( event, config ){
     provider = new Web3.providers.HttpProvider(endpoint, {timeout, keepAlive:false});
     console.log("provider Http", endpoint);
   } else {
-    provider = kmsProvider;
+    provider = new kap.KmsProvider(endpoint, { region, keyIds });
     console.log("provider Kms", endpoint);
   }
 
@@ -804,7 +804,7 @@ exports.handler = async (event, context, callback) => {
         { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]},
         { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]}
       ],
-      kms_flg:false }, config );
+      kms_flg:false, ws_flg:true }, config );
   const response = {
     statusCode: 200,
     body: JSON.stringify('Hello from Lambda!'),
