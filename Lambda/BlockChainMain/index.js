@@ -1,3 +1,4 @@
+/* global BigInt */
 //import Matic from '@maticnetwork/maticjs';
 // const Matic = require('@maticnetwork/maticjs');
 const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
@@ -9,6 +10,7 @@ var AWS = require('aws-sdk'),
     Web3 = require('web3'),
     util = require("ethereumjs-util"),
     ethereumjs_tx = require("ethereumjs-tx"),
+    Common = require('ethereumjs-common').default,
     kap = require('aws-kms-provider');// 0.2.1 // ブラウザからは実行できない(ローカルファイルの参照がある)
 
 /*
@@ -332,7 +334,7 @@ async function SendDeposit(Contract, amount){
   try {
     let receipt = [];
     // --- 参考 ( matic.js-master/examples/POS-client/ERC20/approve.js )
-    //receipt.push( await maticPOSClient.approveERC20ForDeposit(rootToken, amount) );
+    receipt.push( await maticPOSClient.approveERC20ForDeposit(rootToken, amount) );
     // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js )
     receipt.push( await maticPOSClient.depositERC20ForUser(
       rootToken, // RootToken address ( Ethereum, Matic の両方にコントラクトがある )
@@ -518,23 +520,23 @@ async function SendContract(web3, account, abi, func_name, param, now_time){
   return ret_hash;
 }
 
-async function SendKmsSingTransaction(web3, abi, func_name, param, th){
+async function SendKmsSingTransaction(web3, abi, func_name, param, th, kmsProvider){
   let func_abi, to, KeyId = 'alias/test_bc01';
+  const from = process.env.ACCOUNT;
+  const chainId = 80001;
   // nonce の取得
   let nonce = 0, count = 0;
   do {
     try {
-      nonce = await web3.eth.getTransactionCount( process.env.ACCOUNT );
+      nonce = await web3.eth.getTransactionCount( from );
     } catch(err) {}
     console.log("get nonce: ", TimeLog(th), nonce);
   } while (nonce === 0 && count++ < 10);
 
   // 送信先のコントラクトアドレス
+  console.log("get to address: ", TimeLog(th), func_name, param);
   const conf = await getDynamoDB(TableName, tableKey);
-  if (func_name.indexOF("Relay") === -1)
-    to = conf.tokAddr;
-  else
-    to = conf.txrAddr;
+  to = conf.tokAddr;
   console.log("get to address: ", TimeLog(th), to);
 
   // 送信データ作成
@@ -544,47 +546,81 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th){
   const data = web3.eth.abi.encodeFunctionCall(func_abi, param);
 
   // トランザクションの作成
-  //  
+  //  EthereumのsendTransaction時のvalidationエラー一覧:
+  //    https://y-nakajo.hatenablog.com/entry/2018/01/26/173543
+  //  '100001275200000000'
+  const gas = BigInt( '100001275200000000' );
+  const gasPrice =  web3.utils.toWei('1', 'gwei');
+  const gasLimit = 420000;
+  const cost = BigInt(gasPrice * gasLimit);
+  console.log("gas: ", cost < gas, gasPrice, cost, gas);
   const txData = {
-    nonce, // def:web3.eth.getTransactionCount();
+		nonce: '0x' + nonce.toString(16),
+		gasPrice: web3.utils.toHex(gasPrice),
+		gasLimit: web3.utils.toHex(gasLimit),
+    from,
     to,
-    gasPrice: "20000000000",
-    gas: "21000",
-    //chainId: // def:web3.eth.net.getId(),
+    chainId, // def:web3.eth.net.getId(),
     //chain: // def:'mainnet',
-    //value: 0,
+    value: '0x00',
     data
   };
-  const tx = await ethereumjs_tx.createTransaction(txData);
-  console.log("make tx: ", TimeLog(th), txData, tx);
+  const customCommon = Common.forCustomChain(
+    'mainnet',
+    {
+      name: 'mainnet',
+      NetworkName: "Mumbai Testnet",
+      networkId: chainId,
+      chainId,
+    },
+    'petersburg',
+  );
+  console.log(TimeLog(th), "customCommon:", customCommon);
+  const tx = await new ethereumjs_tx(txData, {common: customCommon});
+  console.log("make tx:", TimeLog(th), txData, "tx.getChainId():",tx.getChainId(), "hash:",tx.hash(false));
+  /*
+2021-02-02T15:13:10.309Z	0d9b8c0e-7bcd-432a-ac92-22fb0bc5b3d1	INFO	getTransactionOptions {
+  common: Common {
+    _chainParams: {
+      name: 'mainnet',
+      chainId: 80001,
+      networkId: 80001,
+      comment: 'The Ethereum main chain',
+      url: 'https://ethstats.net/',
+      genesis: [Object],
+      hardforks: [Array],
+      bootstrapNodes: [Array]
+    },
+    _hardfork: 'petersburg',
+    _supportedHardforks: []
+  }
+}
+  */
+  // const kmsRawTx_tmp = await kmsProvider.eth.signTransaction( txData );
+  // const kmsRawTx = kmsRawTx_tmp.raw;
+  // console.log(TimeLog(th), "kms signTransaction: ", kmsRawTx);
 
-  // 署名の実施
-  // aws-kms-provider/dist/signer/kms-signer.js
-  // aws-kms-provider/dist/provider.js
-  var kms_params = {
-    KeyId,
-    Message: tx.hash(false),
-    SigningAlgorithm: 'ECDSA_SHA_256',
-    MessageType: 'DIGEST'
-  };
-  const signature = await kms.sign( kms_params );
-  console.log("kms.sign: ", TimeLog(th), kms_params, signature);
-
-  // ブロックチェーン用に署名を分割
-  const vStr = (signature.v + tx.getChainId() * 2 + 8).toString(16);
+  // node_modules/aws-kms-provider/dist/provider.js
+  const KmsSigner = new kap.KmsSigner( "ap-northeast-1", process.env.KMS_KEY );
+  const signature = await KmsSigner.sign( tx.hash(false) );
+  console.log(TimeLog(th), "signature: ", signature.v, signature.r, signature.s);
+  
+  const vStr = (signature.v + chainId * 2 + 8).toString(16);
   const length = vStr.length + (vStr.length % 2);
   const v = Buffer.from(vStr.padStart(length, "0"), "hex");
   tx.r = signature.r;
   tx.s = signature.s;
   tx.v = v;
   const rawTx = `0x${tx.serialize().toString("hex")}`;
-  console.log("make tx: ", TimeLog(th), tx, rawTx);
+  console.log(TimeLog(th), "serialize tx: ", vStr, length, v, rawTx);
+  if(0) return null;
 
   // トランザクションの投入
   const call_tx = new Promise((resolve, reject) => {
+    //web3.eth.sendSignedTransaction(kmsRawTx, function(err, data) {
     web3.eth.sendSignedTransaction(rawTx, function(err, data) {
       if (err){
-        console.error("DynamoDB sendTransaction", TimeLog(th), JSON.stringify(param), err, err.stack);
+        console.error("sendTransaction", TimeLog(th), JSON.stringify(param), err, err.stack);
         reject( err );
       } else {
         console.log("Promise: ", TimeLog(th), data);
@@ -597,14 +633,14 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th){
   return ret_hash;
 }
 
-async function Contract(web3, account, in_param, ret_hash, kms_flg){
+async function Contract(web3, account, in_param, ret_hash, kms_flg, kmsProvider){
   let th = {};
   console.log("Contract() B in_param", in_param.act);
   if( !in_param )
     return {out_param: [], hash: null, receipt: null };
 
   let {obj, tx_param, act, now_time, func_name} = in_param;
-  console.log("Contract() D in_param", tx_param, act);
+  console.log("Contract() D in_param", tx_param, func_name);
 
   // アクションに従った操作の選択
   let out_hash = null;
@@ -618,7 +654,10 @@ async function Contract(web3, account, in_param, ret_hash, kms_flg){
       out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time, kms_flg );
       break;
     case 3:
-      out_hash = await SendKmsSingTransaction(web3, obj.abi, func_name, tx_param, th );
+      out_hash = await SendKmsSingTransaction(web3, obj.abi, func_name, tx_param, th, kmsProvider );
+      break;
+    case 4:
+      out_hash = await SendDeposit("", 10);
       break;
     case 10:
       out_hash = await SendContract(web3, account, obj.abi, "", tx_param, now_time, kms_flg );
@@ -676,9 +715,8 @@ async function BlockChainMain( event, config ){
       break;
     case 1:
     case 2:
-      in_param[i].obj = tokenObj;
-      break;
     case 3:
+      in_param[i].obj = tokenObj;
       break;
     case 4:
       MakeData();
@@ -690,13 +728,18 @@ async function BlockChainMain( event, config ){
   }
   console.log("BlockChainMain() event", in_param.length, hash);
 
+  const kmsProvider = new kap.KmsProvider(endpoint, { region, keyIds });
   let provider;
-  if(ws_flg)
+  if(ws_flg) {
     provider = new Web3.providers.WebsocketProvider(endpoint_ws);
-  else if(kms_flg === false || hash)
+    console.log("provider Websocket", endpoint_ws);
+  } else if(kms_flg === false || hash) {
     provider = new Web3.providers.HttpProvider(endpoint, {timeout, keepAlive:false});
-  else
-    provider = new kap.KmsProvider(endpoint, { region, keyIds });
+    console.log("provider Http", endpoint);
+  } else {
+    provider = kmsProvider;
+    console.log("provider Kms", endpoint);
+  }
 
   // 処理中と判断し、状況確認を実施
   if (hash){
@@ -718,10 +761,11 @@ async function BlockChainMain( event, config ){
   }
 
   // 書き込みは KMS で処理が必用
-  const web3k = new Web3( provider );
+  const web3k = new Web3( kmsProvider );
+  const web3 = new Web3( provider );
   let account = process.env.ACCOUNT;
   let call = new Promise((resolve, reject) => {
-    web3k.eth.getAccounts((error, accounts) => {
+    web3.eth.getAccounts((error, accounts) => {
       if ( error ) throw error;
       console.log("Provider OK", accounts, Date.now() - now_time);
       resolve( accounts );
@@ -730,7 +774,7 @@ async function BlockChainMain( event, config ){
   await call.then((data) => account = data[0]);
 
   // 書き込み処理の実施
-  let result = await Contract(web3k, account, in_param[0], hash, kms_flg );
+  let result = await Contract(web3, account, in_param[0], hash, kms_flg, web3k );
   if(provider && provider.engine) provider.engine.stop();
   console.log("BlockChainMain() result", result, Date.now() - now_time);
   return result;
@@ -738,6 +782,8 @@ async function BlockChainMain( event, config ){
 
 exports.handler = async (event, context, callback) => {
   console.log("event", event);
+  // https://docs.matic.network/docs/develop/network-details/network
+  // https://infura.io/docs/gettingStarted/chooseaNetwork
   const config = {
     region:          'ap-northeast-1',
     endpoint:        'https://rpc-mumbai.matic.today',
@@ -746,15 +792,19 @@ exports.handler = async (event, context, callback) => {
     endpoint_eth_ws: 'wss://goerli.infura.io/ws/v3/'+ process.env.ETH_PROJECT_ID,
     keyIds: [ process.env.KMS_KEY ]
   };
-
-  if(event.test){
+  const {test, act} = event;
+  if(test){
     return null;
   }
-  if(1){
-    return await SendDeposit("", 10);
-  }
   
-  let target = await BlockChainMain( event, config );
+  //let target = await BlockChainMain( event, config );
+  let target = await BlockChainMain(
+    { in_param:
+      [
+        { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]},
+        { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]}
+      ],
+      kms_flg:false }, config );
   const response = {
     statusCode: 200,
     body: JSON.stringify('Hello from Lambda!'),

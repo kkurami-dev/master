@@ -44,6 +44,7 @@ zipUpload(){
 #zipUpload mySendToken
 zipUpload BlockChainMain
 
+aws lambda invoke --function-name BlockChainMain out --log-type Tail
 
 #arn:aws:lambda:ap-northeast-1:176264229023:function:myHelloWorld
 #arn:aws:lambda:ap-northeast-1:176264229023:function:mySendToken

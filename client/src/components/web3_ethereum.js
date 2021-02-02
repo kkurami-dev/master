@@ -164,7 +164,6 @@ export default class Web3Ethereum extends  Component {
     console.log("componentWillUnmount", event, v2, v3);
     this.setState({ loop: false });
   }
-"arn:aws:kms:ap-northeast-1:176264229023:key/01f9ef3a-7f13-4fb8-b70c-f60d76f924ab key usage is SIGN_VERIFY which is not valid for Encrypt."
   async sendLoop( event ){
     let in_param = [{tx_param:[], act:2}];
     let now_time = Date.now();
