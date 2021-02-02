@@ -520,7 +520,7 @@ async function SendContract(web3, account, abi, func_name, param, now_time){
   return ret_hash;
 }
 
-async function SendKmsSingTransaction(web3, abi, func_name, param, th, kmsProvider){
+async function SendKmsSingTransaction(web3, abi, func_name, param, th){
   let func_abi, to, KeyId = 'alias/test_bc01';
   const from = process.env.ACCOUNT;
   const chainId = 80001;
@@ -530,14 +530,14 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th, kmsProvid
     try {
       nonce = await web3.eth.getTransactionCount( from );
     } catch(err) {}
-    console.log("get nonce: ", TimeLog(th), nonce);
+    console.log(TimeLog(th), "get nonce: ", nonce);
   } while (nonce === 0 && count++ < 10);
 
   // 送信先のコントラクトアドレス
-  console.log("get to address: ", TimeLog(th), func_name, param);
+  console.log(TimeLog(th), "get to address: ", func_name, param);
   const conf = await getDynamoDB(TableName, tableKey);
   to = conf.tokAddr;
-  console.log("get to address: ", TimeLog(th), to);
+  console.log(TimeLog(th), "get to address: ", to);
 
   // 送信データ作成
   for( let i = 0; i < abi.length; i++ )
@@ -553,7 +553,7 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th, kmsProvid
   const gasPrice =  web3.utils.toWei('1', 'gwei');
   const gasLimit = 420000;
   const cost = BigInt(gasPrice * gasLimit);
-  console.log("gas: ", cost < gas, gasPrice, cost, gas);
+  console.log(TimeLog(th), "gas: ", cost < gas, gasPrice, cost, gas);
   const txData = {
 		nonce: '0x' + nonce.toString(16),
 		gasPrice: web3.utils.toHex(gasPrice),
@@ -577,7 +577,7 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th, kmsProvid
   );
   console.log(TimeLog(th), "customCommon:", customCommon);
   const tx = await new ethereumjs_tx(txData, {common: customCommon});
-  console.log("make tx:", TimeLog(th), txData, "tx.getChainId():",tx.getChainId(), "hash:",tx.hash(false));
+  console.log(TimeLog(th), "make tx:", txData, "tx.getChainId():",tx.getChainId(), "hash:",tx.hash(false));
   /*
 2021-02-02T15:13:10.309Z	0d9b8c0e-7bcd-432a-ac92-22fb0bc5b3d1	INFO	getTransactionOptions {
   common: Common {
@@ -623,24 +623,24 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th, kmsProvid
         console.error("sendTransaction", TimeLog(th), JSON.stringify(param), err, err.stack);
         reject( err );
       } else {
-        console.log("Promise: ", TimeLog(th), data);
+        console.log(TimeLog(th), "Promise:", data);
         resolve( data );
       }
     });
   });
   let ret_hash;
   await call_tx.then((value) => ret_hash = value );
+  console.log(TimeLog(th), "SendKmsSingTransaction end: ", ret_hash);
   return ret_hash;
 }
 
-async function Contract(web3, account, in_param, ret_hash, kms_flg, kmsProvider){
-  let th = {};
-  console.log("Contract() B in_param", in_param.act);
+async function Contract(web3, account, in_param, ret_hash, kms_flg, th){
+  console.log(TimeLog(th), "Contract() B in_param", in_param.act);
   if( !in_param )
     return {out_param: [], hash: null, receipt: null };
 
   let {obj, tx_param, act, now_time, func_name} = in_param;
-  console.log("Contract() D in_param", tx_param, func_name);
+  console.log(TimeLog(th), "Contract() D in_param", tx_param, func_name);
 
   // アクションに従った操作の選択
   let out_hash = null;
@@ -654,7 +654,7 @@ async function Contract(web3, account, in_param, ret_hash, kms_flg, kmsProvider)
       out_hash = await SendTransfer(web3, account, obj.abi, tx_param, now_time, kms_flg );
       break;
     case 3:
-      out_hash = await SendKmsSingTransaction(web3, obj.abi, func_name, tx_param, th, kmsProvider );
+      out_hash = await SendKmsSingTransaction(web3, obj.abi, func_name, tx_param, th);
       break;
     case 4:
       out_hash = await SendDeposit("", 10);
@@ -664,11 +664,11 @@ async function Contract(web3, account, in_param, ret_hash, kms_flg, kmsProvider)
       break;
     }
   } catch(err){
-    console.error("Contract() D", err);
+    console.error(TimeLog(th), "Contract() D", err);
     throw err;
   }
 
-  console.log("Contract() C", out_hash);
+  console.log(TimeLog(th), "Contract() C", out_hash);
   return {out_param: in_param, out_hash, receipt: null };
 }
 
@@ -699,6 +699,8 @@ function MakeData( ){
 }
 
 async function BlockChainMain( event, config ){
+  let th = {};
+  TimeLog(th);
   const now_time = Date.now()
   const timeout = 1000;
 
@@ -726,13 +728,13 @@ async function BlockChainMain( event, config ){
     if(i == 0) in_param[0].now_time = now_time;
     //console.log("in_param[i]", in_param[i]);
   }
-  console.log("BlockChainMain() event", in_param.length, hash);
+  console.log(TimeLog(th), "BlockChainMain() event", in_param.length, hash);
 
   let kmsProvider;
   let provider;
   if(ws_flg) {
     provider = new Web3.providers.WebsocketProvider(endpoint_ws);
-    console.log("provider Websocket", endpoint_ws);
+    console.log(TimeLog(th), "provider Websocket", endpoint_ws);
   } else if(kms_flg === false || hash) {
     provider = new Web3.providers.HttpProvider(endpoint, {timeout, keepAlive:false});
     console.log("provider Http", endpoint);
@@ -743,14 +745,14 @@ async function BlockChainMain( event, config ){
 
   // 処理中と判断し、状況確認を実施
   if (hash){
-    console.log("hash check", hash);
+    console.log(TimeLog(th), "hash check", hash);
     const web3h = new Web3( provider );
 
     console.log("getTransactionReceipt()");
     let receipt;
     await web3h.eth.getTransactionReceipt(hash).then((result) => receipt = result);
 
-    console.log("BlockChainMain() A", receipt );
+    console.log(TimeLog(th), "BlockChainMain() A", receipt );
     if(receipt) {
       await PostProcessing(in_param[0], receipt);
       out_param.shift();
@@ -761,22 +763,23 @@ async function BlockChainMain( event, config ){
   }
 
   // 書き込みは KMS で処理が必用
-  const web3k = new Web3( kmsProvider );
+  let web3k;
+  //web3k = new Web3( kmsProvider );
   const web3 = new Web3( provider );
   let account = process.env.ACCOUNT;
   let call = new Promise((resolve, reject) => {
     web3.eth.getAccounts((error, accounts) => {
       if ( error ) throw error;
-      console.log("Provider OK", accounts, Date.now() - now_time);
+      console.log(TimeLog(th), "Provider OK", accounts, Date.now() - now_time);
       resolve( accounts );
     });
   });
   await call.then((data) => account = data[0]);
 
   // 書き込み処理の実施
-  let result = await Contract(web3, account, in_param[0], hash, kms_flg, web3k );
+  let result = await Contract(web3, account, in_param[0], hash, kms_flg, th );
   if(provider && provider.engine) provider.engine.stop();
-  console.log("BlockChainMain() result", result, Date.now() - now_time);
+  console.log(TimeLog(th), "BlockChainMain() result", result, Date.now() - now_time);
   return result;
 }
 
