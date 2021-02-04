@@ -698,9 +698,7 @@ async function PostProcessing(param, receipt){
 function MakeData( ){
 }
 
-async function BlockChainMain( event, config ){
-  let th = {};
-  TimeLog(th);
+async function BlockChainMain( event, config, th ){
   const now_time = Date.now()
   const timeout = 1000;
 
@@ -734,13 +732,13 @@ async function BlockChainMain( event, config ){
   let provider;
   if(ws_flg) {
     provider = new Web3.providers.WebsocketProvider(endpoint_ws);
-    console.log(TimeLog(th), "provider Websocket", endpoint_ws);
+    console.log(TimeLog(th), "provider Websocket", endpoint_ws, provider);
   } else if(kms_flg === false || hash) {
     provider = new Web3.providers.HttpProvider(endpoint, {timeout, keepAlive:false});
-    console.log("provider Http", endpoint);
+    console.log("provider Http", endpoint, provider);
   } else {
     provider = new kap.KmsProvider(endpoint, { region, keyIds });
-    console.log("provider Kms", endpoint);
+    console.log("provider Kms", endpoint, provider);
   }
 
   // 処理中と判断し、状況確認を実施
@@ -779,12 +777,15 @@ async function BlockChainMain( event, config ){
   // 書き込み処理の実施
   let result = await Contract(web3, account, in_param[0], hash, kms_flg, th );
   if(provider && provider.engine) provider.engine.stop();
+  if(ws_flg) provider.prototype.disconnect();
   console.log(TimeLog(th), "BlockChainMain() result", result, Date.now() - now_time);
   return result;
 }
 
 exports.handler = async (event, context, callback) => {
-  console.log("event", event);
+  let th = {};
+  TimeLog(th);
+  console.log(TimeLog(th), "event", event);
   // https://docs.matic.network/docs/develop/network-details/network
   // https://infura.io/docs/gettingStarted/chooseaNetwork
   const config = {
@@ -807,7 +808,8 @@ exports.handler = async (event, context, callback) => {
         { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]},
         { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]}
       ],
-      kms_flg:false, ws_flg:true }, config );
+      kms_flg:false, ws_flg:true }, config, th );
+  console.log(TimeLog(th), "main end", target);
   const response = {
     statusCode: 200,
     body: JSON.stringify('Hello from Lambda!'),
@@ -815,5 +817,6 @@ exports.handler = async (event, context, callback) => {
   };
   
   //callback( null, response);// 何かの終了を待つ為、アプリに応答が戻らない
+  console.log(TimeLog(th), "end");
   return response;
 };
