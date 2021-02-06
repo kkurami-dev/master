@@ -47,10 +47,13 @@ import { callLambda,
 import history from '../history';
 
 import "../App.css";
-
+//////////////////////////////////////////////////////////////////////////////////
 const config = require("../configs/config.json");
 const table_name = config.db_name;
 
+const objTxRelay = require("../contracts/TxRelay.json");
+
+//////////////////////////////////////////////////////////////////////////////////
 async function DeployContract(web3, account, obj, param ) {
   console.log("DeployContract s");
 
@@ -110,7 +113,6 @@ async function Contract(web3, account, in_param, ret_hash){
   return {out_param:in_param, out_hash: hash, receipt };
 }
 
-const objTxRelay = require("../contracts/TxRelay.json");
 //////////////////////////////////////////////////////////////////////////////////
 export default class Web3Ethereum extends  Component {
   constructor(props) {
@@ -125,6 +127,8 @@ export default class Web3Ethereum extends  Component {
       loop: true,
       first: true
     };
+    
+    console.log(env);
   }
 
   componentDidMount = async () => {

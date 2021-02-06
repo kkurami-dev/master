@@ -1,18 +1,11 @@
 /* global BigInt */
-//import Matic from '@maticnetwork/maticjs';
-// const Matic = require('@maticnetwork/maticjs');
-const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
-//const Matic = require('./matic.js'); // window がない（つまりブラウザでの実行が前提のようだ）
-//const MaticPOSClient = require('./matic.js').MaticPOSClient;
-//var axios = asn1js = require("/opt/nodejs/node_modules/axios");
-
 var AWS = require('aws-sdk'),
     Web3 = require('web3'),
+    MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient,
     util = require("ethereumjs-util"),
     ethereumjs_tx = require("ethereumjs-tx"),
     Common = require('ethereumjs-common').default,
     kap = require('aws-kms-provider');// 0.2.1 // ブラウザからは実行できない(ローカルファイルの参照がある)
-
 /*
     "aws-kms-provider": {
       "version": "0.2.1",
@@ -30,8 +23,6 @@ var AWS = require('aws-sdk'),
         "web3": "^1.2.6",
         "web3-provider-engine": "^15.0.6"
       },
-
-
 */
 
 var kms = new AWS.KMS(),
@@ -40,7 +31,7 @@ var kms = new AWS.KMS(),
     tokenObj = require("./MyToken.json");
 
 const TableName = process.env.DB_NAME;
-const tableKey  = {BuildID: {S: 'b0001'}, now_time:{N: '0'}};
+const table_Key  = {BuildID: {S: 'b0001'}, now_time:{N: '0'}};
 
 async function getDynamoDB( TableName, Key ) {
   // DynamoDBへのアクセスロジック
@@ -261,64 +252,27 @@ async function SendDeposit(Contract, amount){
   const conf = {
     Eth_EndPoint: 'https://rpc.goerli.mudit.blog/',
     Mti_EndPoint: 'https://rpc-mumbai.matic.today',
-    GEO:{root: { abi:"GEO_Eth_Abi.json",
-                 addr: "0xfa8b929171077C18ec0702c78D5E6002236001AE"
-               },
-         chil: { abi:"GEO_Mat_Abi.json",
-                 addr:"0x1a3200b9b30c81286fC01614F3Af7A1Ce84eb532",
-              }
-        },
-    GET2:{root: { abi:"GEO_Eth_Abi.json",
-                 addr: "0xADF8f27F2188C0D69610a3001aEEe766D525D58e"
-               },
-         chil: { abi:"GEO_Mat_Abi.json",
-                 addr:"0xDf97A8db02e250BA71C7B008A10beb7635980C1f",
-              }
-        }, // MyToken
-    DAI:{root: { abi:"DAI_Eth_Abi.json",
-                 addr: "0x2686eca13186766760a0347ee8eeb5a88710e11b"
-               },
-         chil: { abi:"DAI_Mat_Abi.json",
-                 addr:"0x27a44456bEDb94DbD59D0f0A14fE977c777fC5C3",
-              }
-        },
-    CHM:{ root: { abi:"CHM_Eth_Abi.json",
-                  addr:"0xB4F8414382A3286F962572b401dE0dD45F9116e0"
-                },
-          chil: { abi:"CHM_Mat_Abi.json",
-                  //addr:"0xEd12B500491c2c291075f564cc6C496ad5268A93"//cont
-                  addr:"0xEd12B500491c2c291075f564cc6C496ad5268A93"// Read Proxy
-                }
-    }// CheerMedal
+    addr: "0x2686eca13186766760a0347ee8eeb5a88710e11b"
   };
 
   const Kms_conf = {
     region: "ap-northeast-1",
     keyIds: [ process.env.KMS_KEY ]
   };
-  const mainProvider = new kap.KmsProvider(conf.Eth_EndPoint, Kms_conf);
-  const maticProvider = new kap.KmsProvider(conf.Mti_EndPoint, Kms_conf);
-
-  const cont = conf["GET2"];
-  const rootTokenABI = require('./'+ cont.root.abi);
-  const rootTokenAddress = cont.root.addr;
-  const rootToken = cont.root.addr;
-  const childTokenABI = require('./'+ cont.chil.abi);
-  const childTokenAddress = cont.chil.addr;
+  const rootToken = conf.addr;
   const from = process.env.ACCOUNT;
 
   // https://github.com/maticnetwork/matic.js/
   // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
   // https://github.com/maticnetwork/static/tree/master/network/testnet/mumbai
-  const rootChainManagerABI = require('./RootChainManager.json');
   const rootChainManagerAddress = '0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74';
   const erc20Predicate = '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34';
-
+  const mainProvider = new kap.KmsProvider(conf.Eth_EndPoint, Kms_conf);
+  const maticProvider = new kap.KmsProvider(conf.Mti_EndPoint, Kms_conf);
   const mainWeb3 = new Web3(mainProvider);// Ethereum
   const web3Client = new Web3(maticProvider);// Matic
 
   // --- 参考 matic.js( matic.js-master/examples/POS-client/utils.js )
-  const MaticPOSClient = require('./lib/index.js').MaticPOSClient;
   const maticPOSClient = new MaticPOSClient({
     network: 'testnet', // optional, default is testnet
     version: 'mumbai', // optional, default is mumbai
@@ -364,7 +318,7 @@ async function SendTransfer(web3, from, abi, func_name, param, kms_flg){
   let th = {}, result;
   TimeLog( th );
 
-  let keyIds = await getDynamoDB(TableName, tableKey);
+  let keyIds = await getDynamoDB(TableName, table_Key);
   let addr = keyIds.tokAddr;
 
   const to =  process.env.ADDR_USER1,
@@ -491,7 +445,7 @@ async function SendContract(web3, account, abi, func_name, param, now_time){
     if(abi[i].name === func_name)
       func_abi = param.abi[i];
 
-  let keyIds = await getDynamoDB(TableName, tableKey);
+  let keyIds = await getDynamoDB(TableName, table_Key);
   if (func_name.indexOF("Relay") === -1)
     to = keyIds.tokAddr;
   else
@@ -535,7 +489,7 @@ async function SendKmsSingTransaction(web3, abi, func_name, param, th){
 
   // 送信先のコントラクトアドレス
   console.log(TimeLog(th), "get to address: ", func_name, param);
-  const conf = await getDynamoDB(TableName, tableKey);
+  const conf = await getDynamoDB(TableName, table_Key);
   to = conf.tokAddr;
   console.log(TimeLog(th), "get to address: ", to);
 
@@ -691,7 +645,7 @@ async function PostProcessing(param, receipt){
   if( act === 1 ){
     let data = receipt.contractAddress;
     db_data[DB_key] = {Value:{S: data}, Action:"PUT"};
-    await updateLambdaDB(TableName, tableKey, db_data);
+    await updateLambdaDB(TableName, table_Key, db_data);
   }
 }
 
@@ -777,25 +731,26 @@ async function BlockChainMain( event, config, th ){
   // 書き込み処理の実施
   let result = await Contract(web3, account, in_param[0], hash, kms_flg, th );
   if(provider && provider.engine) provider.engine.stop();
-  if(ws_flg) provider.prototype.disconnect();
   console.log(TimeLog(th), "BlockChainMain() result", result, Date.now() - now_time);
   return result;
 }
 
+// https://docs.matic.network/docs/develop/network-details/network
+// https://infura.io/docs/gettingStarted/chooseaNetwork
+const config = {
+  region:          'ap-northeast-1',
+  endpoint:        'https://rpc-mumbai.matic.today',
+  endpoint_ws:     'wss://ws-mumbai.matic.today',
+  endpoint_eth:    'https://goerli.infura.io/v3/'+ process.env.ETH_PROJECT_ID,
+  endpoint_eth_ws: 'wss://goerli.infura.io/ws/v3/'+ process.env.ETH_PROJECT_ID,
+  user1: process.env.ADDR_USER1,
+  user2: process.env.ADDR_USER2,
+  keyIds: [ process.env.KMS_KEY ]
+};
 exports.handler = async (event, context, callback) => {
   let th = {};
   TimeLog(th);
   console.log(TimeLog(th), "event", event);
-  // https://docs.matic.network/docs/develop/network-details/network
-  // https://infura.io/docs/gettingStarted/chooseaNetwork
-  const config = {
-    region:          'ap-northeast-1',
-    endpoint:        'https://rpc-mumbai.matic.today',
-    endpoint_ws:     'wss://ws-mumbai.matic.today',
-    endpoint_eth:    'https://goerli.infura.io/v3/'+ process.env.ETH_PROJECT_ID,
-    endpoint_eth_ws: 'wss://goerli.infura.io/ws/v3/'+ process.env.ETH_PROJECT_ID,
-    keyIds: [ process.env.KMS_KEY ]
-  };
   const {test, act} = event;
   if(test){
     return null;
@@ -805,8 +760,7 @@ exports.handler = async (event, context, callback) => {
   let target = await BlockChainMain(
     { in_param:
       [
-        { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]},
-        { act:3, func_name:'transfer', tx_param:['0x4A7C625A628981919f37E321A4f9E7C4a90AF15c', 100]}
+        { act:3, func_name:'transfer', tx_param:[config.user1, 100]},
       ],
       kms_flg:false, ws_flg:true }, config, th );
   console.log(TimeLog(th), "main end", target);
