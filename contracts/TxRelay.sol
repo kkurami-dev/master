@@ -35,7 +35,7 @@ contract TxRelay {
         address destination,
         bytes memory data,
         address sender
-    ) public {
+    ) public returns (bytes memory) {
 
         // EIP-1344 ( Replay Problem )
         // https://www.youtube.com/watch?v=91X5wzgYlEg
@@ -77,6 +77,7 @@ contract TxRelay {
         // invoke method on behalf of sender
         (bool ret, bytes memory retval) = destination.call(data);
         require(ret, "TxRelay() call error");
+        return retval;
     }
 
     function b20h(bytes memory data) public pure returns( bytes32 ) {
