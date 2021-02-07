@@ -35,8 +35,8 @@ import React, { Component } from 'react';
    toBlockが'latest'やundefinedの時は、getをcallした時点までの
    Eventを返します。
   */
-//import getWeb3 from "../lib/getWeb3";
-import Web3 from "web3";
+import getWeb3 from "../lib/getWeb3";
+//import Web3 from "web3";
 import { getBalanceOf,
        } from "../lib/lib_web3";
 import { callLambda,
@@ -50,7 +50,7 @@ import { MaticPOSClient } from '@maticnetwork/maticjs';
 import "../App.css";
 //////////////////////////////////////////////////////////////////////////////////
 const config = require("../configs/config.json");
-const proxyAbi = require("../configs/UChaildERC20ProxyABI.json");
+const proxyAbi = require("../contracts/UChildERC20Proxy.json").abi;
 const table_name = config.db_name;
 const objTxRelay = require("../contracts/TxRelay.json");
 
@@ -74,16 +74,16 @@ export default class Web3Ethereum extends  Component {
     try {
 
       // Chorome の MetaMask 拡張機能でローカルの truffle に接続するので、このままで
-      //const web3 = await getWeb3();
+      const web3 = await getWeb3();
       //const provider = new Web3.providers.HttpProvider("http://127.0.0.1:8545");
-      const provider = new Web3.providers.HttpProvider('https://rpc-mumbai.matic.today');
-      const web3 = new Web3(provider);
+      //const provider = new Web3.providers.HttpProvider('https://rpc-mumbai.matic.today');
+      //const web3 = new Web3(provider);
       console.log(web3);
 
       const accounts = await web3.eth.getAccounts();
       this.setState({ web3, account: accounts[0], objTxRelay});
 
-      this.checkProxy();
+      //this.checkProxy();
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
       console.error(error);
@@ -104,18 +104,16 @@ export default class Web3Ethereum extends  Component {
     if(in_param.length === 0)
       return {out_param:in_param, out_hash:null, receipt };
     
-    let {obj, tx_param, act} = in_param.shift();
+    //let {obj, tx_param, act} = in_param.shift();
     let hash;
-    if( act === 0 )
-      hash = await this.DeployContract(web3, account, obj, tx_param );
+    // if( act === 0 )
+    //   hash = await this.DeployContract(web3, account, obj, tx_param );
     return {out_param:in_param, out_hash: hash, receipt };
   }
 
-  DeployContract = async ()  => {
+  DeployContract = async (web3, obj, arg, call_flg=false)  => {
     console.log("DeployContract s");
-    const obj = require("../contracts/MyToken"),
-          account = config.account,
-          web3 = this.state.web3,
+    const account = config.account,
           bytecode = obj.bytecode,
           abi = obj.abi;
     console.log("abi", abi, "account", account);
@@ -130,65 +128,84 @@ export default class Web3Ethereum extends  Component {
         return null;
       }
 
-      var contract = new web3.eth.Contract(abi);
-      const hexdata = contract.deploy({
-        data: '0x' + bytecode,
-        arguments:["GET","MyToken3", '1000000000000000000']
-      }).encodeABI()
-
-      const nonce = await web3.eth.getTransactionCount( account );
-      const nonceHex = web3.utils.toHex(nonce)
+      //const nonce = await web3.eth.getTransactionCount( account );
+      //const nonceHex = web3.utils.toHex(nonce)
       const gasPriceHex = web3.utils.toHex(3 * 1e9);
       // const estimatedGas = await testCoinContractDeploy.estimateGas();
-      var rawTx = {
-        nonce: nonceHex,
-        gasPrice: gasPriceHex,
-        gasLimit: web3.utils.toHex(6100500),
-        data: "0x"+hexdata
+
+      var contract = new web3.eth.Contract(abi);
+      if(call_flg){
+        const hexdata = await contract.deploy({
+          data: '0x',
+          arguments:arg,
+        }).encodeABI();
+        console.log('receipt', hexdata);
+        return hexdata;
       }
-      console.log("rawTx", rawTx);
-      const result = await web3.eth.sendTransaction(rawTx).call({from:account}, console.log)
-        .on('transactionHash', console.log)
-        .on('receipt', console.log)
-        .on('confirmation', console.log)
-            .on('error', console.log);
+      let result;
+      const call = new Promise((resolve, reject) => {
+        contract
+          .deploy({
+            data: bytecode,
+            arguments: arg,
+          }, function(error, transactionHash){console.log(error, transactionHash)})
+          .send({
+            from: '0x4A7C625A628981919f37E321A4f9E7C4a90AF15c',
+            gasPrice: gasPriceHex,
+            gasLimit: web3.utils.toHex(6100500),
+          })
+          .on('transactionHash', console.log)
+          .on('receipt', function(receipt){
+            console.log('receipt', receipt);
+            resolve(receipt);
+          });
+      });
+      await call.then((ret) => result = ret);
       return result;
     } catch(e){
-      console.error(e);
+      console.error("catch", e);
       return null;
     }
   }
   
+  async callDeploy(e){
+    console.log('callDeploy S');
+    const call = true;
+    const web3 = this.state.web3;
+    let obj, arg;
+    // Ethereum ネットワークに root コントラクトをデプロイ
+    obj = require("../contracts/MyToken.json");
+    arg = ["GET","MyToken3", "100000000"];
+    await this.DeployContract(web3, obj, arg, call);
+
+    // Matic ネットワークに Child コントラクトをデプロイ
+    obj = require("../contracts/UChildERC20.json");
+    arg = [];
+    await this.DeployContract(web3, obj, arg, call);
+
+    // Matic ネットワークに Proxy コントラクトをデプロイ
+    obj = require("../contracts/UChildERC20Proxy.json");
+    arg = ["0x80511563D5A1B4313e463D93dC4b5F0Edd42Ab4B"];
+    await this.DeployContract(web3, obj, arg, call);
+    console.log('callDeploy E');
+  }
+
   async checkProxy(e){
     const web3 = this.state.web3;
     const proxy = new web3.eth.Contract(proxyAbi, config.matic_token);
     const from = config.account;
     let result;
     result = await proxy.methods.proxyOwner().call({from}, console.log);
-    //let mutabli = await proxy.methods.stateMutability(from);
+    // let mutabli = await proxy.methods.stateMutability(from);
     console.log("proxy", proxy.methods);
     console.log("proxy abi", proxyAbi);
     console.log("proxy own:", result);
     console.log("proxy implementation:", await proxy.methods.implementation());
     console.log("proxyType:", await proxy.methods.proxyType());
 
-    const to_addr = config.matic_local;
-    result = await proxy.methods.updateImplementation(to_addr).call({from}, console.log);
-    console.log("updateImplementation:", result);
-  }
-
-  async callDeploy(e){
-    let {web3, account, obj, ret_hash} = this.state;
-    let in_param = [{obj, tx_param:[], act:0}, {obj, tx_param:[], act:0}, {obj, tx_param:[], act:0}];
-    let i = 0;
-    do {
-      console.log("callDeploy() loop", ++i );
-      let {out_param, out_hash, receipt} = await this.Contract(web3, account, in_param, ret_hash);
-      console.log("callDeploy()", receipt);
-      ret_hash = out_hash;
-      in_param = out_param;
-    } while(ret_hash || in_param.length);
-    console.log("callDeploy() end" );
+    // const to_addr = config.matic_local;
+    // result = await proxy.methods.updateImplementation(to_addr).call({from}, console.log);
+    // console.log("updateImplementation:", result);
   }
 
   componentWillUnmount(event, v2, v3) {
@@ -362,8 +379,8 @@ export default class Web3Ethereum extends  Component {
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
         <p>
-          <button onClick={this.callDeploy(this)}>デプロイ</button><br/>
-          <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
+          <button onClick={(e) => this.callDeploy(e)}>デプロイ</button><br/>
+          <button onClick={(e) => this.callLambdaDeploy.bind(e)}>デプロイ(Lambda)</button><br/>
           <button onClick={(e) => this.sendLoop(e)}>送信の繰り返し</button><br/>
           <button onClick={(e) => this.callLambdaDeploy_batch(e)}>batch request の確認</button><br/>
           <button onClick={(e) => this.SendDeposit('1000')}>デポジット の確認</button><br/>

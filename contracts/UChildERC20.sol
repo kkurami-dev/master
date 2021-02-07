@@ -1553,3 +1553,4 @@ contract UChildERC20 is
         _burn(_msgSender(), amount);
     }
 }
+
