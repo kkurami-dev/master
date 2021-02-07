@@ -45,15 +45,54 @@ import { callLambda,
          //updateLambdaDB
        } from "../lib/lib_aws";
 import history from '../history';
+import { MaticPOSClient } from '@maticnetwork/maticjs';
 
 import "../App.css";
 //////////////////////////////////////////////////////////////////////////////////
 const config = require("../configs/config.json");
+const proxyAbi = require("../configs/UChaildERC20ProxyABI.json");
 const table_name = config.db_name;
 
 const objTxRelay = require("../contracts/TxRelay.json");
 
 //////////////////////////////////////////////////////////////////////////////////
+async function SendDeposit(amount){
+  const conf = config;
+  const rootToken = conf.goerli_contract;
+  const from = '0x4A7C625A628981919f37E321A4f9E7C4a90AF15c';
+
+  // https://github.com/maticnetwork/matic.js/
+  // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
+  // https://github.com/maticnetwork/static/tree/master/network/testnet/mumbai
+  const rootChainManagerAddress = '0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74';
+  const erc20Predicate = '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34';
+  const mainWeb3 = new Web3(conf.Eth_EndPoint);// Ethereum
+  const web3Client = new Web3(conf.Mti_EndPoint);// Matic
+
+  // --- 参考 matic.js( matic.js-master/examples/POS-client/utils.js )
+  const maticPOSClient = new MaticPOSClient({
+    network: 'testnet', // optional, default is testnet
+    version: 'mumbai', // optional, default is mumbai
+    parentProvider: mainWeb3,
+    maticProvider: web3Client,
+  });
+  // child.DERC20
+
+  try {
+    let receipt = [];
+    // --- 参考 ( matic.js-master/examples/POS-client/ERC20/approve.js )
+    receipt.push( await maticPOSClient.approveERC20ForDeposit(rootToken, amount) );
+    // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js )
+    receipt.push( await maticPOSClient.depositERC20ForUser(
+      rootToken, // RootToken address ( Ethereum, Matic の両方にコントラクトがある )
+      from,      // 宛先
+      amount     // Amount for approval (in wei)
+    ));
+  } catch(err){
+    console.error("SendDeposit:", err);
+  }
+}
+
 async function DeployContract(web3, account, obj, param ) {
   console.log("DeployContract s");
 
@@ -127,8 +166,6 @@ export default class Web3Ethereum extends  Component {
       loop: true,
       first: true
     };
-    
-    console.log(env);
   }
 
   componentDidMount = async () => {
@@ -144,6 +181,20 @@ export default class Web3Ethereum extends  Component {
 
       const accounts = await web3.eth.getAccounts();
       this.setState({ web3, account: accounts[0], objTxRelay});
+
+
+      const proxy = new web3.eth.Contract(proxyAbi, config.matic_token);
+      const from = config.account;
+      let own = await proxy.methods.proxyOwner().call({from}, console.log);
+      //let mutabli = await proxy.methods.stateMutability(from);
+      console.log("proxy",proxy.methods);
+      console.log("own:",own);
+      console.log("implementation:",await proxy.methods.implementation());
+      console.log("proxyType:",await proxy.methods.proxyType());
+
+      const provider_old = window.ethereum;
+      console.log("provider_old:", provider_old);
+      //SendDeposit(10);
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
       console.error(error);
@@ -202,7 +253,7 @@ export default class Web3Ethereum extends  Component {
       }
 
       let {out_param, out_hash, receipt} = result.target;
-      console.log("callDeploy()", Date.now() - loop_time, result);
+      console.log("callDeploy()", Date.now() - loop_time, result, receipt);
       if(!in_param.length) break;
       hash = out_hash;
       in_param = out_param;
@@ -231,12 +282,12 @@ export default class Web3Ethereum extends  Component {
     }
 
     const abi = require("../contracts/MyToken").abi,
-          account = this.state.account,
-          func_name = "balanceOf",
+          //account = this.state.account,
+          //func_name = "balanceOf",
           from = config.user1_addr,
-          to = config.tokAddr,
-          cli = config.user2_addr;
-    let func_abi;
+          to = config.tokAddr;
+          //cli = config.user2_addr;
+    //let func_abi;
 
     console.log("callLambdaDeploy_batch abi", abi);
 
@@ -246,7 +297,7 @@ export default class Web3Ethereum extends  Component {
     batch.add(web3.eth.getBalance.request(from, 'latest', callback1));
     batch.add(web3.eth.getBalance.request(to, 'latest', callback2));
     batch.add(contract.methods.transfer(to, "3").call.request({ from }, callback3));
-    let result = batch.execute();
+    //let result = batch.execute();
 
     console.log("callLambdaDeploy_batch end");
   }
@@ -279,6 +330,21 @@ export default class Web3Ethereum extends  Component {
     return (
       <div>
         <h1>Good to Go!</h1>
+        <table>
+          <thead className="data">
+            <tr>
+              <th>WEB Design Tools</th><th>開発元</th><th>カテゴリ</th><th>評価</th>
+            </tr>
+          </thead>
+          <tbody className="data">
+            <tr className="even">
+              <th>DreamWeaver</th><td>adobe</td><td>エディタ</td><td>★★★☆☆</td>
+            </tr>
+            <tr className="odd">
+              <th>Fireworks</th><td>adobe</td><td>WEBグラフィック作成</td><td>★★★☆☆</td>
+            </tr>
+          </tbody>
+        </table>
         <p>Your Truffle Box is installed and ready.</p>
         <h2>Smart Contract Example</h2>
         <p>

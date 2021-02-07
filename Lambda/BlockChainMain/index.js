@@ -1,4 +1,7 @@
 /* global BigInt */
+/**
+ * https://gigazine.net/news/20200528-aws-one-line-explanation/
+ */
 var AWS = require('aws-sdk'),
     Web3 = require('web3'),
     MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient,
@@ -24,7 +27,11 @@ var AWS = require('aws-sdk'),
         "web3-provider-engine": "^15.0.6"
       },
 */
-
+////////////////////////////////////////////////////////////////////////////////
+/*
+ * 環境変数：AWS_NODEJS_CONNECTION_REUSE_ENABLED = 1
+ * 
+ */
 var kms = new AWS.KMS(),
     docClient = new AWS.DynamoDB(),
     txrObj = require("./TxRelay.json"),
@@ -33,6 +40,35 @@ var kms = new AWS.KMS(),
 const TableName = process.env.DB_NAME;
 const table_Key  = {BuildID: {S: 'b0001'}, now_time:{N: '0'}};
 
+// https://docs.matic.network/docs/develop/network-details/network
+// https://infura.io/docs/gettingStarted/chooseaNetwork
+const config = {
+  matic_token:     process.env.MYTOKEN_MATIC,
+  eth_token:       process.env.MYTOKEN_ETH,
+  account:         process.env.ACCOUNT,
+  region:          'ap-northeast-1',
+  endpoint:        'https://rpc-mumbai.matic.today',
+  endpoint_ws:     'wss://ws-mumbai.matic.today',
+  endpoint_eth:    'https://goerli.infura.io/v3/'+ process.env.ETH_PROJECT_ID,
+  endpoint_eth_ws: 'wss://goerli.infura.io/ws/v3/'+ process.env.ETH_PROJECT_ID,
+  user1: process.env.ADDR_USER1,
+  user2: process.env.ADDR_USER2,
+  abi:{
+    proxy: require("./UChaildERC20ProxyABI.json"),
+  },
+  keyIds: [ process.env.KMS_KEY ]
+};
+////////////////////////////////////////////////////////////////////////////////
+async function checkProxy( ) {
+  var web3child = new Web3(config.endpoint_ws);
+  const proxy = new web3child.eth.Contract(config.abi.proxy, config.matic_token);
+  const from = config.account;
+  let own = await proxy.methods.proxyOwner().call({from}, console.log);
+  let mutabli = await proxy.methods.stateMutability(from);
+  console.log("own:",own, 'mutabli:',mutabli);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 async function getDynamoDB( TableName, Key ) {
   // DynamoDBへのアクセスロジック
   let params = { Key, TableName };
@@ -735,23 +771,15 @@ async function BlockChainMain( event, config, th ){
   return result;
 }
 
-// https://docs.matic.network/docs/develop/network-details/network
-// https://infura.io/docs/gettingStarted/chooseaNetwork
-const config = {
-  region:          'ap-northeast-1',
-  endpoint:        'https://rpc-mumbai.matic.today',
-  endpoint_ws:     'wss://ws-mumbai.matic.today',
-  endpoint_eth:    'https://goerli.infura.io/v3/'+ process.env.ETH_PROJECT_ID,
-  endpoint_eth_ws: 'wss://goerli.infura.io/ws/v3/'+ process.env.ETH_PROJECT_ID,
-  user1: process.env.ADDR_USER1,
-  user2: process.env.ADDR_USER2,
-  keyIds: [ process.env.KMS_KEY ]
-};
 exports.handler = async (event, context, callback) => {
   let th = {};
   TimeLog(th);
   console.log(TimeLog(th), "event", event);
   const {test, act} = event;
+  if(test === 'Proxy'){
+    await checkProxy();
+    return null;
+  }
   if(test){
     return null;
   }

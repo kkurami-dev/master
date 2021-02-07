@@ -16,12 +16,12 @@ const params = {
   }
 };
 
-async function checkTransaction(web3, hash){
-  console.log("checkTransaction()");
-  let receipt;
-  await web3.eth.getTransactionReceipt(hash).then((result) => receipt = result);
-  return receipt;
-}
+// async function checkTransaction(web3, hash){
+//   console.log("checkTransaction()");
+//   let receipt;
+//   await web3.eth.getTransactionReceipt(hash).then((result) => receipt = result);
+//   return receipt;
+// }
 
 async function getDynamoDB(table_name, table_key){
   let ret_val;
@@ -40,7 +40,7 @@ async function getDynamoDB(table_name, table_key){
 
 export function getBalanceOf( web3, name, cb ) {
   let param = params[name];
-  let address;
+  //let address;
   let func_abi;
   let func_name = "balanceOf";
 
