@@ -44,9 +44,9 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.6.0",// solc: 0.6.0+commit.26b70077.Emscripten.clang
+      version: "0.6.6",// solc: 0.6.0+commit.26b70077.Emscripten.clang
       //evmVersion: <string> // Default: "istanbul"
-      evmVersion: "petersburg"
+      evmVersion: "istanbul"
 
     }
   }
