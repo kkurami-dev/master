@@ -38,3 +38,14 @@ const gasPriceHex = web3.utils.toHex(3 * 1e9);
 
 };
 deploy();
+
+
+implementation
+proxyOwner
+proxyType
+
+transferProxyOwnership
+updateAndCall
+updateImplementation
+
+fallback()

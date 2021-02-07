@@ -50,8 +50,10 @@ export function getBalanceOf( web3, name, cb ) {
   console.log("func_abi", func_abi, param.abi);
 
   // ブロックチェーンへの問い合わせ結果処理
-  let getBalance = (addr, vale) => {
-    console.log("BalanceOf,", addr, Number(vale));
+  let getBalance = (addr, name, v) => {
+    let vale = Number(v);
+    console.log("BalanceOf,", addr +', '+ name +',', vale);
+    cb({addr, name, vale});
   };
 
   // DynamoDB からアドレスと取得後にブロックチェーンへの問い合わせ処理
@@ -60,8 +62,8 @@ export function getBalanceOf( web3, name, cb ) {
 
     params.user.forEach( function( account ){
       let data = web3.eth.abi.encodeFunctionCall(func_abi, [account]);
-      web3.eth.call({to, data}).then( (val) => getBalance(account + ", EGT,", val) );
-      web3.eth.getBalance(account).then( (val) => getBalance(account + ", ETH,", val) );
+      web3.eth.call({to, data}).then( (val) => getBalance(account, "EGT", val) );
+      web3.eth.getBalance(account).then( (val) => getBalance(account, "ETH", val) );
     });
   };
 

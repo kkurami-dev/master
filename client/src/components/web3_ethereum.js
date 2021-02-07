@@ -52,70 +52,8 @@ import "../App.css";
 const config = require("../configs/config.json");
 const proxyAbi = require("../configs/UChaildERC20ProxyABI.json");
 const table_name = config.db_name;
-
 const objTxRelay = require("../contracts/TxRelay.json");
 
-//////////////////////////////////////////////////////////////////////////////////
-async function DeployContract(web3, account, obj, param ) {
-  console.log("DeployContract s");
-
-  try{
-    let bytecode = obj.bytecode;
-    let abi = obj.abi;
-    let ret_hash;
-    console.log("abi", abi);
-
-    // デプロイに必要なGasを問い合わせる
-    let nowEth = web3.eth.getBalance(account);
-    web3.eth.getGasPrice().then(console.log);
-    let gasEstimate = web3.eth.estimateGas({data: bytecode});
-    if(nowEth < gasEstimate ){
-      console.log(nowEth, "<", gasEstimate, "gas が不足している");
-      return null;
-    }
-
-    let call = new Promise((resolve, reject) => {
-      web3.eth.sendTransaction({
-        from: account,
-        data: bytecode, // deploying a contracrt
-        arguments: param
-      }, (error, hash) => resolve( hash ));
-    });
-    await call.then((value) => ret_hash = value );
-
-    console.log("DeployContract e", ret_hash);
-    return ret_hash;
-  }
-  catch(e){
-    console.log(e.message);
-    return null;
-  }
-}
-
-async function Contract(web3, account, in_param, ret_hash){
-  var receipt;
-
-  
-  if(ret_hash){
-    console.log("getTransactionReceipt()");
-    await web3.eth.getTransactionReceipt(ret_hash).then((result) => receipt = result);
-    //console.log("Contract() A", receipt );
-    if(!receipt)
-      return { out_param: in_param, hash: ret_hash, receipt };
-  }
-
-  console.log("Contract() B", in_param, in_param.length);
-  if(in_param.length === 0)
-    return {out_param:in_param, out_hash:null, receipt };
-  
-  let {obj, tx_param, act} = in_param.shift();
-  let hash;
-  if( act === 0 )
-    hash = await DeployContract(web3, account, obj, tx_param );
-  return {out_param:in_param, out_hash: hash, receipt };
-}
-
-//////////////////////////////////////////////////////////////////////////////////
 export default class Web3Ethereum extends  Component {
   constructor(props) {
     console.log("constructor(props)");
@@ -145,20 +83,99 @@ export default class Web3Ethereum extends  Component {
       const accounts = await web3.eth.getAccounts();
       this.setState({ web3, account: accounts[0], objTxRelay});
 
-
-      const proxy = new web3.eth.Contract(proxyAbi, config.matic_token);
-      const from = config.account;
-      let own = await proxy.methods.proxyOwner().call({from}, console.log);
-      //let mutabli = await proxy.methods.stateMutability(from);
-      console.log("proxy",proxy.methods);
-      console.log("own:",own);
-      console.log("implementation:",await proxy.methods.implementation());
-      console.log("proxyType:",await proxy.methods.proxyType());
+      this.checkProxy();
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
       console.error(error);
     }
   };
+
+  Contract = async (web3, account, in_param, ret_hash) => {
+    var receipt;
+    if(ret_hash){
+      console.log("getTransactionReceipt()");
+      await web3.eth.getTransactionReceipt(ret_hash).then((result) => receipt = result);
+      //console.log("Contract() A", receipt );
+      if(!receipt)
+        return { out_param: in_param, hash: ret_hash, receipt };
+    }
+
+    console.log("Contract() B", in_param, in_param.length);
+    if(in_param.length === 0)
+      return {out_param:in_param, out_hash:null, receipt };
+    
+    let {obj, tx_param, act} = in_param.shift();
+    let hash;
+    if( act === 0 )
+      hash = await this.DeployContract(web3, account, obj, tx_param );
+    return {out_param:in_param, out_hash: hash, receipt };
+  }
+
+  DeployContract = async ()  => {
+    console.log("DeployContract s");
+    const obj = require("../contracts/MyToken"),
+          account = config.account,
+          web3 = this.state.web3,
+          bytecode = obj.bytecode,
+          abi = obj.abi;
+    console.log("abi", abi, "account", account);
+
+    try{
+      // デプロイに必要なGasを問い合わせる
+      let nowEth = web3.eth.getBalance(account);
+      web3.eth.getGasPrice().then(console.log);
+      let gasEstimate = web3.eth.estimateGas({data: bytecode});
+      if(nowEth < gasEstimate ){
+        console.log(nowEth, "<", gasEstimate, "gas が不足している");
+        return null;
+      }
+
+      var contract = new web3.eth.Contract(abi);
+      const hexdata = contract.deploy({
+        data: '0x' + bytecode,
+        arguments:["GET","MyToken3", '1000000000000000000']
+      }).encodeABI()
+
+      const nonce = await web3.eth.getTransactionCount( account );
+      const nonceHex = web3.utils.toHex(nonce)
+      const gasPriceHex = web3.utils.toHex(3 * 1e9);
+      // const estimatedGas = await testCoinContractDeploy.estimateGas();
+      var rawTx = {
+        nonce: nonceHex,
+        gasPrice: gasPriceHex,
+        gasLimit: web3.utils.toHex(6100500),
+        data: "0x"+hexdata
+      }
+      console.log("rawTx", rawTx);
+      const result = await web3.eth.sendTransaction(rawTx).call({from:account}, console.log)
+        .on('transactionHash', console.log)
+        .on('receipt', console.log)
+        .on('confirmation', console.log)
+            .on('error', console.log);
+      return result;
+    } catch(e){
+      console.error(e);
+      return null;
+    }
+  }
+  
+  async checkProxy(e){
+    const web3 = this.state.web3;
+    const proxy = new web3.eth.Contract(proxyAbi, config.matic_token);
+    const from = config.account;
+    let result;
+    result = await proxy.methods.proxyOwner().call({from}, console.log);
+    //let mutabli = await proxy.methods.stateMutability(from);
+    console.log("proxy", proxy.methods);
+    console.log("proxy abi", proxyAbi);
+    console.log("proxy own:", result);
+    console.log("proxy implementation:", await proxy.methods.implementation());
+    console.log("proxyType:", await proxy.methods.proxyType());
+
+    const to_addr = config.matic_local;
+    result = await proxy.methods.updateImplementation(to_addr).call({from}, console.log);
+    console.log("updateImplementation:", result);
+  }
 
   async callDeploy(e){
     let {web3, account, obj, ret_hash} = this.state;
@@ -166,7 +183,7 @@ export default class Web3Ethereum extends  Component {
     let i = 0;
     do {
       console.log("callDeploy() loop", ++i );
-      let {out_param, out_hash, receipt} = await Contract(web3, account, in_param, ret_hash);
+      let {out_param, out_hash, receipt} = await this.Contract(web3, account, in_param, ret_hash);
       console.log("callDeploy()", receipt);
       ret_hash = out_hash;
       in_param = out_param;
@@ -268,7 +285,7 @@ export default class Web3Ethereum extends  Component {
     //updateLambdaDB(table_name, Key, {txaddr:{Value:{S: data}, Action:"PUT"}},console.log);
     getLambdaDB(table_name, Key, console.log);
     getBalanceOf(this.state.web3, "token", (item) => {
-      console.log("checkLambdaDB", item);
+      //console.log("checkLambdaDB", item);
     });
   }
 
@@ -279,9 +296,8 @@ export default class Web3Ethereum extends  Component {
   }
 
   SendDeposit = async (amount) => {
-    const conf = config;
-    const rootToken = conf.goerli_contract;
-    const from = conf.account;
+    const rootToken = config.goerli_contract;
+    const from = config.account;
 
     // https://github.com/maticnetwork/matic.js/
     // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
@@ -346,7 +362,7 @@ export default class Web3Ethereum extends  Component {
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
         <p>
-          <button onClick={this.callDeploy.bind(this)}>デプロイ</button><br/>
+          <button onClick={this.callDeploy(this)}>デプロイ</button><br/>
           <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
           <button onClick={(e) => this.sendLoop(e)}>送信の繰り返し</button><br/>
           <button onClick={(e) => this.callLambdaDeploy_batch(e)}>batch request の確認</button><br/>
