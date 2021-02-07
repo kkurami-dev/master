@@ -56,43 +56,6 @@ const table_name = config.db_name;
 const objTxRelay = require("../contracts/TxRelay.json");
 
 //////////////////////////////////////////////////////////////////////////////////
-async function SendDeposit(amount){
-  const conf = config;
-  const rootToken = conf.goerli_contract;
-  const from = '0x4A7C625A628981919f37E321A4f9E7C4a90AF15c';
-
-  // https://github.com/maticnetwork/matic.js/
-  // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
-  // https://github.com/maticnetwork/static/tree/master/network/testnet/mumbai
-  const rootChainManagerAddress = '0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74';
-  const erc20Predicate = '0xdD6596F2029e6233DEFfaCa316e6A95217d4Dc34';
-  const mainWeb3 = new Web3(conf.Eth_EndPoint);// Ethereum
-  const web3Client = new Web3(conf.Mti_EndPoint);// Matic
-
-  // --- 参考 matic.js( matic.js-master/examples/POS-client/utils.js )
-  const maticPOSClient = new MaticPOSClient({
-    network: 'testnet', // optional, default is testnet
-    version: 'mumbai', // optional, default is mumbai
-    parentProvider: mainWeb3,
-    maticProvider: web3Client,
-  });
-  // child.DERC20
-
-  try {
-    let receipt = [];
-    // --- 参考 ( matic.js-master/examples/POS-client/ERC20/approve.js )
-    receipt.push( await maticPOSClient.approveERC20ForDeposit(rootToken, amount) );
-    // --- 参考 ( matic.js-master/examples/POS-client/ERC20/deposit.js )
-    receipt.push( await maticPOSClient.depositERC20ForUser(
-      rootToken, // RootToken address ( Ethereum, Matic の両方にコントラクトがある )
-      from,      // 宛先
-      amount     // Amount for approval (in wei)
-    ));
-  } catch(err){
-    console.error("SendDeposit:", err);
-  }
-}
-
 async function DeployContract(web3, account, obj, param ) {
   console.log("DeployContract s");
 
@@ -191,10 +154,6 @@ export default class Web3Ethereum extends  Component {
       console.log("own:",own);
       console.log("implementation:",await proxy.methods.implementation());
       console.log("proxyType:",await proxy.methods.proxyType());
-
-      const provider_old = window.ethereum;
-      console.log("provider_old:", provider_old);
-      //SendDeposit(10);
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
       console.error(error);
@@ -319,6 +278,37 @@ export default class Web3Ethereum extends  Component {
     this.setState({ first: false, loop: false });
   }
 
+  SendDeposit = async (amount) => {
+    const conf = config;
+    const rootToken = conf.goerli_contract;
+    const from = conf.account;
+
+    // https://github.com/maticnetwork/matic.js/
+    // https://github.com/maticnetwork/matic.js/blob/master/src/root/POSRootChainManager.ts
+    // https://github.com/maticnetwork/static/tree/master/network/testnet/mumbai
+
+    // --- 参考 matic.js( matic.js-master/examples/POS-client/utils.js )
+    const provider = window.ethereum;
+    const maticPoSClient = new MaticPOSClient({
+      network: 'testnet', // optional, default is testnet
+      version: 'mumbai', // optional, default is mumbai
+      parentProvider: provider,
+      maticProvider: provider,
+    });
+    console.log("maticPoSClient:", maticPoSClient);
+    // child.DERC20
+
+    let result;
+    try {
+      result = await maticPoSClient.approveERC20ForDeposit(rootToken, amount, {from});
+      console.log("approveERC20ForDeposit:", result);
+      result = await maticPoSClient.depositERC20ForUser(rootToken, from, amount, {from});
+      console.log("depositERC20ForUser:", result);
+    } catch(err){
+      console.error("SendDeposit:", err);
+    }
+  }
+
   render() {
     if (!this.state.web3) {
       // web3 のインスタンスが入るまではここに入る
@@ -360,6 +350,7 @@ export default class Web3Ethereum extends  Component {
           <button onClick={this.callLambdaDeploy.bind(this)}>デプロイ(Lambda)</button><br/>
           <button onClick={(e) => this.sendLoop(e)}>送信の繰り返し</button><br/>
           <button onClick={(e) => this.callLambdaDeploy_batch(e)}>batch request の確認</button><br/>
+          <button onClick={(e) => this.SendDeposit('1000')}>デポジット の確認</button><br/>
         </p>
         <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button><br/>
         <button onClick={(e) => this.checkLambdaDB(e)}>DB確認</button><br/>
