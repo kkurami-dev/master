@@ -3,10 +3,10 @@ var AWS = require('aws-sdk'),
     util = require("ethereumjs-util"),
     ethereumjs_tx = require("ethereumjs-tx"),
     Common = require('ethereumjs-common').default,
-    kap = require('aws-kms-provider');
+    AWSKmsProvider = require('aws-kms-provider');
     // 0.2.1 // ブラウザからは実行できない(ローカルファイルの参照がある)
 
-class KKWebsocketProvider extends WebsocketProvider {
+class KKWebsocketProvider extends AWSKmsProvider {
 
   
   

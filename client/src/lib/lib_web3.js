@@ -47,12 +47,12 @@ export function getBalanceOf( web3, name, cb ) {
   for( let i = 0; i < param.abi.length; i++ )
     if(param.abi[i].name === func_name)
       func_abi = param.abi[i];
-  console.log("func_abi", func_abi, param.abi);
+  //console.log("func_abi", func_abi, param.abi);
 
   // ブロックチェーンへの問い合わせ結果処理
   let getBalance = (addr, name, v) => {
     let vale = Number(v);
-    console.log("BalanceOf,", addr +', '+ name +',', vale);
+    //console.log("BalanceOf,", addr +', '+ name +',', vale);
     cb({addr, name, vale});
   };
 

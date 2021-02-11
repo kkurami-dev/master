@@ -35,6 +35,7 @@ import React, { Component } from 'react';
    toBlockが'latest'やundefinedの時は、getをcallした時点までの
    Eventを返します。
   */
+import Web3 from "web3";
 import getWeb3 from "../lib/getWeb3";
 //import Web3 from "web3";
 import { getBalanceOf,
@@ -46,6 +47,7 @@ import { callLambda,
        } from "../lib/lib_aws";
 import history from '../history';
 import { MaticPOSClient } from '@maticnetwork/maticjs';
+import { ComposedChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Area, Bar } from 'recharts';
 
 import "../App.css";
 //////////////////////////////////////////////////////////////////////////////////
@@ -53,11 +55,24 @@ const config = require("../configs/config.json");
 const proxyAbi = require("../contracts/UChildERC20Proxy.json").abi;
 const table_name = config.db_name;
 const objTxRelay = require("../contracts/TxRelay.json");
+const Network = require("@maticnetwork/meta/network");
+
+
+function UrlCheck(ethereum, matic){
+
+  return {http:{ethereum:'', matic:''}, }
+}
 
 export default class Web3Ethereum extends  Component {
   constructor(props) {
     console.log("constructor(props)");
     super(props);
+
+    let dataGraph = [];
+    for(let i = 0; i < 100; i++){
+      dataGraph.push({month: i, '売上': 0, '総売上': 0});
+    }
+    
     this.state = {
       storageValue: 0,
       web3: null,
@@ -65,7 +80,18 @@ export default class Web3Ethereum extends  Component {
       contract: null,
 
       loop: true,
-      first: true
+      first: true,
+
+      network: null,
+
+      // グラフを表示する
+      //   https://qiita.com/gcyagyu/items/5eb7c5e3e05e6a2241ed
+      //   npm i --save recharts
+      //表示させたいデータ群
+      GraphNo: 0,
+      dataGraph,
+      radio:'A',
+      update: 'on'
     };
   }
 
@@ -83,12 +109,22 @@ export default class Web3Ethereum extends  Component {
       const accounts = await web3.eth.getAccounts();
       this.setState({ web3, account: accounts[0], objTxRelay});
 
+      this.updateData(() => { return this.state.update === 'on'; });
+
       //this.checkProxy();
     } catch (error) {
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
       console.error(error);
     }
+
+    getBalanceOf(this.state.web3, "token", (item) => {
+      console.log("checkLambdaDB", item);
+    });
   };
+
+  componentWillUnmount = () => {
+    this.setState({ loop:false });
+  }
 
   Contract = async (web3, account, in_param, ret_hash) => {
     var receipt;
@@ -167,6 +203,61 @@ export default class Web3Ethereum extends  Component {
       return null;
     }
   }
+
+  // 1秒間隔でデータの更新を行う
+  updateData(cb){
+    console.log('updateData start');
+        
+    const getdata_callback = (data) => {
+      if(!data) return;
+      let {dataGraph, GraphNo} = this.state;
+      let newDataGraph = [];
+      // 6,000,000,000
+      let sum = 0, count = 0, write = true;
+      GraphNo++;
+      //console.log('GasPrice', data, GraphNo, dataGraph[0], dataGraph[6]);
+      for(let i = 0; i < dataGraph.length; i++){
+        newDataGraph[i] = dataGraph[i];
+        if(write && (newDataGraph[i]["総売上"] === 0 || i === (dataGraph.length - 1))){
+          newDataGraph[i]["総売上"] = parseInt(data);
+          write = false;
+        } else if(i === (dataGraph.length - 1) || dataGraph[i+1]["総売上"] === 0){
+          newDataGraph[i]["総売上"] = dataGraph[i]["総売上"];
+        } else {
+          newDataGraph[i]["総売上"] = dataGraph[i+1]["総売上"];
+        }
+        if(newDataGraph[i]["総売上"] !== 0){
+          count++;
+          sum += newDataGraph[i]["総売上"];
+          newDataGraph[i]["売上"] = parseInt( (sum/count), 10);
+        } else {
+          newDataGraph[i]["売上"] = 0;
+        }
+      }
+      //console.log('GasPrice', sum, count);
+      //console.log('GasPrice', data, val, GraphNo, newDataGraph[0], newDataGraph[6]);
+      this.setState({ dataGraph:newDataGraph, GraphNo });
+    };
+
+    let io = setInterval(async () => {
+      let web3 = new Web3('https://mainnet.infura.io/v3/' + config.infura_pjkey);
+      if (!this.state.web3) {
+        console.log('not web3');
+        return;
+      } else if(!web3){
+        web3 = this.state.web3;
+      }
+
+      try {
+        let ret = await web3.eth.getGasPrice().then( getdata_callback );
+      } catch(err){
+        console.error('GasPrice catch', err);
+        clearInterval(io);
+      }
+
+      if(cb() !== true) clearInterval(io);
+    }, 3000);
+  };
   
   async callDeploy(e){
     console.log('callDeploy S');
@@ -241,19 +332,18 @@ export default class Web3Ethereum extends  Component {
       let result = await callLambda("BlockChainMain", {in_param, hash});
       ++i;
       if(result.errorType || result.errorMessage) {
-        console.error("callDeploy() loop", Date.now() - loop_time, i, result );
+        console.error("callLambdaDeploy_su() loop", Date.now() - loop_time, i, result );
         return;
       }
 
       let {out_param, out_hash, receipt} = result.target;
-      console.log("callDeploy()", Date.now() - loop_time, result, receipt);
+      console.log("callLambdaDeploy_su()", Date.now() - loop_time, result, receipt);
       if(!in_param.length) break;
       hash = out_hash;
       in_param = out_param;
 
     } while(hash || in_param.length);
     console.log("callLambdaDeploy_sub()", Date.now() - now_time);
-    //console.log("callDeploy() end", (Date.now() - now_time)/1000 );
   }
 
   callLambdaDeploy_batch = async ( ) => {
@@ -300,10 +390,8 @@ export default class Web3Ethereum extends  Component {
     let Key = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
     //getLambdaDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: '0'}}, console.log);
     //updateLambdaDB(table_name, Key, {txaddr:{Value:{S: data}, Action:"PUT"}},console.log);
-    getLambdaDB(table_name, Key, console.log);
-    getBalanceOf(this.state.web3, "token", (item) => {
-      //console.log("checkLambdaDB", item);
-    });
+    const callback = (data) => {};
+    getLambdaDB(table_name, Key, callback);
   }
 
   toLogWatch = (event) =>{
@@ -342,6 +430,23 @@ export default class Web3Ethereum extends  Component {
     }
   }
 
+  handleChange = (event) => {
+    console.log('handleChange', event.target, event);
+    let val = event.target.value;
+    switch(val){
+    case 'A':
+    case 'B':
+      // ラジオボタンのサンプル
+      //   http://koyamatch.com/react/basic2/basic_9.html
+      this.setState({radio: val});
+      break;
+
+    case 'update_on': this.setState({update: 'on'}); break;
+    case 'update_off':this.setState({update: 'off'}); break;
+    }
+
+  }
+
   render() {
     if (!this.state.web3) {
       // web3 のインスタンスが入るまではここに入る
@@ -368,25 +473,73 @@ export default class Web3Ethereum extends  Component {
             </tr>
           </tbody>
         </table>
-        <p>Your Truffle Box is installed and ready.</p>
-        <h2>Smart Contract Example</h2>
         <p>
-          If your contracts compiled and migrated successfully, below will show
-          a stored value of 5 (by default).
+          Your Truffle Box is installed and ready.
           Web3:v{this.state.web3.version}
         </p>
+        <h2>Smart Contract Example</h2>
         <p>
-          Try changing the value stored on <strong>line 40</strong> of App.js.
+          <input type="radio" value="A" checked={this.state.radio==="A"} onChange={this.handleChange}/>
+          A 、
+          <input type="radio" value="B" checked={this.state.radio==="B"} onChange={this.handleChange}/>
+          B
         </p>
         <p>
-          <button onClick={(e) => this.callDeploy(e)}>デプロイ</button><br/>
+          <button onClick={(e) => this.callDeploy(e)}>デプロイ</button>
           <button onClick={(e) => this.callLambdaDeploy.bind(e)}>デプロイ(Lambda)</button><br/>
-          <button onClick={(e) => this.sendLoop(e)}>送信の繰り返し</button><br/>
+          
+          <button onClick={(e) => this.sendLoop(e)}>送信の繰り返し</button>
           <button onClick={(e) => this.callLambdaDeploy_batch(e)}>batch request の確認</button><br/>
+          
           <button onClick={(e) => this.SendDeposit('1000')}>デポジット の確認</button><br/>
         </p>
-        <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button><br/>
+        <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button>
         <button onClick={(e) => this.checkLambdaDB(e)}>DB確認</button><br/>
+        <div>
+
+          {/* Reactでオシャレなグラフ・図を簡単に描く(Rechart.js)
+            *   https://qiita.com/gcyagyu/items/5eb7c5e3e05e6a2241ed
+            */}
+            <input type="radio" value='update_on' checked={this.state.update==='on'} onChange={this.handleChange}/>
+            A 、
+            <input type="radio" value='update_off' checked={this.state.update==='off'} onChange={this.handleChange}/>
+            B
+          <ComposedChart
+      // グラフ全体のサイズや位置、データを指定。場合によってmarginで上下左右の位置を指定する必要あり。
+            width={600}  //グラフ全体の幅を指定
+            height={280}  //グラフ全体の高さを指定
+            data={this.state.dataGraph} //ここにArray型のデータを指定
+            margin={{ top: 20, right: 60, bottom: 0, left: 0 }}  //marginを指定
+          >
+            <XAxis
+              dataKey="month"  //Array型のデータの、X軸に表示したい値のキーを指定
+            />
+            <YAxis />
+            <Tooltip /> //hoverした時に各パラメーターの詳細を見れるように設定
+            <Legend />  // 凡例を表示(図の【売上】【総売上】)
+            <CartesianGrid
+      // グラフのグリッドを指定
+              stroke="#f5f5f5" //グリッド線の色を指定
+            />
+            <Area
+      // 面積を表すグラフ
+              type="monotone"  //グラフが曲線を描くように指定。default値は折れ線グラフ
+              dataKey="総売上" //Array型のデータの、Y軸に表示したい値のキーを指定
+              stroke="#00aced" ////グラフの線の色を指定
+              fillOpacity={1}  ////グラフの中身の薄さを指定
+              fill="rgba(0, 172, 237, 0.2)"  //グラフの色を指定
+            />
+            <Bar
+      // 棒グラフ
+              dataKey="売上" //Array型のデータの、Y軸に表示したい値のキーを指定
+              barSize={20}  //棒の太さを指定
+              stroke="rgba(34, 80, 162, 0.2)" ////レーダーの線の色を指定 
+              fillOpacity={1}  //レーダーの中身の色の薄さを指定
+              fill="#2250A2" ////レーダーの中身の色を指定
+            />
+          </ComposedChart>
+
+        </div>
       </div>
     );
   }
