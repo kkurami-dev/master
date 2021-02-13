@@ -47,7 +47,7 @@ import { callLambda,
        } from "../lib/lib_aws";
 import history from '../history';
 import { MaticPOSClient } from '@maticnetwork/maticjs';
-import { ComposedChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Area, Bar } from 'recharts';
+import { ComposedChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Area, Bar, Line } from 'recharts';
 
 import "../App.css";
 //////////////////////////////////////////////////////////////////////////////////
@@ -56,8 +56,9 @@ const proxyAbi = require("../contracts/UChildERC20Proxy.json").abi;
 const table_name = config.db_name;
 const objTxRelay = require("../contracts/TxRelay.json");
 const Network = require("@maticnetwork/meta/network");
+const axiosBase = require('axios');
 
-
+////////////////////////////////////////////////////////////////////////////////
 function UrlCheck(ethereum, matic){
 
   return {http:{ethereum:'', matic:''}, }
@@ -70,7 +71,7 @@ export default class Web3Ethereum extends  Component {
 
     let dataGraph = [];
     for(let i = 0; i < 100; i++){
-      dataGraph.push({month: i, '売上': 0, '総売上': 0});
+      dataGraph.push({month: i, '平均': 0, 'infura': 0, 'Etherscan':0});
     }
     
     this.state = {
@@ -90,6 +91,7 @@ export default class Web3Ethereum extends  Component {
       //表示させたいデータ群
       GraphNo: 0,
       dataGraph,
+      avg: 0,
       radio:'A',
       update: 'on'
     };
@@ -206,40 +208,71 @@ export default class Web3Ethereum extends  Component {
 
   // 1秒間隔でデータの更新を行う
   updateData(cb){
+    // https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=YourApiKeyToken
+    //
     console.log('updateData start');
+    const rato = 1000000000;
         
     const getdata_callback = (data) => {
       if(!data) return;
-      let {dataGraph, GraphNo} = this.state;
+      let {dataGraph, GraphNo, avg, etherscan} = this.state;
       let newDataGraph = [];
       // 6,000,000,000
-      let sum = 0, count = 0, write = true;
+      let count = 0, write = true;
       GraphNo++;
+      avg = 0;
       //console.log('GasPrice', data, GraphNo, dataGraph[0], dataGraph[6]);
       for(let i = 0; i < dataGraph.length; i++){
         newDataGraph[i] = dataGraph[i];
-        if(write && (newDataGraph[i]["総売上"] === 0 || i === (dataGraph.length - 1))){
-          newDataGraph[i]["総売上"] = parseInt(data);
+        if(write && (newDataGraph[i]["infura"] === 0 || i === (dataGraph.length - 1))){
+          newDataGraph[i]["infura"] = parseInt(data / rato, 10);
           write = false;
-        } else if(i === (dataGraph.length - 1) || dataGraph[i+1]["総売上"] === 0){
-          newDataGraph[i]["総売上"] = dataGraph[i]["総売上"];
+        } else if(i === (dataGraph.length - 1) || dataGraph[i+1]["infura"] === 0){
+          newDataGraph[i]["infura"] = dataGraph[i]["infura"];
         } else {
-          newDataGraph[i]["総売上"] = dataGraph[i+1]["総売上"];
+          newDataGraph[i]["infura"] = dataGraph[i+1]["infura"];
         }
-        if(newDataGraph[i]["総売上"] !== 0){
+
+        if(newDataGraph[i]["infura"] !== 0){
           count++;
-          sum += newDataGraph[i]["総売上"];
-          newDataGraph[i]["売上"] = parseInt( (sum/count), 10);
+          avg += newDataGraph[i]["infura"];
+          newDataGraph[i]["平均"] = parseInt( (avg/count), 10);
         } else {
-          newDataGraph[i]["売上"] = 0;
+          newDataGraph[i]["平均"] = 0;
+        }
+
+        if(etherscan !== 0){
+          count++;
+          avg += etherscan;
+          newDataGraph[i]["平均"] = parseInt( (avg/count), 10);
+        } else {
+          newDataGraph[i]["平均"] = 0;
         }
       }
       //console.log('GasPrice', sum, count);
       //console.log('GasPrice', data, val, GraphNo, newDataGraph[0], newDataGraph[6]);
-      this.setState({ dataGraph:newDataGraph, GraphNo });
+      this.setState({ dataGraph:newDataGraph, GraphNo, avg });
+    };
+
+    const baseURL = 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=' + config.eth_apikey;
+    const axios = axiosBase.create({
+      baseURL,
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      responseType: 'json'
+    });
+    const http_callback = (res) =>{
+      let val = 0;
+      if(res && res.data && res.data.result )
+        val = parseInt( res.data.result / rato, 10);
+      this.setState({ etherscan: val });
+      // 142600000000
+      // 142,600,000,000
+      // console.log('etherscan', res, val);
     };
 
     let io = setInterval(async () => {
+      if(cb() !== true) clearInterval(io);
+
       let web3 = new Web3('https://mainnet.infura.io/v3/' + config.infura_pjkey);
       if (!this.state.web3) {
         console.log('not web3');
@@ -249,13 +282,13 @@ export default class Web3Ethereum extends  Component {
       }
 
       try {
+        axiosBase.get(baseURL).then( http_callback ).catch( console.log );
         let ret = await web3.eth.getGasPrice().then( getdata_callback );
       } catch(err){
         console.error('GasPrice catch', err);
         clearInterval(io);
       }
 
-      if(cb() !== true) clearInterval(io);
     }, 3000);
   };
   
@@ -441,8 +474,13 @@ export default class Web3Ethereum extends  Component {
       this.setState({radio: val});
       break;
 
-    case 'update_on': this.setState({update: 'on'}); break;
-    case 'update_off':this.setState({update: 'off'}); break;
+    case 'update_on':
+      this.setState({update: 'on'});
+      this.updateData(() => true);
+      break;
+    case 'update_off':
+      this.setState({update: 'off'});
+      break;
     }
 
   }
@@ -516,26 +554,20 @@ export default class Web3Ethereum extends  Component {
             />
             <YAxis />
             <Tooltip /> //hoverした時に各パラメーターの詳細を見れるように設定
-            <Legend />  // 凡例を表示(図の【売上】【総売上】)
+            <Legend />  // 凡例を表示(図の【売上】【infura】)
             <CartesianGrid
       // グラフのグリッドを指定
               stroke="#f5f5f5" //グリッド線の色を指定
             />
+            <Line dataKey="Etherscan" stroke="#ff7300" dot={false} />
+            <Line dataKey="infura" stroke="#2250A2" dot={false} />
             <Area
       // 面積を表すグラフ
               type="monotone"  //グラフが曲線を描くように指定。default値は折れ線グラフ
-              dataKey="総売上" //Array型のデータの、Y軸に表示したい値のキーを指定
+              dataKey="平均" //Array型のデータの、Y軸に表示したい値のキーを指定
               stroke="#00aced" ////グラフの線の色を指定
               fillOpacity={1}  ////グラフの中身の薄さを指定
               fill="rgba(0, 172, 237, 0.2)"  //グラフの色を指定
-            />
-            <Bar
-      // 棒グラフ
-              dataKey="売上" //Array型のデータの、Y軸に表示したい値のキーを指定
-              barSize={20}  //棒の太さを指定
-              stroke="rgba(34, 80, 162, 0.2)" ////レーダーの線の色を指定 
-              fillOpacity={1}  //レーダーの中身の色の薄さを指定
-              fill="#2250A2" ////レーダーの中身の色を指定
             />
           </ComposedChart>
 
