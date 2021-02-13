@@ -70,7 +70,7 @@ export default class Web3Ethereum extends  Component {
     super(props);
 
     let dataGraph = [];
-    for(let i = 0; i < 100; i++){
+    for(let i = 0; i < 1000; i++){
       dataGraph.push({month: i, '平均': 0, 'infura': 0, 'Etherscan':0});
     }
     
@@ -213,9 +213,8 @@ export default class Web3Ethereum extends  Component {
     console.log('updateData start');
     const rato = 1000000000;
         
-    const getdata_callback = (data) => {
-      if(!data) return;
-      let {dataGraph, GraphNo, avg, etherscan} = this.state;
+    const getdata_callback = () => {
+      let {dataGraph, GraphNo, avg, etherscan, infura} = this.state;
       let newDataGraph = [];
       // 6,000,000,000
       let count = 0, write = true;
@@ -225,28 +224,26 @@ export default class Web3Ethereum extends  Component {
       for(let i = 0; i < dataGraph.length; i++){
         newDataGraph[i] = dataGraph[i];
         if(write && (newDataGraph[i]["infura"] === 0 || i === (dataGraph.length - 1))){
-          newDataGraph[i]["infura"] = parseInt(data / rato, 10);
+          newDataGraph[i]["infura"] = infura;
+          newDataGraph[i]["Etherscan"] = etherscan;
           write = false;
         } else if(i === (dataGraph.length - 1) || dataGraph[i+1]["infura"] === 0){
           newDataGraph[i]["infura"] = dataGraph[i]["infura"];
+          newDataGraph[i]["Etherscan"] = dataGraph[i]["Etherscan"];
         } else {
-          newDataGraph[i]["infura"] = dataGraph[i+1]["infura"];
+          newDataGraph[i]["infura"] = dataGraph[i + 1]["infura"];
+          newDataGraph[i]["Etherscan"] = dataGraph[i + 1]["Etherscan"];
         }
 
         if(newDataGraph[i]["infura"] !== 0){
           count++;
           avg += newDataGraph[i]["infura"];
           newDataGraph[i]["平均"] = parseInt( (avg/count), 10);
-        } else {
-          newDataGraph[i]["平均"] = 0;
         }
-
-        if(etherscan !== 0){
+        if(newDataGraph[i]["Etherscan"] !== 0){
           count++;
-          avg += etherscan;
+          avg += newDataGraph[i]["Etherscan"];
           newDataGraph[i]["平均"] = parseInt( (avg/count), 10);
-        } else {
-          newDataGraph[i]["平均"] = 0;
         }
       }
       //console.log('GasPrice', sum, count);
@@ -262,13 +259,21 @@ export default class Web3Ethereum extends  Component {
     });
     const http_callback = (res) =>{
       let val = 0;
-      if(res && res.data && res.data.result )
+      if(res && res.data && res.data.result ){
         val = parseInt( res.data.result / rato, 10);
-      this.setState({ etherscan: val });
+        this.setState({ etherscan: val });
+      }
       // 142600000000
       // 142,600,000,000
       // console.log('etherscan', res, val);
     };
+    const infura_callback = (data) => {
+      let val = 0;
+      if(data ){
+        val = parseInt( data / rato, 10);
+        this.setState({ infura: val });
+      }
+    }
 
     let io = setInterval(async () => {
       if(cb() !== true) clearInterval(io);
@@ -283,13 +288,14 @@ export default class Web3Ethereum extends  Component {
 
       try {
         axiosBase.get(baseURL).then( http_callback ).catch( console.log );
-        let ret = await web3.eth.getGasPrice().then( getdata_callback );
+        web3.eth.getGasPrice().then( infura_callback );
+        getdata_callback();
       } catch(err){
         console.error('GasPrice catch', err);
         clearInterval(io);
       }
 
-    }, 3000);
+    }, 30000);
   };
   
   async callDeploy(e){
@@ -534,14 +540,14 @@ export default class Web3Ethereum extends  Component {
         <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button>
         <button onClick={(e) => this.checkLambdaDB(e)}>DB確認</button><br/>
         <div>
-
           {/* Reactでオシャレなグラフ・図を簡単に描く(Rechart.js)
             *   https://qiita.com/gcyagyu/items/5eb7c5e3e05e6a2241ed
             */}
+          gasPrice の確認
             <input type="radio" value='update_on' checked={this.state.update==='on'} onChange={this.handleChange}/>
-            A 、
+            取得、
             <input type="radio" value='update_off' checked={this.state.update==='off'} onChange={this.handleChange}/>
-            B
+            停止
           <ComposedChart
       // グラフ全体のサイズや位置、データを指定。場合によってmarginで上下左右の位置を指定する必要あり。
             width={600}  //グラフ全体の幅を指定
