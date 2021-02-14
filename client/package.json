@@ -6,6 +6,7 @@
     "@maticnetwork/maticjs": "^2.0.29",
     "aws-sdk": "^2.759.0",
     "axios": "^0.21.1",
+    "date-utils": "^1.2.21",
     "react": "16.11.0",
     "react-bootstrap": "^1.4.0",
     "react-dom": "16.11.0",

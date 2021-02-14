@@ -41,9 +41,11 @@ import getWeb3 from "../lib/getWeb3";
 import { getBalanceOf,
        } from "../lib/lib_web3";
 import { callLambda,
-         getLambdaDB,
-         //putLambdaDB,
-         //updateLambdaDB
+         getDynamoDB,
+         scanDynamoDB,
+         putDynamoDB,
+         //updateDynamoDB,
+         delDynamoDB
        } from "../lib/lib_aws";
 import history from '../history';
 import { MaticPOSClient } from '@maticnetwork/maticjs';
@@ -57,6 +59,10 @@ const table_name = config.db_name;
 const objTxRelay = require("../contracts/TxRelay.json");
 const Network = require("@maticnetwork/meta/network");
 const axiosBase = require('axios');
+require('date-utils'); // https://qiita.com/n0bisuke/items/dd28122d006c95c58f9c
+
+////////////////////////////////////////////////////////////////////////////////
+const gasPriceNum = 1000;
 
 ////////////////////////////////////////////////////////////////////////////////
 function UrlCheck(ethereum, matic){
@@ -70,7 +76,7 @@ export default class Web3Ethereum extends  Component {
     super(props);
 
     let dataGraph = [];
-    for(let i = 0; i < 1000; i++){
+    for(let i = 0; i < gasPriceNum; i++){
       dataGraph.push({month: i, '平均': 0, 'infura': 0, 'Etherscan':0});
     }
     
@@ -120,7 +126,7 @@ export default class Web3Ethereum extends  Component {
     }
 
     getBalanceOf(this.state.web3, "token", (item) => {
-      console.log("checkLambdaDB", item);
+      console.log("checkDynamoDB", item);
     });
   };
 
@@ -206,20 +212,49 @@ export default class Web3Ethereum extends  Component {
     }
   }
 
+  updateGasPriceDB(){
+  }
+
   // 1秒間隔でデータの更新を行う
   updateData(cb){
     // https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=YourApiKeyToken
     //
     console.log('updateData start');
     const rato = 1000000000;
-        
+    //const interval = 30000;
+    const interval =  100000;
+    const baseURL = 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=' + config.eth_apikey;
+    const scanParam = {ExpressionAttributeValues:{":key": "gasPrice"}, FilterExpression: "BuildID = :key", ProjectionExpression: "i, e, now_time"};
+
+    let {dataGraph} = this.state;
+    if(dataGraph[0].infura === 0){
+      console.log("DynamoDB scan");
+      scanDynamoDB(table_name, scanParam, ( db_arr ) => {
+        console.log("DataGraph update", db_arr);
+        let newDataGraph = dataGraph;
+        let avg = 0, idx = 0, infura = 0, etherscan = 0;
+        for(; idx < db_arr.length; idx++){
+          const {now_time, e, i} = db_arr[idx];
+          newDataGraph[idx]["infura"] = i;
+          newDataGraph[idx]["Etherscan"] = e;
+          avg += (i + e);
+          newDataGraph[idx]["平均"] = parseInt( (avg/(idx * 2)), 10);
+          infura = i;
+          etherscan = e;
+        }
+        console.log("DynamoDB scan res", newDataGraph[0]);
+        this.setState({ dataGraph:newDataGraph, GraphNo:idx * 2, avg, infura, etherscan });
+      });
+    }
+
+    // グラフ更新コールバック
     const getdata_callback = () => {
+      let up_time = parseInt( Date.now() / interval );
       let {dataGraph, GraphNo, avg, etherscan, infura} = this.state;
       let newDataGraph = [];
       // 6,000,000,000
-      let count = 0, write = true;
-      GraphNo++;
-      avg = 0;
+      let write = true;
+      GraphNo = avg = 0;
       //console.log('GasPrice', data, GraphNo, dataGraph[0], dataGraph[6]);
       for(let i = 0; i < dataGraph.length; i++){
         newDataGraph[i] = dataGraph[i];
@@ -236,37 +271,38 @@ export default class Web3Ethereum extends  Component {
         }
 
         if(newDataGraph[i]["infura"] !== 0){
-          count++;
+          GraphNo++;
           avg += newDataGraph[i]["infura"];
-          newDataGraph[i]["平均"] = parseInt( (avg/count), 10);
+          newDataGraph[i]["平均"] = parseInt( (avg/GraphNo), 10);
         }
         if(newDataGraph[i]["Etherscan"] !== 0){
-          count++;
+          GraphNo++;
           avg += newDataGraph[i]["Etherscan"];
-          newDataGraph[i]["平均"] = parseInt( (avg/count), 10);
+          newDataGraph[i]["平均"] = parseInt( (avg/GraphNo), 10);
         }
       }
-      //console.log('GasPrice', sum, count);
-      //console.log('GasPrice', data, val, GraphNo, newDataGraph[0], newDataGraph[6]);
       this.setState({ dataGraph:newDataGraph, GraphNo, avg });
+
+      scanDynamoDB(table_name, scanParam, ( db_arr ) => {
+        let BuildID = 'gasPrice';
+        if(db_arr.length > gasPriceNum){
+          let {now_time} = db_arr[0];
+          delDynamoDB(table_name, {BuildID, now_time});
+        }
+        if(etherscan && infura)
+          putDynamoDB(table_name, {BuildID, now_time:up_time, e:etherscan, i:infura});
+      });
     };
 
-    const baseURL = 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=' + config.eth_apikey;
-    const axios = axiosBase.create({
-      baseURL,
-      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      responseType: 'json'
-    });
+    // Etherscan を使っての gasPrice 取得
     const http_callback = (res) =>{
       let val = 0;
       if(res && res.data && res.data.result ){
         val = parseInt( res.data.result / rato, 10);
         this.setState({ etherscan: val });
       }
-      // 142600000000
-      // 142,600,000,000
-      // console.log('etherscan', res, val);
     };
+    // Infura を使っての gasPrice 取得
     const infura_callback = (data) => {
       let val = 0;
       if(data ){
@@ -295,7 +331,7 @@ export default class Web3Ethereum extends  Component {
         clearInterval(io);
       }
 
-    }, 30000);
+    }, interval);
   };
   
   async callDeploy(e){
@@ -424,13 +460,13 @@ export default class Web3Ethereum extends  Component {
     console.log("callLambdaDeploy_batch end");
   }
 
-  checkLambdaDB = (event) =>{
+  checkDynamoDB = (event) =>{
     //let data = '0x00' + Date.now();
-    let Key = {BuildID: {S: 'b0001'}, now_time: {N: '0'}};
-    //getLambdaDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: '0'}}, console.log);
-    //updateLambdaDB(table_name, Key, {txaddr:{Value:{S: data}, Action:"PUT"}},console.log);
+    let Key = {BuildID: 'b0001', now_time:0};
+    //getDynamoDB(table_name, {BuildID: {S: 'b0001'}, now_time: {N: li'0'}}, console.log);
+    //updateDynamoDB(table_name, Key, {txaddr:{Value:{S: data}, Action:"PUT"}},console.log);
     const callback = (data) => {};
-    getLambdaDB(table_name, Key, callback);
+    getDynamoDB(table_name, Key, callback);
   }
 
   toLogWatch = (event) =>{
@@ -497,7 +533,8 @@ export default class Web3Ethereum extends  Component {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
 
-    if(this.state.first)  this.checkLambdaDB(this);
+    if(this.state.first)  this.checkDynamoDB(this);
+    let {dataGraph, GraphNo, avg, etherscan, infura} = this.state;
     //if(this.state.first)  this.callLambdaDeploy(this);
     return (
       <div>
@@ -538,21 +575,21 @@ export default class Web3Ethereum extends  Component {
           <button onClick={(e) => this.SendDeposit('1000')}>デポジット の確認</button><br/>
         </p>
         <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button>
-        <button onClick={(e) => this.checkLambdaDB(e)}>DB確認</button><br/>
+        <button onClick={(e) => this.checkDynamoDB(e)}>DB確認</button><br/>
         <div>
           {/* Reactでオシャレなグラフ・図を簡単に描く(Rechart.js)
             *   https://qiita.com/gcyagyu/items/5eb7c5e3e05e6a2241ed
             */}
-          gasPrice の確認
-            <input type="radio" value='update_on' checked={this.state.update==='on'} onChange={this.handleChange}/>
-            取得、
-            <input type="radio" value='update_off' checked={this.state.update==='off'} onChange={this.handleChange}/>
-            停止
+          gasPrice( Etherscan：{etherscan} Infura：{infura} 平均：{parseInt(avg/GraphNo, 10)})
+          <input type="radio" value='update_on' checked={this.state.update==='on'} onChange={this.handleChange}/>
+          (取得 
+          <input type="radio" value='update_off' checked={this.state.update==='off'} onChange={this.handleChange}/>
+          停止)
           <ComposedChart
       // グラフ全体のサイズや位置、データを指定。場合によってmarginで上下左右の位置を指定する必要あり。
             width={600}  //グラフ全体の幅を指定
             height={280}  //グラフ全体の高さを指定
-            data={this.state.dataGraph} //ここにArray型のデータを指定
+            data={dataGraph} //ここにArray型のデータを指定
             margin={{ top: 20, right: 60, bottom: 0, left: 0 }}  //marginを指定
           >
             <XAxis
