@@ -6,6 +6,7 @@ import React, { Component, useRef } from 'react';
 // 複数選択
 //   https://qiita.com/Hitomi_Nagano/items/c00df24dc24e0329167d
 //   https://react-select.com/home
+//   https://stackoverflow.com/questions/50412843/how-to-programmatically-clear-reset-react-select
 import Select from 'react-select';
 
 import SplitPane from 'react-split-pane';
@@ -25,9 +26,22 @@ moment.locale('ja');
 
 //const selectInputRef = useRef();
 
+const data_param = {
+  data1: 1,
+  data2: true,
+  data3: "aaaaaaaaaaaaaaaaaaaaaa",
+  data4: [1, 2, 3],
+  data5: "bbbbbbbbbbbbbbb"
+};
+
 const options = [
   { value: 'chocolate', label: 'Chocolate' },
-  { value: 'strawberry', label: 'Strawberry' },
+  { value: 'strawberry1', label: 'Strawberry1' },
+  { value: 'strawberry2', label: 'Strawberry2' },
+  { value: 'strawberry3', label: 'Strawberry3' },
+  { value: 'strawberry4', label: 'Strawberry4' },
+  { value: 'strawberry5', label: 'Strawberry5' },
+  { value: 'strawberry6', label: 'Strawberry6' },
   { value: 'vanilla', label: 'Vanilla' }
 ];
 
@@ -60,6 +74,7 @@ class Main extends Component {
   }
 
   render() {
+    const items = ['Sun', 'Mon', 'Tue', 'Wed'];
     const {item} = this.state;
     return (
       <div>
@@ -79,6 +94,11 @@ class Main extends Component {
                     onChange={val => this.add_select(val)}
                     value={item}
                     isMulti />
+            <ul>{
+              Object.keys(data_param).map(key => {
+                return <li>{key}</li>
+              })
+            }</ul>
           </div>
         </SplitPane>
         {this.props.children}
