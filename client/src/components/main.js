@@ -1,32 +1,66 @@
 /** -*- coding: utf-8-unix -*-
  * 最初に読み込む、画面分割のサンプル
  */
-import React, { Component } from 'react';
+import React, { Component, useRef } from 'react';
+
+// 複数選択
+//   https://qiita.com/Hitomi_Nagano/items/c00df24dc24e0329167d
+//   https://react-select.com/home
+import Select from 'react-select';
+
 import SplitPane from 'react-split-pane';
 //import { Link, withRouter } from 'react-router';
 import { withRouter } from 'react-router';
 
+// リスト
+//   https://jquense.github.io/react-widgets/api/DateTimePicker/
+import { DateTimePicker } from 'react-widgets';
+
+import moment from "moment";
+import 'moment/min/locales';
+
 import "../App.css";
+
+moment.locale('ja');
+
+//const selectInputRef = useRef();
+
+const options = [
+  { value: 'chocolate', label: 'Chocolate' },
+  { value: 'strawberry', label: 'Strawberry' },
+  { value: 'vanilla', label: 'Vanilla' }
+];
 
 //var ReactRouter = require('react-router');
 class Main extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      item: null
+    };
+  }
+
   listenToName(e) {
     e.preventDefault();
     const name = window.prompt("What's your name?", '');
     this.props.router.push({ pathname: '/hello', query: { name } });
   }
-/*
-          <li><Link to='/welcome'>Welcome</Link></li>
-          <li><Link onClick={this.listenToName.bind(this)} to='/hello'>Hello</Link></li>
-          <li><Link to='/form'>Form</Link></li>
 
-*/
-  
-  style = {
-    border: '3px solid green'
-  };
+  add_select = (e) => {
+    console.log("event:", e);
+    this.setState({
+      item: e
+    });
+  }
+  clean_select = (e) => {
+    this.setState({
+      item: null
+    });
+  }
 
   render() {
+    const {item} = this.state;
     return (
       <div>
         <h1>Main</h1>
@@ -34,8 +68,18 @@ class Main extends Component {
           <li></li>
         </ul>
         <SplitPane split="vertical" minSize={50} defaultSize="20%">
-          <div className="leftMenu">test1<br/>test1<br/></div>
-          <div className="split">test2<br/>test2<br/></div>
+          <div className="leftMenu">test1<br/>test1<br/>
+          </div>
+          <div className="split">test2<br/>test2<br/>
+            <button onClick={(e) => this.clean_select(e)}>複数選択の削除</button><br/>
+            <DateTimePicker
+              defaultValue={new Date()}
+            />
+            <Select options={options}
+                    onChange={val => this.add_select(val)}
+                    value={item}
+                    isMulti />
+          </div>
         </SplitPane>
         {this.props.children}
       </div>

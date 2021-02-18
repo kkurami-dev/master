@@ -55,6 +55,15 @@
   /* scroll-behavior: smooth; */
 }
 
+.datetime {
+  width: 50%;
+  padding: 3px 5px;
+}
+.DateTimePickerContainer {
+  width: 100%;
+  padding: 5px 5px;
+}
+
 /* menu  */
 .dropDownMenu {
   position: relative;
@@ -97,6 +106,10 @@ table, th, td {
   border-collapse: collapse;
   border: 1px solid #ccc;
   line-height: 1.5;
+}
+td, td {
+  padding: 10px;
+  width: 15px;
 }
 
 table.type06 th {

@@ -68,12 +68,12 @@ export function delDynamoDB( TableName, Key, cb) {
         console.error("DynamoDB deleteItem", params, err, err.stack);
       } else {
         let Item = KeyToVal( data.Item );
-        cb( Item );
+        if(cb) cb( Item );
       }
     });
   } catch (error){
     console.error("DynamoDB deleteItem try/catch", error );
-    cb( error );
+    if(cb) cb( error );
   }
 }
 export function scanDynamoDB( TableName, Key, cb) {
