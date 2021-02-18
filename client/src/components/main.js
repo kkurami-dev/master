@@ -77,7 +77,7 @@ class Main extends Component {
     const items = ['Sun', 'Mon', 'Tue', 'Wed'];
     const {item} = this.state;
     return (
-      <div>
+      <>
         <h1>Main</h1>
         <ul>
           <li></li>
@@ -94,15 +94,29 @@ class Main extends Component {
                     onChange={val => this.add_select(val)}
                     value={item}
                     isMulti />
-            <ul>{
-              Object.keys(data_param).map(key => {
-                return <li>{key}</li>
-              })
-            }</ul>
+            <table>
+              <thead>
+                <tr>
+                  <th>id</th>
+                  <th>first</th>
+                  <th>last</th>
+                  <th>email</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  Object.keys(data_param).map((key, id) => {
+                    return (<tr key={id}>
+                              <td>{key}</td>
+                              <td>{data_param[key]}</td>
+                            </tr>)
+                  })}
+              </tbody>
+            </table>
           </div>
         </SplitPane>
         {this.props.children}
-      </div>
+      </>
     );
   }
 }
