@@ -42,7 +42,7 @@ const table_Key  = {BuildID: {S: 'b0001'}, now_time:{N: '0'}};
 
 // https://docs.matic.network/docs/develop/network-details/network
 // https://infura.io/docs/gettingStarted/chooseaNetwork
-const config = {
+const config_org = {
   matic_token:     process.env.MYTOKEN_MATIC,
   eth_token:       process.env.MYTOKEN_ETH,
   account:         process.env.ACCOUNT,
@@ -783,6 +783,11 @@ exports.handler = async (event, context, callback) => {
   if(test){
     return null;
   }
+
+  let config = {...config_org};
+  if(event.endPointPrefix){
+    config.endpoint = config[ "endpoint_" + event.endPointPrefix ];
+  }
   
   //let target = await BlockChainMain( event, config );
   let target = await BlockChainMain(
@@ -798,7 +803,7 @@ exports.handler = async (event, context, callback) => {
     target
   };
   
-  //callback( null, response);// 何かの終了を待つ為、アプリに応答が戻らない
+  callback( null, response);// 何かの終了を待つ為、アプリに応答が戻らない
   console.log(TimeLog(th), "end");
   return response;
 };

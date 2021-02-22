@@ -63,7 +63,7 @@ export function getDynamoDB( TableName, Key, cb) {
 export function delDynamoDB( TableName, Key, cb) {
   let params ={ TableName, Key  };
   try {
-    docClient.deleteItem(params, function(err, data) {
+    docClient.delete(params, function(err, data) {
       if (err) {
         console.error("DynamoDB deleteItem", params, err, err.stack);
       } else {
@@ -75,6 +75,28 @@ export function delDynamoDB( TableName, Key, cb) {
     console.error("DynamoDB deleteItem try/catch", error );
     if(cb) cb( error );
   }
+}
+export function queryDynamoDB( TableName, Key, cb) {
+  let params ={ TableName, ...Key  };
+  let Items = [];
+  try {
+    docClient.query(params, function(err, data) {
+      if (err) {
+        console.error("DynamoDB scan", params, err, err.stack);
+      } else {
+        //console.log("DynamoDB scan", data);
+        for(let i = 0; i < data.Count; i++ ){
+          let item = data.Items[i];
+          Items.push( KeyToVal( item ))
+        }
+        if(cb) cb( Items );
+      }
+    });
+  } catch (error){
+    console.error("DynamoDB scan try/catch", error );
+    if(cb) cb( error );
+  }
+  return Items;
 }
 export function scanDynamoDB( TableName, Key, cb) {
   let params ={ TableName, ...Key  };
@@ -271,7 +293,11 @@ export function callLambdaTest(Payload, cb) {
   lambdaClient.invoke(params, cb);
 }
 
-export async function callLambda(FunctionName, payload) {
+export function callDefFunc(Payload, cb) {
+  callLambda( "defFunc", Payload, cb );
+}
+
+export function callLambda(FunctionName, payload, cb=null) {
   let call = new Promise((resolve, reject) => {
     let Payload = JSON.stringify( payload );
     var params = {
@@ -293,7 +319,13 @@ export async function callLambda(FunctionName, payload) {
     });
   });
   let ret_val;
-  await call.then((value) => ret_val = value );
+  if(cb)
+    call.then((value) => {
+      cb(value);
+    });
+  else
+    return call;
+    //await call.then((value) => ret_val = value );
   return ret_val;
 }
 

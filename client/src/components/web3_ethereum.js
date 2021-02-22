@@ -42,6 +42,7 @@ import { getBalanceOf,
        } from "../lib/lib_web3";
 import { callLambda,
          getDynamoDB,
+         queryDynamoDB,
          scanDynamoDB,
          putDynamoDB,
          //updateDynamoDB,
@@ -224,15 +225,24 @@ export default class Web3Ethereum extends  Component {
     //const interval = 30000;
     const interval =  100000;
     const baseURL = 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=' + config.eth_apikey;
-    const scanParam = {ExpressionAttributeValues:{":key": "gasPrice"}, FilterExpression: "BuildID = :key", ProjectionExpression: "i, e, now_time"};
+    let scanParam = {ExpressionAttributeValues:{":key": "gasPrice"},
+                     KeyConditionExpression: "BuildID = :key",
+                     ProjectionExpression: "i, e, now_time",
+                     
+                      };
 
     let {dataGraph} = this.state;
     if(dataGraph[0].infura === 0){
       console.log("DynamoDB scan");
-      scanDynamoDB(table_name, scanParam, ( db_arr ) => {
-        console.log("DataGraph update", db_arr);
+      queryDynamoDB(table_name, {...scanParam, Limit: gasPriceNum}, ( db_arr ) => {
+
         let newDataGraph = dataGraph;
         let avg = 0, idx = 0, infura = 0, etherscan = 0;
+        if(db_arr.length > gasPriceNum){
+          idx = db_arr.length - gasPriceNum;
+        }
+
+        console.log("DataGraph update", db_arr.length, dataGraph.length, idx);
         for(; idx < db_arr.length; idx++){
           const {now_time, e, i} = db_arr[idx];
           newDataGraph[idx]["infura"] = i;
@@ -249,11 +259,13 @@ export default class Web3Ethereum extends  Component {
 
     // グラフ更新コールバック
     const getdata_callback = () => {
+      const BuildID = 'gasPrice';
       let up_time = parseInt( Date.now() / interval );
       let {dataGraph, GraphNo, avg, etherscan, infura} = this.state;
       let newDataGraph = [];
       // 6,000,000,000
       let write = true;
+
       GraphNo = avg = 0;
       //console.log('GasPrice', data, GraphNo, dataGraph[0], dataGraph[6]);
       for(let i = 0; i < dataGraph.length; i++){
@@ -283,15 +295,17 @@ export default class Web3Ethereum extends  Component {
       }
       this.setState({ dataGraph:newDataGraph, GraphNo, avg });
 
-      scanDynamoDB(table_name, scanParam, ( db_arr ) => {
-        let BuildID = 'gasPrice';
+      queryDynamoDB(table_name, scanParam, ( db_arr ) => {
         if(db_arr.length > gasPriceNum){
-          let {now_time} = db_arr[0];
-          delDynamoDB(table_name, {BuildID, now_time});
+          let max = db_arr.length - gasPriceNum + 1;
+          for( let i = 0; i < max; i++ ){
+            let {now_time} = db_arr[i];
+            delDynamoDB(table_name, {BuildID, now_time});
+          }
         }
-        if(etherscan && infura)
-          putDynamoDB(table_name, {BuildID, now_time:up_time, e:etherscan, i:infura});
       });
+      if(etherscan && infura)
+        putDynamoDB(table_name, {BuildID, now_time:up_time, e:etherscan, i:infura});
     };
 
     // Etherscan を使っての gasPrice 取得
@@ -528,7 +542,7 @@ export default class Web3Ethereum extends  Component {
   }
 
   render() {
-    if (!this.state.web3) {
+    if (!this.state.web3 || this.state.GraphNo === 0) {
       // web3 のインスタンスが入るまではここに入る
       return <div>Loading Web3, accounts, and contract...</div>;
     }
@@ -568,10 +582,12 @@ export default class Web3Ethereum extends  Component {
         <p>
           <button onClick={(e) => this.callDeploy(e)}>デプロイ</button>
           <button onClick={(e) => this.callLambdaDeploy.bind(e)}>デプロイ(Lambda)</button><br/>
-          
+        </p>
+        <p>
           <button onClick={(e) => this.sendLoop(e)}>送信の繰り返し</button>
           <button onClick={(e) => this.callLambdaDeploy_batch(e)}>batch request の確認</button><br/>
-          
+        </p>
+        <p>
           <button onClick={(e) => this.SendDeposit('1000')}>デポジット の確認</button><br/>
         </p>
         <button onClick={(e) => this.toLogWatch(e)}>ログ監視</button>

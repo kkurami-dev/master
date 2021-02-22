@@ -112,6 +112,18 @@ td, td {
   width: 15px;
 }
 
+table.type05 {
+  border-collapse:  collapse; /* セルの線を重ねる */
+}
+table.type05 tr:nth-child(odd) {
+  background-color:  #ddd;    /* 背景色指定 */
+}
+table.type05 th,td {
+  padding: 5px 10px;          /* 余白指定 */
+  width: 200px;               /* 通常は200pxで表示 */
+  max-width: 1000px;          /* 画面に収まりきらないときは100%の幅に */
+}
+
 table.type06 th {
   width: 150px;
   padding: 10px;
