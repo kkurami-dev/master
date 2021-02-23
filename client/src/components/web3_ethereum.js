@@ -2,6 +2,7 @@
  * 
  */
 import React, { Component } from 'react';
+import moment from "moment";
 /**
    web3.version : 1.2.6
    API: https://web3js.readthedocs.io/en/v1.2.6/web3-eth.html
@@ -328,7 +329,7 @@ export default class Web3Ethereum extends  Component {
     let io = setInterval(async () => {
       if(cb() !== true) clearInterval(io);
 
-      let web3 = new Web3('https://mainnet.infura.io/v3/' + config.infura_pjkey);
+      let web3;// = new Web3('https://mainnet.infura.io/v3/' + config.infura_pjkey);
       if (!this.state.web3) {
         console.log('not web3');
         return;
@@ -349,7 +350,7 @@ export default class Web3Ethereum extends  Component {
   };
   
   async callDeploy(e){
-    console.log('callDeploy S');
+    this.setState({ msg: "callDeploy" });
     const call = true;
     const web3 = this.state.web3;
     let obj, arg;
@@ -367,7 +368,7 @@ export default class Web3Ethereum extends  Component {
     obj = require("../contracts/UChildERC20Proxy.json");
     arg = ["0x80511563D5A1B4313e463D93dC4b5F0Edd42Ab4B"];
     await this.DeployContract(web3, obj, arg, call);
-    console.log('callDeploy E');
+    this.setState({ msg: "" });
   }
 
   async checkProxy(e){
@@ -393,10 +394,11 @@ export default class Web3Ethereum extends  Component {
     this.setState({ loop: false });
   }
   async sendLoop( event ){
-    let in_param = [{tx_param:[], act:2}];
     let now_time = Date.now();
+    this.setState({ msg: "callLambdaDeploy()\n" + moment().format("YYYY-MM-DD HH:mm:ssZ") });
+    let in_param = [{tx_param:[], act:2}];
     await this.callLambdaDeploy_sub( in_param );
-    console.log("callLambdaDeploy()", Date.now() - now_time);
+    this.setState({ msg: "callLambdaDeploy()" + Date.now() - now_time });
   }
 
   async callLambdaDeploy( event ){
@@ -548,11 +550,11 @@ export default class Web3Ethereum extends  Component {
     }
 
     if(this.state.first)  this.checkDynamoDB(this);
-    let {dataGraph, GraphNo, avg, etherscan, infura} = this.state;
+    let {dataGraph, GraphNo, avg, etherscan, infura, msg} = this.state;
     //if(this.state.first)  this.callLambdaDeploy(this);
     return (
       <div>
-        <h1>Good to Go!</h1>
+        <label className="attention">{msg}</label><h1>Good to Go!</h1>
         <table>
           <thead className="data">
             <tr>

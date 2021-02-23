@@ -82,7 +82,7 @@ export function queryDynamoDB( TableName, Key, cb) {
   try {
     docClient.query(params, function(err, data) {
       if (err) {
-        console.error("DynamoDB scan", params, err, err.stack);
+        console.error("DynamoDB query", params, err, err.stack);
       } else {
         //console.log("DynamoDB scan", data);
         for(let i = 0; i < data.Count; i++ ){

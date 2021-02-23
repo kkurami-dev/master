@@ -43,15 +43,15 @@ zipUpload(){
 #zipUpload myHelloWorld
 #zipUpload mySendToken
 
-#zipUpload BlockChainMain
+zipUpload BlockChainMain
 # aws lambda invoke --function-name BlockChainMain out \
 #     --log-type Tail --cli-binary-format raw-in-base64-out \
 #     --payload '{ "test": "Proxy" }' |  base64 -d
 
-zipUpload defFunc
-aws lambda invoke --function-name defFunc out \
-    --log-type Tail --cli-binary-format raw-in-base64-out \
-    --payload '{ "test": "Proxy" }' |  base64 -d
+# zipUpload defFunc
+# aws lambda invoke --function-name defFunc out \
+#     --log-type Tail --cli-binary-format raw-in-base64-out \
+#     --payload '{ "test": "Proxy" }' |  base64 -d
 
 #arn:aws:lambda:ap-northeast-1:176264229023:function:myHelloWorld
 #arn:aws:lambda:ap-northeast-1:176264229023:function:mySendToken
