@@ -1,5 +1,8 @@
-const AWS = require('aws-sdk');
-const docClient = new AWS.DynamoDB.DocumentClient();
+var AWS = require('aws-sdk'),
+    docClient = new AWS.DynamoDB.DocumentClient({
+  apiVersion: '2012-08-10',
+  region: "ap-northeast-1"
+});
 
 function gacha (config, rval) {
   let accum = 0;
@@ -52,14 +55,126 @@ async function main() {
   // console.log(gacha(config, 0.7)); // はずれ
 }
 
+async function putDynamoDB( Item ){
+  let TableName = 'delTest2';
+  let param = {
+    TableName, Item,
+    ReturnConsumedCapacity: 'TOTAL',
+    ReturnItemCollectionMetrics : 'SIZE',
+    ReturnValues: 'ALL_OLD'
+  };
+  console.log("putDynamoDB", param);
+
+  const call = new Promise((resolve, reject) => {
+    let ret_cunt = 0;
+    docClient.put(param, (err, data) => {
+      if(err) {
+        console.error("putDynamoDB err:", err);
+        reject( err );
+      } else if(data.Attributes){
+        ret_cunt++;
+        resolve( true );
+      } else if(data.ConsumedCapacity){
+        ret_cunt++;
+        resolve( true );
+      }
+      console.log("putDynamoDB:", data);
+      if( ret_cunt === 2 ){
+        console.log('putDynamoDB ok');
+        resolve( true );
+      }
+    });
+  });
+
+  let ret_val;
+  await call.then((value) => ret_val = value );
+  console.log('putDynamoDB end');
+  return param;
+}
+async function delDynamoDB( Key ){
+  let TableName = 'delTest2';
+  let param = {
+    TableName, Key,
+    ReturnConsumedCapacity:'TOTAL',
+    ReturnItemCollectionMetrics : 'SIZE',
+    ReturnValues:'ALL_OLD'
+  };
+  console.log("delDynamoDB", param);
+
+  //return param;
+  const call = new Promise((resolve, reject) => {
+    let ret_cunt = 0;
+    docClient.delete(param, (err, data) => {
+      if(err) {
+        console.error("delDynamoDB err:", err);
+        reject( err );
+      } else if(data.Attributes){
+        ret_cunt++;
+        resolve( true );
+      } else if(data.ConsumedCapacity){
+        ret_cunt++;
+        resolve( true );
+      }
+      console.log("delDynamoDB:", data);
+      if( ret_cunt === 2 ){
+        console.log('delDynamoDB ok');
+        resolve( true );
+      }
+    });
+  });
+
+  let ret_val;
+  try {
+    await call.then((value) => ret_val = value );
+  } catch( err ){
+    console.log('del NG', err);
+  }
+  console.log('del end');
+  return ret_val;
+}
+
 exports.handler = async (event, context, callback) => {
-  let params ={ TableName:'TestDB' };
-  docClient.scan(params, function(err, data) {
-  });
-  docClient.scan(params, function(err, data) {
-  });
-  docClient.scan(params, function(err, data) {
-  });
+  console.log("event", event);
+  if(0) return {msg:"ok"};
+  context.callbackWaitsForEmptyEventLoop = true;
+
+  try {
+    let params = { TableName:'TestDB' };
+    // let ret = await docClient.scan(params, function(err, data) {
+    //   if (err) console.err("scan", err, err.stack); // an error occurred
+    //   else     console.log("scan ok");           // successful response
+    // }).promise();
+    let ret = await docClient.scan(params).promise();
+    console.log("scan ok");
+  } catch(err){
+  }
+
+  let result;
+  try {
+    switch(event.func ){
+    case 'put':{
+      let Skey_test_da = Date.now() + ":" + context.awsRequestId;
+      let test_params = {
+        Pkey_test_da : "b0001-100-100",
+        Skey_test_da,
+        RequestId : context.awsRequestId,
+        logGroupName : context.logGroupName,
+        logStreamName : context.logStreamName
+      };
+      result = await putDynamoDB( test_params );
+      break;
+    }
+    case 'del':{
+      const {Pkey_test_da, Skey_test_da} = event;
+      result = await delDynamoDB( { Pkey_test_da, Skey_test_da } );
+      break;
+    }}
+  } catch(err){
+    console.error("main err:", err);
+    result = err;
+  }
+  callback( null, result );
+  if(1) return {msg: 'ok'};
 
   const max = 300;
   let items = [];

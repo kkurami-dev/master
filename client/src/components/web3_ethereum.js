@@ -111,13 +111,14 @@ export default class Web3Ethereum extends  Component {
 
       // Chorome の MetaMask 拡張機能でローカルの truffle に接続するので、このままで
       const web3 = await getWeb3();
+      const web3i = new Web3('https://mainnet.infura.io/v3/' + config.infura_pjkey);
       //const provider = new Web3.providers.HttpProvider("http://127.0.0.1:8545");
       //const provider = new Web3.providers.HttpProvider('https://rpc-mumbai.matic.today');
       //const web3 = new Web3(provider);
       console.log(web3);
 
       const accounts = await web3.eth.getAccounts();
-      this.setState({ web3, account: accounts[0], objTxRelay});
+      this.setState({ web3, web3i, account: accounts[0], objTxRelay});
 
       this.updateData(() => { return this.state.update === 'on'; });
 
@@ -329,17 +330,17 @@ export default class Web3Ethereum extends  Component {
     let io = setInterval(async () => {
       if(cb() !== true) clearInterval(io);
 
-      let web3;// = new Web3('https://mainnet.infura.io/v3/' + config.infura_pjkey);
-      if (!this.state.web3) {
+      let web3i;// = new Web3('https://mainnet.infura.io/v3/' + config.infura_pjkey);
+      if (!this.state.web3i) {
         console.log('not web3');
         return;
-      } else if(!web3){
-        web3 = this.state.web3;
+      } else if(!web3i){
+        web3i = this.state.web3i;
       }
 
       try {
         axiosBase.get(baseURL).then( http_callback ).catch( console.log );
-        web3.eth.getGasPrice().then( infura_callback );
+        web3i.eth.getGasPrice().then( infura_callback );
         getdata_callback();
       } catch(err){
         console.error('GasPrice catch', err);
@@ -372,6 +373,7 @@ export default class Web3Ethereum extends  Component {
   }
 
   async checkProxy(e){
+    
     const web3 = this.state.web3;
     const proxy = new web3.eth.Contract(proxyAbi, config.matic_token);
     const from = config.account;

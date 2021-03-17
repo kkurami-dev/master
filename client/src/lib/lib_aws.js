@@ -121,7 +121,7 @@ export function scanDynamoDB( TableName, Key, cb) {
   return Items;
 }
 export function putDynamoDB(TableName, Item, cb) {
-  let params ={
+  let params = {
     Item,
     TableName
   };

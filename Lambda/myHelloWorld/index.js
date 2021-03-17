@@ -1,4 +1,4 @@
-// Time-stamp: "2021-01-23 13:29:43 kuramitu"
+// Time-stamp: "2021-03-18 07:24:13 kuramitu"
 var AWS = require('aws-sdk');
 var docClient = new AWS.DynamoDB.DocumentClient({
   apiVersion: '2012-08-10',
@@ -26,23 +26,23 @@ async function callLambda(FunctionName, payload) {
   let th = {};
   TimeLog( th );
   console.log("callLambda start", TimeLog( th ));
-  let call = new Promise((resolve, reject) => {
+  let call = new Promise( async (resolve, reject) => {
     let Payload = JSON.stringify( payload );
     var params = {
       FunctionName,
       Payload,
     };
-    lambdaClient.invoke(params, (err, data) => {
+    await lambdaClient.invoke(params, async (err, data) => {
       console.log("callLambda callback", TimeLog( th ));
       if(err) {
         console.error(err);
-        reject( err );
+        await reject( err );
       } else {
         if(!data)
-          resolve( data );
+          await resolve( data );
         if(data.Payload){
           let out = JSON.parse( data.Payload );
-          resolve( out );
+          await resolve( out );
         }
       }
     });
@@ -116,6 +116,17 @@ exports.queryTest = async (event, context, callback) => {
 };
 
 exports.handler = async (event, context, callback) => {
+  console.log("event, context, callback", event, context, callback);
+  let ret = await callLambda( 'defFunc', {func: 'put'});
+  console.log("return put val", ret);
+  if(ret && ret.Item){
+    ret.func = 'del';
+    ret = await callLambda( 'defFunc', {func:'del', ...ret.Item});
+  }
+  console.log("return del val", ret);
+  callback(null, {msg:'ok'});
+
+  if(1) return;
   let th = {}, result;
   TimeLog( th );
   const payload = { in_param: [ { tx_param: [], act: 2 }, { tx_param: [], act: 2 } ] }

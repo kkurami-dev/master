@@ -10,6 +10,7 @@ if [ $# -gt 1 ]; then
 fi
 
 zipUpload(){
+    echo "#----------------------------------------"
     # 引数に命名
     FPATH=$1
 
@@ -24,7 +25,7 @@ zipUpload(){
         --function-name ${FPATH} \
         --zip-file fileb://${UZIP} \
         --region "ap-northeast-1" \
-        --publish 
+        --publish  > log
     rm -rf ${ZIP}
 
     # echo "# Lambda関数 ${FPATH} の直接実行"
@@ -40,10 +41,11 @@ zipUpload(){
     #     --log-type Tail
 }
 
-#zipUpload myHelloWorld
+zipUpload defFunc
+zipUpload myHelloWorld
 #zipUpload mySendToken
 
-zipUpload BlockChainMain
+#zipUpload BlockChainMain
 # aws lambda invoke --function-name BlockChainMain out \
 #     --log-type Tail --cli-binary-format raw-in-base64-out \
 #     --payload '{ "test": "Proxy" }' |  base64 -d

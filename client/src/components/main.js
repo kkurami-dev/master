@@ -17,6 +17,7 @@ import { withRouter } from 'react-router';
 // リスト
 //   https://jquense.github.io/react-widgets/api/DateTimePicker/
 import { DateTimePicker } from 'react-widgets';
+import TablePagination from '@material-ui/core/TablePagination';
 
 import moment from "moment";
 import 'moment/min/locales';
