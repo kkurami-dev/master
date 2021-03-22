@@ -17,7 +17,8 @@ import { withRouter } from 'react-router';
 // リスト
 //   https://jquense.github.io/react-widgets/api/DateTimePicker/
 import { DateTimePicker } from 'react-widgets';
-import TablePagination from '@material-ui/core/TablePagination';
+//import TablePagination from '@material-ui/core/TablePagination';
+import { DataGrid } from '@material-ui/data-grid';
 
 import moment from "moment";
 import 'moment/min/locales';
@@ -72,10 +73,17 @@ class Main extends Component {
   constructor(props) {
     super(props);
 
+    const columns = [
+      {field: 'id', headerName: 'ID', width: 70 },
+      {field: 'value', headerName: 'VAL', width: 130 },
+      {field: 'data1', headerName: 'DATA1', width: 130 },
+      {field: 'data4', headerName: '内容', width: 160 },
+    ];
+    
     const bigdata = [];
     for(let i = 0; i < 20000; i++){
       let val = getRandomInt(0, 100000000000000000000000000000000);
-      bigdata.push( { idx:i,
+      bigdata.push( { id: i + 1,
                       value: 'strawberry1' + i,
                       label: 'Strawberry1'+i,
                       data1:100000000000000 + i,
@@ -87,6 +95,7 @@ class Main extends Component {
     }
 
     this.state = {
+      columns,
       bigdata,
       item: null
     };
@@ -158,53 +167,27 @@ class Main extends Component {
 
   render() {
     const items = ['Sun', 'Mon', 'Tue', 'Wed'];
-    const data = this.state;
+    const {data, columns, bigdata } = this.state;
     return (
       <>
         <h1>Main</h1>
         <ul>
           <li></li>
         </ul>
-          <div className="leftMenu">test1<br/>test1<br/>
-          </div>
-          <div className="split">test2<br/>test2<br/>
-            <button onClick={(e) => this.clean_select(e)}>複数選択の削除</button><br/>
-            <DateTimePicker defaultValue={new Date()}
-                            onChange={val => this.setState({ time:val })}/>
-            <Select options={options}
-                    onChange={val => this.setState({ item:val })}
-                    value={data.item}
-                    isMulti />
-            <button className="box" onClick={this.gacha} name="send">ガチャ</button>
-            <button className="box" onClick={this.gachasub} name="send">ガチャ(1回)</button><br/>
-            {/* テーブルの書き方 https://code-kitchen.dev/html/table/ */}
-            <table className="type05">
-              <thead>
-                <tr>
-                  <th>id</th>
-                  <th>data1</th>
-                  <th>data2</th>
-                  <th>data3</th>
-                  <th>data4</th>
-                  <th>data5</th>
-                  <th>data6</th>
-                  <th>data7</th>
-                  <th>data8</th>
-                </tr>
-              </thead>
-              <tbody>{data.bigdata.map(
-                (item, id) => ( <tr key={id}>{
-                  Object.keys(data_def).map((key, iid) => <td key={iid}>{
-                    !item[key] ? '-' :
-                      item[key] === null ? 'null' :
-                      typeof item[key] === 'boolean' ? (item[key] ? 'true' : 'false') :
-                      typeof item[key] === 'Object' ? item[key].toString() :
-                      item[key]
-                  }</td>)
-                }</tr>)
-              )}</tbody>
-            </table>
-          </div>
+        <div className="leftMenu">test1<br/>test1<br/>
+        </div>
+        <div className="split">test2<br/>test2<br/>
+          <button onClick={(e) => this.clean_select(e)}>複数選択の削除</button><br/>
+          <DateTimePicker defaultValue={new Date()}
+                          onChange={val => this.setState({ time:val })}/>
+          <button className="box" onClick={this.gacha} name="send">ガチャ</button>
+          <button className="box" onClick={this.gachasub} name="send">ガチャ(1回)</button><br/>
+          {/* テーブルの書き方 https://code-kitchen.dev/html/table/ */}
+        </div>
+        <div style={{ height: 800, width: '100%' }}>
+          <DataGrid rows={bigdata} columns={columns}
+                    pageSize={200} rowHeight={35} loading={bigdata.length === 0} />
+        </div>
         {this.props.children}
       </>
     );

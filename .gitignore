@@ -158,3 +158,4 @@ local.properties
 /contracts/MyToken.sol
 /migrations/2_deploy_contracts.js
 /migrations/3_deploy_contracts.js
+/Lambda/log

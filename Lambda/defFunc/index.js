@@ -155,7 +155,7 @@ exports.handler = async (event, context, callback) => {
     case 'put':{
       let Skey_test_da = Date.now() + ":" + context.awsRequestId;
       let test_params = {
-        Pkey_test_da : "b0001-100-100",
+        Pkey_test_da : "gacha-b0001-11",
         Skey_test_da,
         RequestId : context.awsRequestId,
         logGroupName : context.logGroupName,

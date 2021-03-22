@@ -1,4 +1,4 @@
-// Time-stamp: "2021-03-18 07:24:13 kuramitu"
+// Time-stamp: "2021-03-19 21:02:36 kuramitu"
 var AWS = require('aws-sdk');
 var docClient = new AWS.DynamoDB.DocumentClient({
   apiVersion: '2012-08-10',
@@ -116,17 +116,20 @@ exports.queryTest = async (event, context, callback) => {
 };
 
 exports.handler = async (event, context, callback) => {
+  let put_ret, del_ret;
   console.log("event, context, callback", event, context, callback);
-  let ret = await callLambda( 'defFunc', {func: 'put'});
-  console.log("return put val", ret);
-  if(ret && ret.Item){
-    ret.func = 'del';
-    ret = await callLambda( 'defFunc', {func:'del', ...ret.Item});
+  put_ret = await callLambda( 'defFunc', {func: 'put'});
+  console.log("return put val", put_ret);
+  if(put_ret && put_ret.Item){
+    put_ret.func = 'del';
+    del_ret = await callLambda( 'defFunc', {func:'del', ...put_ret.Item});
   }
-  console.log("return del val", ret);
-  callback(null, {msg:'ok'});
+  console.log("return del val", del_ret);
+  let param = {msg:'ok', put_ret, del_ret};
+  return param;
+  //callback(null, param);
 
-  if(1) return;
+  if(1) return param;
   let th = {}, result;
   TimeLog( th );
   const payload = { in_param: [ { tx_param: [], act: 2 }, { tx_param: [], act: 2 } ] }
