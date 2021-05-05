@@ -1,0 +1,10 @@
+---
+setting: "aaa"
+base:
+  BBB:
+    data1: "a"
+    data2: "a"
+  CCC:
+    user_data:
+      paths: ""
+      
