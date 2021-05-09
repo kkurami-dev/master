@@ -15,15 +15,22 @@ jq 'reduce inputs as $s (.; .CCC.user_data |= .+$s)' YamelBase.json b.json > c.j
 memo='
 https://docs.aws.amazon.com/cli/latest/index.html
 
+WSS の設定取得とか
 https://docs.aws.amazon.com/cli/latest/reference/apigatewayv2/index.html
- aws apigatewayv2 --region us-east-1 create-deployment --api-id aabbccddee
+  aws apigatewayv2 --region us-east-1 create-deployment --api-id aabbccddee
   
- aws apigatewayv2 get-stage \
-     --api-id a1b2c3d4 \
-     --stage-name prod
+  aws apigatewayv2 get-stage \
+      --api-id a1b2c3d4 \
+      --stage-name prod
 
+Lmbda レイヤー
 https://docs.aws.amazon.com/cli/latest/reference/lambda/index.html
-aws lambda list-layers \
-    --compatible-runtime nodejs
+  aws lambda list-layers \
+      --compatible-runtime nodejs
+
+CloudWatch イベント
+https://docs.aws.amazon.com/cli/latest/reference/events/index.html
+  aws events list-rules
+
 ';
 
