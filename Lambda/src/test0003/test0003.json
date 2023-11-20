@@ -1,0 +1,35 @@
+{
+  "FunctionName": "test0003",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:test0003",
+  "Runtime": "nodejs18.x",
+  "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+  "Handler": "index.handler",
+  "CodeSize": 23659,
+  "Description": "",
+  "Timeout": 40,
+  "MemorySize": 128,
+  "LastModified": "2023-02-10T12:31:48.000+0000",
+  "CodeSha256": "ccnEe+W5fKZw8wu2bWeYXWN3zxFuOvw3Oym2Rynh5fM=",
+  "Version": "$LATEST",
+  "Environment": {
+    "Variables": {
+      "LIB_DEBUG_MODE": "true"
+    }
+  },
+  "TracingConfig": {
+    "Mode": "PassThrough"
+  },
+  "RevisionId": "aec663d2-a7f8-48ca-a459-1c161b70b799",
+  "Layers": [
+    {
+      "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:MyLayer:1",
+      "CodeSize": 1902245
+    }
+  ],
+  "State": "Active",
+  "LastUpdateStatus": "Successful",
+  "PackageType": "Zip",
+  "Architectures": [
+    "x86_64"
+  ]
+}

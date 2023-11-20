@@ -1,0 +1,67 @@
+------
+Boto3 ドキュメント( python で AWS をいろいろ操作する時のAPIリファレンスス）
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp.html
+
+------
+・API Gateway のログ出力設定を行う
+  API GatewayのアクセスログをCloudWatchに記録する
+  https://www.yamamanx.com/api-gateway-cloudwatch-accesslog/
+
+・API Gateway 実行できる Cognito User Pool Group を設定
+ APIGatewayのリソースパスをCognitoで認可制御したい件
+ https://qiita.com/NewGyu/items/6dd998408bbbc46bcb91
+ 1．Cognito ユーザプール作成
+ 2．ユーザプールにグループ作成（role の割り当て）
+ 3．APIGateway のリソースポリシーを設定
+    前手順作成したのロール指定で許可設定をおこなう
+    ・サンプルのAWSアカウントの許可リストに記載がある Principal にロールが指定できる事が記載されている
+    ・Cognito でグループを作成、グループにロールを設定できる
+    参考URL：
+      https://docs.aws.amazon.com/ja_jp/apigateway/latest/developerguide/apigateway-authorization-flow.html
+      https://docs.aws.amazon.com/ja_jp/apigateway/latest/developerguide/apigateway-resource-policies-aws-condition-keys.html
+      https://qiita.com/NewGyu/items/6dd998408bbbc46bcb91
+例）
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": "arn:aws:execute-api:ap-northeast-1:176264229023:4r3ki42pi3/my-api/*/login"
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::176264229023:role/admin"
+            },
+            "Action": "execute-api:Invoke",
+            "Resource": "arn:aws:execute-api:ap-northeast-1:176264229023:4r3ki42pi3/*"
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::176264229023:role/operator"
+            },
+            "Action": "execute-api:Invoke",
+            "Resource": "arn:aws:execute-api:ap-northeast-1:176264229023:4r3ki42pi3/my-api/GET/myhelloworld2"
+        },
+        {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": "arn:aws:execute-api:ap-northeast-1:176264229023:4r3ki42pi3/*"
+        }
+    ]
+}
+
+---
+レイヤー作成
+aws lambda publish-layer-version --layer-name my-layer --description "My layer"  \ 
+  --license-info "MIT" --content S3Bucket=lambda-layers-us-east-2-123456789012,S3Key=layer.zip \
+  --compatible-runtimes python3.6 python3.7 python3.8 \
+  --compatible-architectures "arm64" "x86_64"
+
+---
+
+・mTLS 認証

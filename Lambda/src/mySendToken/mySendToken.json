@@ -1,0 +1,30 @@
+{
+  "FunctionName": "mySendToken",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:mySendToken",
+  "Runtime": "nodejs14.x",
+  "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+  "Handler": "index.handler",
+  "CodeSize": 5772,
+  "Description": "",
+  "Timeout": 603,
+  "MemorySize": 512,
+  "LastModified": "2022-12-17T13:15:19.242+0000",
+  "CodeSha256": "fPB6bYDNSQ3Y8uPCTZY6y09BP8xk+ocyHpcudFyozcQ=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "PassThrough"
+  },
+  "RevisionId": "1fdd6d0e-842e-470b-adbf-02c7fdabe26a",
+  "Layers": [
+    {
+      "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:web3:13",
+      "CodeSize": 21431492
+    }
+  ],
+  "State": "Active",
+  "LastUpdateStatus": "Successful",
+  "PackageType": "Zip",
+  "Architectures": [
+    "x86_64"
+  ]
+}

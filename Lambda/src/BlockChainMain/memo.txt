@@ -1,0 +1,51 @@
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/022KbD1NPdb2YQ0Wi6vC"));
+
+var Tx = require('ethereumjs-tx');
+const testHashCoinAdvanced = require('./build/TokenERC20.json');
+
+var privateKey = new Buffer('f6da78c45601d9ae02fcdb161e44a15a99e5e1fb1aa931dd95366add5dec367e', 'hex')
+
+
+const deploy = async()=>{
+ 
+           var contract = new web3.eth.Contract(JSON.parse(testHashCoinAdvanced[':TokenERC20'].interface));
+          const hexdata = contract.deploy({
+              data: '0x' + testHashCoinAdvanced[':TokenERC20'].bytecode,
+              arguments:[1000,"HashCoin","HC"]
+           }).encodeABI()
+
+           const nonce = await web3.eth.getTransactionCount( "0x7Fb11F6A52e20BDFfaa08c468cD4848b901b7B70" );
+           const nonceHex = web3.utils.toHex(nonce)
+const gasPriceHex = web3.utils.toHex(3 * 1e9);
+// const estimatedGas = await testCoinContractDeploy.estimateGas();
+  var rawTx = {
+      nonce: nonceHex,
+      gasPrice: web3.utils.toHex(30000000000),
+      gasLimit: web3.utils.toHex(6100500),
+      data: "0x"+hexdata
+  }
+
+  var tx = new Tx(rawTx);
+  tx.sign(privateKey);
+
+  var serializedTx = tx.serialize();
+
+  console.log(serializedTx.toString('hex')); 
+
+  web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('receipt', console.log);
+
+};
+deploy();
+
+
+implementation
+proxyOwner
+proxyType
+
+transferProxyOwnership
+updateAndCall
+updateImplementation
+
+fallback()

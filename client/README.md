@@ -1,68 +1,57 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Cypress で自動テスト
+公式
+* https://runebook.dev/ja/docs/cypress/-index-
+* https://docs.cypress.io/guides/references/troubleshooting#Support-channels
+* https://softwarenote.info/p1454/
 
-## Available Scripts
+はじめに
+* https://qiita.com/oh_rusty_nail/items/58dcec335d67e81816dd
 
-In the project directory, you can run:
+## セットアップ
+    1. モジュールのインストール  
+       $ npm i -D cypress@9.7.0 cypress-file-upload cypress-wait-until
 
-### `yarn start`
+    2. cypress/support/commands.js 追加モジュールの利用設定を追記
+       import 'cypress-file-upload';
+       import 'cypress-wait-until';
+       
+    3. 対象の URL を cypress.json に記載
+       {
+         "baseUrl": "http://localhost:3000"
+       }
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## 確認手順
+    1. npm start でテスト対象を起動（ Web なら不要 )
+    2. npx cypress open で起動
+    3. Running integration tests で全テスト、テスト対象の選択で部分テスト
+    4. 問題があれば修正（自動で再読込、再テストされる）
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+ディレクトリの役割
+* cypress.json       : 設定を記載(確認対象の URL、テスト動画の保存)
+* cypress/integration: テストコードの置き場所
+* cypress/fixtures   : アップロード確認用のファイルの置き場所
+* cypress/support/commands.js: 共通で使用するモジュール、関数などの記載場所
+* cypress/downloads  : ダウンロードしたファイルの置き場所
 
-### `yarn test`
+## 最近の仕様変更
+* 部品の非表示確認は .should('not.be.visible') ではなく.should('not.exist')   
+  .should('not.be.visible') ：部品は存在するが、表示されていない  
+  .should('not.exist') ：存在していない( mui などはこちら )
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* 
 
-### `yarn build`
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 参考サイト
+* 複数サイト：https://qiita.com/aomoriringo/items/187af32eeac869182648
+* アップロード関連：https://engineer-ninaritai.com/cypress-file-upload/
+* ダウンロード関連：https://qiita.com/hi-oowada/items/ec692cf03af86d2528ce
+* 設定変更など：https://runebook.dev/ja/docs/cypress/api/commands/viewport
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+# React の準備
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## モジュールの削除（バックグランドで）
+$ rm -rf ./package-lock.json ; mv node_modules node_modules_back ; rm -rf node_modules_back &  
 
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can窶冲 go back!**
-
-If you aren窶冲 satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you窶决e on your own.
-
-You don窶冲 have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn窶冲 feel obligated to use this feature. However we understand that this tool wouldn窶冲 be useful if you couldn窶冲 customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+## モジュールのインストール
+$ cat ./package.json | jq -r '.dependencies| keys | .[]' | awk '{print "call npm i "$1}' > npm_ins.bat  
+$ cat ./package.json | jq -r '.dependencies ' | sed 's/[{}" ]//g' | awk -F: '{print "call npm i "$1"@"$2}'  

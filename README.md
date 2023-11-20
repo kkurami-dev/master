@@ -1,5 +1,107 @@
 -*- coding: utf-8-unix -*-
 
+# さいしょに
+## 管理関連(アカウント申請)
+1. CM:購入要件ファイルを送ってもらう
+1. CM:イントラ申請、誓約書を提出
+1. CM:アカウントを申請、申請結果を教えてもらう
+1. L:クラウドのメールアドレスを申請
+1. L:メールアドレスが割り当てられたら
+   * CM:VPCを申請してもらう
+   * CM:Box, ソフトウェアファクトリーの申請を依頼
+   * PM:Readmine に登録依頼
+   * L:Temas に登録依頼
+1. PL:Redmine に接続(アカウント作成してもらう)
+1. SC:AWS へのアカウントを作ってもらい、ロールを割り当ててもらう
+
+## 情報
+* 基本作業時間： 午前：8:30～12:00、午後：13:00～17:15 ( 1日6時間以上作業する場合は、1時間の休憩）
+* 週初め：WindowsUpdate、内部セキュリティ更新、今月の稼働時間、稼働見込みを報告
+* 毎日 作業開始時：Teams に作業開始報告、朝会、
+* 毎日 作業終了時：Teams に作業開始報告、その日の作業の進捗を進捗率や項目数などで報告
+* 退館時：２ヵ月より前に契約先に連絡、１ヵ月より前に現場に連絡、シンクラPCの返却チェックリストを確認
+
+## 初期設定
+* シンクラPCの受け取り（現場で）
+* AzureMFA の設定
+* 持ち出し携行品の申請（入館時に申請、定期的に継続申請、退館時に返却申請）
+* 誓約書の提出
+* eラーニングの実施（受講結果のファイルの提出）
+* Zoom の接続 ( SSO で n*-gobal )
+* Box へのアクセス確認
+* 必要ソフトのインストール( 許可されていないソフトのインストール禁止 )
+  * VSCode ( プラグインを入れる：日本語化、[paletter, esline](https://qiita.com/s-yoshida/items/a986e052ab4ede79740d) )
+  * GitExtiensions ( [Gitを使ったバージョン管理](https://backlog.com/ja/git-tutorial/intro/01/) )
+  * WinMerge
+  * NodeJS
+  * AWS CLI V2(aws の config 設定を行う ~/.aws/config)
+* https か[git-remote-codecommit ](https://docs.aws.amazon.com/ja_jp/codecommit/latest/userguide/setting-up-git-remote-codecommit.html) を使用して、Git で必要なものをクローン
+* リアクトアプリの起動確認
+  1. Windows コマンドプロンプトで
+      ``` bat
+      > aws sts ＜指定されたスイッチロール名＞ --profile ＜作成したプロファイル名＞
+      ```
+  1. Git Bash のコマンドプロンプトで
+      ``` bash
+      $ cd ＜クローンしたフォルダ＞
+      $ npm i
+      $ npm start
+      ```
+
+## AWS コンソールで Lambda の実装をお試しする
+* Lambda ( Nodejs18 でコーディング )
+  * ハンドラーからサブ関数実行
+  * Lambda から dynamodb にアクセス、更新
+  * Amazon CloudWatch でログを確認し、デバッグ
+* APIGateway ( REST API の作成、リソースの作成、メソッドの作成, Cognito )
+* DynamoDB の操作
+
+## React アプリを確認する
+* 部品は mui を使う
+* 外部API は axios を使用
+* 勉強サイト
+  * [Reactを学ぶ上で知っておくべきJavaScriptの基本概念](https://qiita.com/KNR109/items/d127687d54a12e992143)
+  * [React入門（簡単計算アプリを作ってみよう）](https://tech.e3factory.com/programming/2586)
+  * [初めてのReact「入門編」導入から基本まで〜TODOアプリを作ってを学ぼう！](https://wk-partners.co.jp/homepage/blog/hpseisaku/javascript/react-start/)
+  * [React入門チュートリアル (5) ToDoアプリを作ってみよう](https://www.hypertextcandy.com/react-tutorial-05-wrap-up-with-todo-app)
+  * [フロントエンド(React)の技術質問](https://qiita.com/KNR109/items/e13a5c5b8b461e846902)
+  * [Reactパフォーマンス最適化まとめ](https://qiita.com/KNR109/items/9f7ec8dd03d0bea8dc35)
+
+* ライフサイクル
+![ライフサイクル](https://wk-partners.co.jp/homepage/wp-content/old-uploads/entryimg/6d2e4244cf0a13037263a2f6c7d32121.png)
+
+## Git でソース管理
+
+## AWS CLI で Lambda を更新する（bash で実行)
+
+## 使用サービスなど
+* Lambda の実装関連でAWS 関連 [AWS SDK V3 リファレンス](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/) を必要に応じて参照する
+  * Lambda ( CallLambda, 
+  * CloudWatch
+  * DynamoDB ( Get, Query, BatchGet, BatchWrite, TransactWrite の実行)
+  * APIGateway
+  * SSM
+  * S3
+  * SES
+  * SNS
+  * KMS
+  * IAM
+  * Cognito
+* 定期実行関連
+  * EventBridge
+* リリース関連
+  * AWS CLI
+    * lambda : update-function-code, update-function-configuration
+    * apigateway
+  * CodeCommit
+  * CodeBuild
+  * CodePipeline
+  * CloudFormation
+* Webページ関連
+  * CloudFront
+  * Rute53
+  * S3
+
 # React のもろもろ
 ## バージョン
   | soft | version |
@@ -8,7 +110,10 @@
   | expo-cli --version |  3.13.1 |
   
 $ npm version
-```
+
+<details><summary>結果サンプル</summary>
+
+``` json
 { npm: '6.4.1',
   ares: '1.15.0',
   cldr: '33.1',
@@ -25,23 +130,24 @@ $ npm version
   v8: '6.8.275.32-node.45',
   zlib: '1.2.11' }
 ```
+</details>
 
 参考
-- [web3 1.2.6 リファレンス](https://web3js.readthedocs.io/en/v1.2.6/web3-utils.html#towei)
-- [AWS SKD nodejs API仕様書](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#invokeAsync-property)
+---
 - [JavaScript リファレンス](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference)
 - [スタイルシートの例など](https://webparts.cman.jp/string/blink/)
-
-
+- [CSSリファレンス](http://www.tohoho-web.com/css/index.htm)
+---
+- [AWS SKD nodejs API仕様書](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#invokeAsync-property)
 - [AWS CLI:AWS Command Line Interface ユーザガイド](https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/cli-chap-welcome.html)
-
-
+---
 - [Reac ドキュメント](https://ja.reactjs.org/docs/getting-started.html)
 - [REACT パフォーマンス最適化](https://ja.reactjs.org/docs/optimizing-performance.html)
 - [初めてReactを触ってみたが、ログイン周りの決定打が見つからなかったので自分で書いてみた。](https://qiita.com/ginban22/items/a36d01b41deaeedd581e)
-
-
 - [リロードしてもデータを保持するためには「localStorage」](https://qiita.com/Ryusou/items/8bce84e7b036114b8d72)
+- [DropdownList の例 ※そのままでは動作しない部分もある](https://jquense.github.io/react-widgets/api/DropdownList/#onSearch)
+---
+- [web3 1.2.6 リファレンス](https://web3js.readthedocs.io/en/v1.2.6/web3-utils.html#towei)
 - [Geth コンソールコマンド一覧](https://qiita.com/Yuto421/items/2e13e1706d708321d356)
 - [Ethereum Geth コンソールコマンド一覧](https://qiita.com/toshikase/items/fa7a826db483177d1e80)
 - [Ethereum入門](https://book.ethereum-jp.net/)
@@ -164,8 +270,6 @@ exp build:android
 01. Page1DetailScreen.js
 01. Page1DetailScreen2.js
 
-
-
 ----------------------------------------
                     navigationOptions: {
                         ({ navigation }) => ({
@@ -180,6 +284,9 @@ exp build:android
                     },
 ----------------------------------------
 
+<details><summary>結果サンプル</summary>
+
+``` json
   "expo": {
    "name": "Your App Name",
    "icon": "./path/to/your/app-icon.png",
@@ -193,6 +300,8 @@ exp build:android
      "package": "com.yourcompany.yourappname"
    }
   }
+```
+</details>
 
 ----------------------------------------
 https://exp.host/@kuramitsu/expo_sample
@@ -262,7 +371,10 @@ CustomSidebarMenu.js
 
 ----------------------------------------
 ## 画像に回転するようなアニメーションを行う
-``` nodejs
+
+<details><summary>サンプルコード</summary>
+
+``` javascript
 // 必要となるモジュール
 import {
   StyleSheet, Animated, View, Easing,
@@ -322,6 +434,8 @@ const styles = StyleSheet.create({
   },
 });
 ```
+
+</details>
 
 ## ボタンを押して、文字列反映
 ```

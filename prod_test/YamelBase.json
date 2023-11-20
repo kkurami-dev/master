@@ -1,0 +1,19 @@
+{
+  "setting": "aaa",
+  "base": "bbb",
+  "BBB": {
+    "data1": "a",
+    "data2": "a"
+  },
+  "CCC":{
+    "user_data": {
+      "swagger": "2.0",
+      "paths": ""
+    }
+  },
+  "data":[
+    {
+      "aaa": "aaa"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "FunctionName": "test0004",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:test0004",
+  "Runtime": "nodejs16.x",
+  "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+  "Handler": "index.handler",
+  "CodeSize": 285,
+  "Description": "",
+  "Timeout": 3,
+  "MemorySize": 128,
+  "LastModified": "2023-02-10T13:01:17.000+0000",
+  "CodeSha256": "/Ao5dmmEnFIzfcT9yNoEjHHKjzpmCw6BkYtUWwdkjNI=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "PassThrough"
+  },
+  "RevisionId": "3eaacd8e-2ee0-4a5b-b130-4543fb6599c3",
+  "State": "Active",
+  "LastUpdateStatus": "Successful",
+  "PackageType": "Zip",
+  "Architectures": [
+    "x86_64"
+  ]
+}

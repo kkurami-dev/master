@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@aws-sdk/client-scheduler": "^3.267.0",
+    "fflate": "^0.8.1"
+  }
+}

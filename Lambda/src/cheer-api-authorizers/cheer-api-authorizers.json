@@ -1,0 +1,24 @@
+{
+  "FunctionName": "cheer-api-authorizers",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:cheer-api-authorizers",
+  "Runtime": "nodejs14.x",
+  "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+  "Handler": "index.handler",
+  "CodeSize": 537,
+  "Description": "",
+  "Timeout": 3,
+  "MemorySize": 128,
+  "LastModified": "2022-10-10T08:58:37.532+0000",
+  "CodeSha256": "kumoXJ/OXOoGVNylxb0GoYnAgzly8BUr+CZ//QeMJiA=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "PassThrough"
+  },
+  "RevisionId": "36910f91-3879-4aba-b444-06a592037935",
+  "State": "Active",
+  "LastUpdateStatus": "Successful",
+  "PackageType": "Zip",
+  "Architectures": [
+    "x86_64"
+  ]
+}

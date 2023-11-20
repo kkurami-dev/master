@@ -1,0 +1,24 @@
+{
+  "FunctionName": "myHelloWorld",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:myHelloWorld",
+  "Runtime": "nodejs14.x",
+  "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+  "Handler": "index.handler",
+  "CodeSize": 276,
+  "Description": "",
+  "Timeout": 3,
+  "MemorySize": 128,
+  "LastModified": "2022-10-12T12:55:31.865+0000",
+  "CodeSha256": "JwgeN9ej7QhrZFHxYfqRWhFHB6mAuGTdx4jucrfThT8=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "PassThrough"
+  },
+  "RevisionId": "234202de-265f-4fac-bc27-8beb13551b28",
+  "State": "Active",
+  "LastUpdateStatus": "Successful",
+  "PackageType": "Zip",
+  "Architectures": [
+    "x86_64"
+  ]
+}

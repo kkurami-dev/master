@@ -1,0 +1,31 @@
+{
+  "FunctionName": "operation-cognito",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:operation-cognito",
+  "Runtime": "python3.9",
+  "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+  "Handler": "lambda_function.lambda_handler",
+  "CodeSize": 2026,
+  "Description": "",
+  "Timeout": 3,
+  "MemorySize": 128,
+  "LastModified": "2022-11-08T12:58:07.403+0000",
+  "CodeSha256": "ZUOjbOEz1ziOa5XkYWRjzweEDzxGgySaAAtvNm0idmc=",
+  "Version": "$LATEST",
+  "Environment": {
+    "Variables": {
+      "USERPOOLID": "ap-northeast-1_yXFT8HNNa",
+      "CLIENTID": "4qopfm69rvhcfmvt5ou6bg3gp2",
+      "REGION": "ap-northeast-1"
+    }
+  },
+  "TracingConfig": {
+    "Mode": "PassThrough"
+  },
+  "RevisionId": "2bdbf3a6-1035-4e0a-9c9a-b5adb1d6044c",
+  "State": "Active",
+  "LastUpdateStatus": "Successful",
+  "PackageType": "Zip",
+  "Architectures": [
+    "x86_64"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+    "FunctionName": "vci-authorizers",
+    "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:vci-authorizers",
+    "Runtime": "nodejs18.x",
+    "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+    "Handler": "index.handler",
+    "CodeSize": 906,
+    "Description": "",
+    "Timeout": 900,
+    "MemorySize": 2048,
+    "LastModified": "2023-09-29T03:03:47.000+0000",
+    "CodeSha256": "to8uQKoUk47/z1dASsD49zKffHN7ep/yDa9fF46G7yg=",
+    "Version": "$LATEST",
+    "Environment": {
+        "Variables": {
+            "TEST2": "BBB",
+            "TEST1": "AAA"
+        }
+    },
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "d8c79a0b-a29d-4f51-bcbf-5f7b1998ce9c",
+    "Layers": [
+        {
+            "Arn": "arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:60",
+            "CodeSize": 4198176
+        },
+        {
+            "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:MyLayer:1",
+            "CodeSize": 1902245
+        },
+        {
+            "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:my-layer:6"
+        }
+    ],
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 1024
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:ap-northeast-1::runtime:d1151b12ca57ae5a7756c59d01d400082fbc5866d3a96d51cf4839c32c5d2a7e"
+    }
+}

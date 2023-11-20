@@ -55,11 +55,21 @@
   /* scroll-behavior: smooth; */
 }
 
+.datetime {
+  width: 50%;
+  padding: 3px 5px;
+}
+.DateTimePickerContainer {
+  width: 100%;
+  padding: 5px 5px;
+}
+
 /* menu  */
 .dropDownMenu {
   position: relative;
   text-align: left;
   padding: 3px 5px;
+  z-index: 1;
 }
 .menuButton {
   display: inline;
@@ -68,25 +78,50 @@
   padding: 3px 5px;
 }
 .menuBox {
+  /* background-color: #cae4ff; */
+  background-color: #ffffff;
   position: absolute;
-  top: 23px;
-  width: 120px;
-  zIndex: 1;
-  cursor: pointer;
-  border: 1px solid black;
+  /* top: 23px; */
+  /* width: 120px; */
+  z-Index: 1;
+  /* cursor: pointer; */
+  /* border: 1px solid black; */
+  /* --- 文字情報設定 ------------------------------ */
+  font-size      : 11pt;         /* 文字サイズ       */
+  letter-spacing : 0em;          /* 文字間隔         */
+  line-height    : 1em;          /* 行間隔（1行高さ）*/
 }
 .menuContent {
   padding: 3px 5px;
-  borderBottom: 1px solid black;
+  /* borderBottom: 1px solid black; */
 }
 .lastMenuContent {
   padding: 3px 5px;
+}
+.menuContent:hover {
+  background-color: rgb(230, 230, 240);
 }
 
 table, th, td {
   border-collapse: collapse;
   border: 1px solid #ccc;
   line-height: 1.5;
+}
+td, td {
+  padding: 10px;
+  width: 15px;
+}
+
+table.type05 {
+  border-collapse:  collapse; /* セルの線を重ねる */
+}
+table.type05 tr:nth-child(odd) {
+  background-color:  #ddd;    /* 背景色指定 */
+}
+table.type05 th,td {
+  padding: 5px 10px;          /* 余白指定 */
+  width: 200px;               /* 通常は200pxで表示 */
+  max-width: 1000px;          /* 画面に収まりきらないときは100%の幅に */
 }
 
 table.type06 th {
@@ -138,4 +173,74 @@ table.type06 td {
   background-color: rgba(0,0,0,.4);
   backdrop: 'static';
   keyboard: false;
+}
+
+/********************
+   * 
+   *  
+   */
+caption {
+    padding: 0 0 5px 0;
+    text-align: right;
+}
+ 
+thead th {
+    color: #4f6b72;
+    border-right: 1px solid #C1DAD7;
+    border-bottom: 1px solid #C1DAD7;
+    border-top: 1px solid #C1DAD7;
+    text-align: center;
+    padding: 6px;
+    background: #CAE8EA repeat-x;
+    height: 23px;
+}
+ 
+thead td {
+    border-right: 1px solid #C1DAD7;
+    background: none;
+    font-weight: bold;
+    text-align: center;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+ 
+tbody .data th {
+    text-align: left;
+    padding: 6px 6px 6px 12px;
+    background-color: #FFFFFF;
+    border: 1px solid #C1DAD7;
+} 
+  
+tbody .data td {
+    border-right: 1px solid #C1DAD7;
+    border-bottom: 1px solid #C1DAD7;
+    background: #FFFFFF;
+    padding: 6px 6px 6px 12px;
+}
+ 
+tbody .even th {
+    background: #DDFFFF no-repeat;
+}
+ 
+tbody .odd th  {
+    background: #FFFFDD no-repeat;
+}
+
+.div_img {
+  border: 2px solid #000;
+  width: 200px;
+  height: 100px;
+}
+.div_img img{
+  width: 100%;
+  height: 100%;
+  object-fit: scale-down;
+  /* display: block; */
+}
+
+.flex-container {
+  display: flex;
+}
+
+.btn-concat {
 }
