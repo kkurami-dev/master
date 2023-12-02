@@ -4,6 +4,10 @@ import { OthelloBoard } from './othello';
 import { opponentSelect } from '../utils/opponentSelect';
 import { selectPosition } from '../utils/selectPosition';
 
+const player = 'x'; // プレイヤー
+const opponent = 'o'; // 対戦相手
+let count = 5;
+
 // 1000ms待つ処理
 function wait() {
   return new Promise((resolve) => {
@@ -20,15 +24,12 @@ export const Board = () => {
   const [playState, setPlayState] = useState('対戦中');
   const rowArr = [0, 1, 2, 3, 4, 5, 6, 7]; // オセロのX軸のindex
 
-  const player = 'x'; // プレイヤー
-  const opponent = 'o'; // 対戦相手
-
   const putPositionArr = othello.isPutPosition(player); //プレイヤーが石を置ける箇所を取得
 
   // 操作タイミングでの処理
   async function clickSquare(e) {
     const { row, index } = e.target.attributes;
-    const isPut = othello.putStone(Number(row.value), Number(index.value), player);
+    const isPut = othello.putStone(Number(row.value), Number(index.value), player, count++);
     const newArray = [...othelloBoard];
     setOthelloBoard(newArray);
 
@@ -53,7 +54,7 @@ export const Board = () => {
       setPlayState('終了');
       return;
     }
-    othello.putStone(select[0], select[1], opponent); // 対戦相手の石を置く
+    othello.putStone(select[0], select[1], opponent, count++); // 対戦相手の石を置く
     setIsDisabled(false); // マスをdisabledを解除
     const _newArray = [...othelloBoard];
     setOthelloBoard(_newArray);
@@ -66,7 +67,7 @@ export const Board = () => {
       <div className="board">
         {rowArr.map((index) => (
           <Row
-            i={index}
+            col={index}
             key={index}
             array={rowArr}
             board={othelloBoard}

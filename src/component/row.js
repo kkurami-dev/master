@@ -16,10 +16,10 @@ function RowDraw(param) {
 }
 
 export const Row = (param) => {
-  const { array, i } = param;
+  const { array, col } = param;
   return (
-    <div className="row" key={i}>
-      {i + 1}
+    <div className="row" key={col}>
+      {col + 1}
       {array.map((index) => (
         <RowDraw key={index} {...param} index={index} />
       ))}

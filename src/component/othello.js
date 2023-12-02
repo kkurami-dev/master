@@ -1,46 +1,79 @@
 import { crossCheck } from './crossCheck';
 
+//チェックする方向
+const directions = [
+  [0, 1], // 右
+  [0, -1], // 左
+  [-1, 0], // 上
+  [1, 0], // 下
+  [-1, -1], // 左上
+  [1, 1], // 左下
+  [-1, 1], // 右上
+  [1, -1], // 右下
+];
+
+function newCel(col, row) {
+  return {
+    Val: null,
+    c: null,
+    col,
+    row,
+    get yIndex() {
+      return this.col;
+    },
+    get xIndex() {
+      return this.row;
+    },
+    set v(str) {
+      this.Val = str;
+    },
+    get v() {
+      if (this.Val === null) return null;
+      return this.Val.toLowerCase();
+    },
+    isAct: function (ox) {
+      if (this.v === ox || this.v === null) return true;
+      return false;
+    },
+    isNow: function (ox) {
+      return this.v !== ox;
+    },
+  };
+}
+
 export class OthelloBoard {
   constructor() {
-    this.board = Array.from(new Array(8), () =>
-      new Array(8).fill(0).map(() => {
-        return null;
-      })
-    );
+    this.board = [];
+    for (let col = 0; col < 8; col++) {
+      const row_arr = [];
+      this.board.push(row_arr);
+      for (let row = 0; row < 8; row++) {
+        row_arr.push(newCel(col, row));
+      }
+    }
 
-    this.board[3][3] = 'o';
-    this.board[3][4] = 'x';
-    this.board[4][3] = 'x';
-    this.board[4][4] = 'o';
+    this.board[3][3].v = 'o';
+    this.board[3][4].v = 'x';
+    this.board[4][3].v = 'x';
+    this.board[4][4].v = 'o';
   }
 
-  checkStone(yIndex, xIndex, player, board = this.board) {
-    //チェックする方向
-    const directions = [
-      [0, 1], // 右
-      [0, -1], // 左
-      [-1, 0], // 上
-      [1, 0], // 下
-      [-1, -1], // 左上
-      [1, 1], // 左下
-      [-1, 1], // 右上
-      [1, -1], // 右下
-    ];
-
+  checkStone(item, player, board = this.board) {
     const change = [];
-    directions.forEach((el) => {
+    for (let i = 0; i < directions.length; i++) {
+      const el = directions[i];
       // 選択した箇所で相手の石を返せそうならその位置を配列に入れる
-      const result = crossCheck(board, { yIndex, xIndex }, el[0], el[1], player);
+      const result = crossCheck(board, item, el[0], el[1], player);
       change.push(...result);
-    });
+    }
     return change;
   }
 
-  isPutPosition(player) {
+  isPutPosition(ox) {
     const putList = [];
-    this.board.forEach((colItem, colIndex) => {
-      colItem.forEach((el, rowIndex) => {
-        const checkPosition = this.checkStone(colIndex, rowIndex, player);
+    this.board.forEach((colItem) => {
+      colItem.forEach((el) => {
+        const checkPosition = this.checkStone(el, ox);
 
         // 石を置いた時に1つも返らなければreturn
         if (checkPosition.length === 0) {
@@ -48,21 +81,22 @@ export class OthelloBoard {
         }
 
         // 1つ以上石を返せれば配列にその位置のY軸とX軸を入れる
-        putList.push([colIndex, rowIndex]);
+        putList.push([el.col, el.row]);
       });
     });
     return putList;
   }
 
-  putStone(yIndex, xIndex, player) {
+  putStone(yIndex, xIndex, ox, count) {
     // 既に石が置いてあれば処理を終了
-    if (this.board[yIndex][xIndex]) {
+    const item = this.board[yIndex][xIndex];
+    if (item.v) {
       console.log('すでに石が置いてあります');
       return false;
     }
 
     //判定
-    const willBeReturned = this.checkStone(yIndex, xIndex, player);
+    const willBeReturned = this.checkStone(item, ox);
 
     // 1つも石を返せなければ処理を終了
     if (willBeReturned.length === 0) {
@@ -71,14 +105,13 @@ export class OthelloBoard {
     }
 
     // 問題なければ石を置く
-    this.board[yIndex][xIndex] = player;
+    item.v = ox.toUpperCase();
+    item.c = count;
 
     // 置いた石との間にある石を返す
     for (let i = 0, l = willBeReturned.length; i < l; i++) {
-      this.board[willBeReturned[i][0]][willBeReturned[i][1]] = player;
+      //willBeReturned[i] = ox;
     }
     return true;
   }
 }
-// const othello = new OthelloBoard();
-// console.log(othello);
