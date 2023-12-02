@@ -26,8 +26,9 @@ export const Board = () => {
   const putPositionArr = othello.isPutPosition(player); //プレイヤーが石を置ける箇所を取得
 
   // 操作タイミングでの処理
-  async function clickSquare(row, index) {
-    const isPut = othello.putStone(row, index, player);
+  async function clickSquare(e) {
+    const { row, index } = e.target.attributes;
+    const isPut = othello.putStone(Number(row.value), Number(index.value), player);
     const newArray = [...othelloBoard];
     setOthelloBoard(newArray);
 
@@ -40,9 +41,12 @@ export const Board = () => {
     setPlayState('NPCの番');
     await wait(); // 1秒待つ
 
-    const opponentPutArr = othello.isPutPosition(opponent); // 対戦相手の石を置ける箇所を取得
-    const putPosition = opponentSelect(opponent, opponentPutArr); // 石を置く箇所の優先順位を決める
-    const select = selectPosition(putPosition, opponent, othello.checkStone, othello.board); // より多く返せる箇所を選択
+    // 対戦相手の石を置ける箇所を取得
+    const opponentPutArr = othello.isPutPosition(opponent);
+    // 石を置く箇所の優先順位を決める
+    const putPosition = opponentSelect(opponent, opponentPutArr);
+    // より多く返せる箇所を選択
+    const select = selectPosition(putPosition, opponent, othello.checkStone, othello.board);
 
     // NPCがおける場所がなくなったので終了
     if (!select) {
@@ -60,19 +64,18 @@ export const Board = () => {
     <div className="container">
       <div>{playState}</div>
       <div className="board">
-        {rowArr.map((index) => {
-          return (
-            <Row
-              key={index}
-              array={rowArr}
-              board={othelloBoard}
-              row={rowArr[index]}
-              isPutStone={putPositionArr}
-              onClick={clickSquare}
-              disabled={isDisabled}
-            ></Row>
-          );
-        })}
+        {rowArr.map((index) => (
+          <Row
+            i={index}
+            key={index}
+            array={rowArr}
+            board={othelloBoard}
+            row={rowArr[index]}
+            isputstone={putPositionArr}
+            onClick={clickSquare}
+            disabled={isDisabled}
+          ></Row>
+        ))}
       </div>
     </div>
   );

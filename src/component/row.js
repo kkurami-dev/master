@@ -1,30 +1,28 @@
 import { Square } from './square';
 
-export const Row = ({ array, board, row, isPutStone, onClick, disabled }) => {
+function RowDraw(param) {
+  const { board, row, isputstone, index } = param;
+  let isPut = 0;
+
+  // 石が置けるかをチェックする
+  if (isputstone) {
+    for (const el of isputstone) {
+      isPut = el[0] === row && el[1] === index ? 1 : 0;
+      if (isPut) break;
+    }
+  }
+
+  return <Square key={index} value={board[row][index]} isput1={isPut} {...param} />;
+}
+
+export const Row = (param) => {
+  const { array, i } = param;
   return (
-    <div className="row">
-      {array.map((index) => {
-        let isPut = false;
-
-        // 石が置けるかをチェックする
-        if (isPutStone) {
-          for (const el of isPutStone) {
-            isPut = el[0] === row && el[1] === index;
-            if (isPut) break;
-          }
-        }
-
-        return (
-          <Square
-            key={index}
-            value={board[row][index]}
-            isPutStone={isPut}
-            putposition={[row, index]}
-            onClick={() => onClick(row, index)}
-            disabled={disabled}
-          />
-        );
-      })}
+    <div className="row" key={i}>
+      {i + 1}
+      {array.map((index) => (
+        <RowDraw key={index} {...param} index={index} />
+      ))}
     </div>
   );
 };
