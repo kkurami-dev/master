@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row } from './row';
 import { OthelloBoard } from './othello';
 import { opponentSelect } from '../utils/opponentSelect';
@@ -22,14 +22,19 @@ export const Board = () => {
   const [othelloBoard, setOthelloBoard] = useState(othello.board); // オセロボードの状態をstateで管理する
   const [isDisabled, setIsDisabled] = useState(false); // 対戦相手が石を置くまで操作できないようにする
   const [playState, setPlayState] = useState('対戦中');
+  //プレイヤーが石を置ける箇所を取得
+  const [putPos, setPutPos] = useState([]);
   const rowArr = [0, 1, 2, 3, 4, 5, 6, 7]; // オセロのX軸のindex
 
-  const putPositionArr = othello.isPutPosition(player); //プレイヤーが石を置ける箇所を取得
+  useEffect(() => {
+    setPutPos(othello.isPutPosition(player));
+  }, []);
 
   // 操作タイミングでの処理
   async function clickSquare(e) {
     const { row, index } = e.target.attributes;
-    const isPut = othello.putStone(Number(row.value), Number(index.value), player, count++);
+    const item = othello.board[Number(row.value)][Number(index.value)];
+    const isPut = othello.putStone(item, player, count++);
     const newArray = [...othelloBoard];
     setOthelloBoard(newArray);
 
@@ -54,11 +59,12 @@ export const Board = () => {
       setPlayState('終了');
       return;
     }
-    othello.putStone(select[0], select[1], opponent, count++); // 対戦相手の石を置く
+    othello.putStone(select, opponent, count++); // 対戦相手の石を置く
     setIsDisabled(false); // マスをdisabledを解除
     const _newArray = [...othelloBoard];
     setOthelloBoard(_newArray);
     setPlayState('プレイヤーの番');
+    setPutPos(othello.isPutPosition(player));
   }
 
   return (
@@ -72,7 +78,7 @@ export const Board = () => {
             array={rowArr}
             board={othelloBoard}
             row={rowArr[index]}
-            isputstone={putPositionArr}
+            isputstone={putPos}
             onClick={clickSquare}
             disabled={isDisabled}
           ></Row>

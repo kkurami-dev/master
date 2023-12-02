@@ -4,12 +4,12 @@ export const selectPosition = (arrPosition, opponent, checkStone, board) => {
 
   // 石を置ける箇所の数だけチェックする
   for (let i = 0; i < arrPosition.length; i++) {
-    const checkPosition = checkStone(arrPosition[i][0], arrPosition[i][1], opponent, board);
+    const checkPosition = checkStone(arrPosition[i], opponent, board);
 
     // 石を置いた時に返せる石の数が多い箇所をopponentPutItemに代入する
     if (checkPosition.length > _returnLength) {
       _returnLength = checkPosition.length;
-      opponentPutItem = [arrPosition[i][0], arrPosition[i][1]];
+      opponentPutItem = arrPosition[i];
     }
   }
 

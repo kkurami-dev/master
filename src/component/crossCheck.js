@@ -12,7 +12,7 @@ export const crossCheck = (board, currentPosition, yAxis, xAxis, player) => {
   const nextPosition = board[y][x];
 
   // 石が次に進んでいく方向 にマスがない場合か、石が置いてある場合はチェックを終了する
-  if (!nextPosition || board[currentPosition.yIndex][currentPosition.xIndex].v) {
+  if (!nextPosition || currentPosition.v) {
     return change;
   }
 
@@ -21,6 +21,11 @@ export const crossCheck = (board, currentPosition, yAxis, xAxis, player) => {
 
   // チェックする方向に置いた石と違う石があれば繰り返し処理をする
   let checkPositon = board[y][x];
+  if (!checkPositon) {
+    console.error('checkPositon', checkPositon);
+    return [];
+  }
+
   while (checkPositon.isNow(player)) {
     // チェックする方向に石があるか、何も置いてない場合は石が置けないのでチェックを終了する
     if (checkPositon.isAct(player)) {
@@ -36,7 +41,7 @@ export const crossCheck = (board, currentPosition, yAxis, xAxis, player) => {
     x += xAxis;
 
     // 石を置いた箇所からチェックを進めていく時にboardの端までチェックし終えたらチェックする処理を終了する
-    if (board.length <= y || y < 0 || board.length <= x) {
+    if (board.length <= y || y < 0 || board.length <= x || x < 0) {
       total.splice(0);
       return total;
     }

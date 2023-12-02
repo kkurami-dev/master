@@ -63,7 +63,7 @@ export class OthelloBoard {
     for (let i = 0; i < directions.length; i++) {
       const el = directions[i];
       // 選択した箇所で相手の石を返せそうならその位置を配列に入れる
-      const result = crossCheck(board, item, el[0], el[1], player);
+      const result = crossCheck(board, item, el[1], el[0], player);
       change.push(...result);
     }
     return change;
@@ -79,16 +79,15 @@ export class OthelloBoard {
 
         // 1つ以上石を返せれば配列にその位置のY軸とX軸を入れる
         if (checkPosition.length) {
-          putList.push([el.col, el.row]);
+          putList.push(el);
         }
       }
     }
     return putList;
   }
 
-  putStone(yIndex, xIndex, ox, count) {
+  putStone(item, ox, count) {
     // 既に石が置いてあれば処理を終了
-    const item = this.board[yIndex][xIndex];
     if (item.v) {
       console.log('すでに石が置いてあります');
       return false;
@@ -109,7 +108,7 @@ export class OthelloBoard {
 
     // 置いた石との間にある石を返す
     for (let i = 0, l = willBeReturned.length; i < l; i++) {
-      //willBeReturned[i] = ox;
+      willBeReturned[i].v = ox;
     }
     return true;
   }

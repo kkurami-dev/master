@@ -40,7 +40,7 @@ function core(positionArr, opponentPutArr, match) {
   const matchArr = [];
   opponentPutArr.forEach((el) => {
     positionArr.forEach((item) => {
-      const isMatch = el[0] === item[0] && el[1] === item[1];
+      const isMatch = el.col === item[0] && el.row === item[1];
 
       if (isMatch) {
         matchArr.push(el);

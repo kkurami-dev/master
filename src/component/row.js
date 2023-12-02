@@ -7,7 +7,7 @@ function RowDraw(param) {
   // 石が置けるかをチェックする
   if (isputstone) {
     for (const el of isputstone) {
-      isPut = el[0] === row && el[1] === index ? 1 : 0;
+      isPut = el.row === row && el.col === index ? 1 : 0;
       if (isPut) break;
     }
   }
