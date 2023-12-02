@@ -29,7 +29,7 @@ export const Square = (param) => {
 
   return (
     <button className={cls} type="button" {...param} disabled={nop}>
-      <div className={color}>{now}</div>
+      <div className={color}>{now.c}</div>
     </button>
   );
 };
