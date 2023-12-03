@@ -72,13 +72,13 @@ export class OthelloBoard {
   isPutPosition(ox) {
     const putList = [];
     for (let i = 0; i < this.board.length; i++) {
-      const colItem = this.board[i];
-      for (let j = 0; j < colItem.length; j++) {
-        const el = colItem[j];
-        const checkPosition = this.checkStone(el, ox);
+      const rowItem = this.board[i];
+      for (let j = 0; j < rowItem.length; j++) {
+        const el = rowItem[j];
+        const flipItems = this.checkStone(el, ox);
 
-        // 1つ以上石を返せれば配列にその位置のY軸とX軸を入れる
-        if (checkPosition.length) {
+        // 1つ以上石を返せれば配列に次に指せる位置を保存
+        if (flipItems.length > 0) {
           putList.push(el);
         }
       }

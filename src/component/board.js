@@ -9,11 +9,11 @@ const opponent = 'o'; // 対戦相手
 let count = 5;
 
 // 1000ms待つ処理
-function wait() {
+function wait(t = 1000) {
   return new Promise((resolve) => {
     setTimeout(function () {
       resolve();
-    }, 1000);
+    }, t);
   });
 }
 
@@ -32,8 +32,8 @@ export const Board = () => {
 
   // 操作タイミングでの処理
   async function clickSquare(e) {
-    const { row, index } = e.target.attributes;
-    const item = othello.board[Number(row.value)][Number(index.value)];
+    const { col, row } = e.target.attributes;
+    const item = othello.board[Number(col.value)][Number(row.value)];
     const isPut = othello.putStone(item, player, count++);
     const newArray = [...othelloBoard];
     setOthelloBoard(newArray);
@@ -63,14 +63,23 @@ export const Board = () => {
     setIsDisabled(false); // マスをdisabledを解除
     const _newArray = [...othelloBoard];
     setOthelloBoard(_newArray);
-    setPlayState('プレイヤーの番');
+    await wait(100);
     setPutPos(othello.isPutPosition(player));
+    setPlayState('プレイヤーの番');
   }
 
   return (
     <div className="container">
       <div>{playState}</div>
       <div className="board">
+        <div className="row">
+          <div>+</div>
+          {rowArr.map((i, idx) => (
+            <div className="title_row" key={idx}>
+              {i}
+            </div>
+          ))}
+        </div>
         {rowArr.map((index) => (
           <Row
             col={index}

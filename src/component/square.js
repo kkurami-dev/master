@@ -1,6 +1,6 @@
 export const Square = (param) => {
-  const { value, isput1 } = param;
-  const cls = isput1 ? 'put-square' : 'square';
+  const { value, isput } = param;
+  const cls = isput ? 'put-square' : 'square';
 
   let now = '';
   let color = null;
