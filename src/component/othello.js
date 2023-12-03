@@ -41,13 +41,17 @@ function newCel(col, row) {
   };
 }
 
+const LEN = 8;
 export class OthelloBoard {
   constructor() {
+    this.number_of_moves = 3;
+    this.len = LEN;
+    this.max = LEN * LEN;
     this.board = [];
-    for (let col = 0; col < 8; col++) {
+    for (let col = 0; col < LEN; col++) {
       const row_arr = [];
       this.board.push(row_arr);
-      for (let row = 0; row < 8; row++) {
+      for (let row = 0; row < LEN; row++) {
         row_arr.push(newCel(col, row));
       }
     }
@@ -56,6 +60,10 @@ export class OthelloBoard {
     this.board[3][4].v = 'x';
     this.board[4][3].v = 'x';
     this.board[4][4].v = 'o';
+  }
+
+  isMatchEnd() {
+    return this.number_of_moves === this.max;
   }
 
   checkStone(item, player, board = this.board) {
@@ -105,6 +113,7 @@ export class OthelloBoard {
     // 問題なければ石を置く
     item.v = ox.toUpperCase();
     item.c = count;
+    this.number_of_moves++;
 
     // 置いた石との間にある石を返す
     for (let i = 0, l = willBeReturned.length; i < l; i++) {
