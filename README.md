@@ -12,6 +12,8 @@
 
 npm i -g prettier eslint react-devtools
 
+npm i -g eslint-plugin-eslint-comments
+
 # VSCode
 
 ## ショートカット：

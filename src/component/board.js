@@ -42,7 +42,7 @@ export const Board = () => {
     // NPCがおける場所がなくなったので終了
     if (!select) {
       if (othello.isMatchEnd()) setPlayState('終了');
-      return true;
+      return false;
     }
     othello.putStone(select, opponent, count++); // 対戦相手の石を置く
     setIsDisabled(false); // マスをdisabledを解除
@@ -52,7 +52,7 @@ export const Board = () => {
     const flipPoss = othello.isPutPosition(player);
     if (flipPoss.length === 0) {
       // プレイヤーの置く場所がない
-      return false;
+      return true;// NPCはおけたので true
     }
 
     setPutPos(flipPoss);
@@ -60,20 +60,28 @@ export const Board = () => {
     return true;
   }
 
-  // 操作タイミングでの処理
-  async function clickSquare(e) {
-    const { col, row } = e.target.attributes;
+  async function pc(event) {
+    const { col, row } = event.target.attributes;
     const item = othello.board[Number(col.value)][Number(row.value)];
     const isPut = othello.putStone(item, player, count++);
+
+    // おけないので終了
+    if (!isPut) return false;
+
     const newArray = [...othelloBoard];
     setOthelloBoard(newArray);
 
+    setIsDisabled(true); // 相手が石を置くまでマスをクリックできないようにする
+    setPlayState('NPCの番');
+    await wait(); // 1秒待つ
+
+    return true;
+  }
+
+  // 操作タイミングでの処理
+  async function clickSquare(event) {
     // 石を置ける箇所がなければ処理を終了する
     if (isPut) {
-      setIsDisabled(true); // 相手が石を置くまでマスをクリックできないようにする
-      setPlayState('NPCの番');
-      await wait(); // 1秒待つ
-
       let next = false;
       do {
         next = npc();
