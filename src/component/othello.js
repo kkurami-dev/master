@@ -1,5 +1,7 @@
 import { crossCheck } from './crossCheck';
 
+export const LEN = 8;
+
 //チェックする方向
 const directions = [
   [0, 1], // 右
@@ -14,10 +16,12 @@ const directions = [
 
 function newCel(col, row) {
   return {
+    ////////////////////////////////////////
     Val: null,
     c: null,
     col,
     row,
+    ////////////////////////////////////////
     get yIndex() {
       return this.col;
     },
@@ -41,7 +45,6 @@ function newCel(col, row) {
   };
 }
 
-const LEN = 8;
 export class OthelloBoard {
   constructor() {
     this.number_of_moves = 3;
@@ -62,7 +65,7 @@ export class OthelloBoard {
     this.board[4][4].v = 'o';
   }
 
-  isMatchEnd() {
+  get isMatchEnd(){
     return this.number_of_moves === this.max;
   }
 

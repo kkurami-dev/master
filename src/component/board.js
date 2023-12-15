@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Row } from './row';
-import { OthelloBoard } from './othello';
+import { OthelloBoard, LEN } from './othello';
 import { opponentSelect } from '../utils/opponentSelect';
 import { selectPosition } from '../utils/selectPosition';
+import { DefaultModal } from '../utils/modal';
 
 const player = 'x'; // プレイヤー
 const opponent = 'o'; // 対戦相手
-let count = 5;
+const rowArr = []; // オセロのX軸のindex
+
+for(let i = 0; i < LEN; i++){
+  rowArr.push(i);
+}
 
 // 1000ms待つ処理
 function wait(t = 1000) {
@@ -19,13 +24,16 @@ function wait(t = 1000) {
 
 const othello = new OthelloBoard(); //OthelloBoardクラスのインスタンスを生成
 export const Board = () => {
-  const [othelloBoard, setOthelloBoard] = useState(othello.board); // オセロボードの状態をstateで管理する
-  const [isDisabled, setIsDisabled] = useState(false); // 対戦相手が石を置くまで操作できないようにする
+  let count = 5;
+  // オセロボードの状態をstateで管理する
+  const [othelloBoard, setOthelloBoard] = useState(othello.board); 
+  // 対戦相手が石を置くまで操作できないようにする
+  const [isDisabled, setIsDisabled] = useState(false); 
   const [playState, setPlayState] = useState('対戦中');
   //プレイヤーが石を置ける箇所を取得
   const [putPos, setPutPos] = useState([]);
-  const rowArr = [0, 1, 2, 3, 4, 5, 6, 7]; // オセロのX軸のindex
-
+  //
+  const [ModalParam, setModalParam] = useState({});
   useEffect(() => {
     setPutPos(othello.isPutPosition(player));
   }, []);
@@ -60,7 +68,7 @@ export const Board = () => {
     return true;
   }
 
-  async function pc(event) {
+  function pc(event) {
     const { col, row } = event.target.attributes;
     const item = othello.board[Number(col.value)][Number(row.value)];
     const isPut = othello.putStone(item, player, count++);
@@ -73,7 +81,6 @@ export const Board = () => {
 
     setIsDisabled(true); // 相手が石を置くまでマスをクリックできないようにする
     setPlayState('NPCの番');
-    await wait(); // 1秒待つ
 
     return true;
   }
@@ -81,11 +88,11 @@ export const Board = () => {
   // 操作タイミングでの処理
   async function clickSquare(event) {
     // 石を置ける箇所がなければ処理を終了する
-    if (isPut) {
-      let next = false;
-      do {
-        next = npc();
-      } while (!next);
+    const isPut  = pc(event);
+    await wait(); // 1秒待つ
+    const next = npc();
+    if ((!isPut && !next) || othello.isMatchEnd ) {
+      
     }
   }
 
@@ -114,6 +121,8 @@ export const Board = () => {
           ></Row>
         ))}
       </div>
+      {count - 1}個置いてある
+      <DefaultModal {...ModalParam} />
     </div>
   );
 };
