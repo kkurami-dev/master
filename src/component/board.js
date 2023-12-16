@@ -33,8 +33,9 @@ export const Board = () => {
   const [isDisabled, setIsDisabled] = useState(false); 
   const [playState, setPlayState] = useState('対戦中');
   const [ss, setSS] = useState([
-    {func: pc,  },
-    {func: npc, },
+    //{func: pc,  next: null},
+    {func: npc, next: null},
+    {func: npc, next: () => clickSquare()},
   ]);
   //プレイヤーが石を置ける箇所を取得
   const [putPos, setPutPos] = useState([]);
@@ -42,6 +43,8 @@ export const Board = () => {
   const [ModalParam, // setModalParam
         ] = useState({title:""});
   useEffect(() => {
+    //
+    console.log("useEffect []");
     setPutPos(othello.isPutPosition(player));
   }, []);
 
@@ -110,8 +113,10 @@ export const Board = () => {
 
       const next = isNext( arr[i] );
       if ((!isPut && !next) || othello.isMatchEnd ) {
+        return;
       }
       await wait(); // 1秒待つ
+      if(ss[i].next) ss[i].next();
     }
   }
 

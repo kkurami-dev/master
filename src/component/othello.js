@@ -66,7 +66,15 @@ export class OthelloBoard {
         row_arr.push(newCel(col, row));
       }
     }
+    this.setdefault();
+  }
 
+  setdefault(){
+    this.board.map((col) => {
+      col.map((cel) => {
+        cel.v = null;
+      });
+    });
     this.board[3][3].v = 'o';
     this.board[3][4].v = 'x';
     this.board[4][3].v = 'x';
