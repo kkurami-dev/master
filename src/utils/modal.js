@@ -1,4 +1,7 @@
-import * as React from 'react';
+/**
+ * 通知用のダイアログ
+ */
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -16,10 +19,11 @@ const style = {
   p: 4,
 };
 
-function BasicModal({title, description}) {
+function BasicModalMain({title, description=""}) {
+  const [open, setOpen] = useState(false);
+
   if( !title && title.length === 0) return <></>;
 
-  const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
@@ -45,6 +49,10 @@ function BasicModal({title, description}) {
   );
 }
 
-export default function DefaultModal(param) {
-  return <BasicModal {...param}/>
+function DefaultModal(param) {
+  return <BasicModalMain {...param}/>
 }
+
+export {
+  DefaultModal,
+};

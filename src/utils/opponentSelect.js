@@ -1,3 +1,4 @@
+
 // board の角の座標
 const angle = [
   [0, 0],

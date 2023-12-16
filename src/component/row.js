@@ -1,3 +1,6 @@
+/**
+* 横一列の制御
+*/
 import { Square } from './square';
 
 function RowDraw(param) {

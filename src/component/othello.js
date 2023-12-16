@@ -2,16 +2,24 @@ import { crossCheck } from './crossCheck';
 
 export const LEN = 8;
 
-//チェックする方向
+// 操作結果
+export const ID = {
+  FLIP_OK: 0,       // 裏返せた
+  NO_PUT_LOCATION: 1,       // 置く場所がない
+  ALREADY_STORE: 2, // すでに石が置いてある
+  NOT_PUT: 3,       // 置けない
+}
+
+// チェックする方向
 const directions = [
-  [0, 1], // 右
-  [0, -1], // 左
-  [-1, 0], // 上
-  [1, 0], // 下
+  [0, 1],   // 右
+  [0, -1],  // 左
+  [-1, 0],  // 上
+  [1, 0],   // 下
   [-1, -1], // 左上
-  [1, 1], // 左下
-  [-1, 1], // 右上
-  [1, -1], // 右下
+  [1, 1],   // 左下
+  [-1, 1],  // 右上
+  [1, -1],  // 右下
 ];
 
 function newCel(col, row) {
@@ -101,7 +109,7 @@ export class OthelloBoard {
     // 既に石が置いてあれば処理を終了
     if (item.v) {
       console.log('すでに石が置いてあります');
-      return false;
+      return ID.ALREADY_STORE;
     }
 
     //判定
@@ -110,7 +118,7 @@ export class OthelloBoard {
     // 1つも石を返せなければ処理を終了
     if (willBeReturned.length === 0) {
       console.log('石を置けません');
-      return false;
+      return ID.NOT_PUT;
     }
 
     // 問題なければ石を置く
@@ -122,6 +130,6 @@ export class OthelloBoard {
     for (let i = 0, l = willBeReturned.length; i < l; i++) {
       willBeReturned[i].v = ox;
     }
-    return true;
+    return ID.FLIP_OK;
   }
 }

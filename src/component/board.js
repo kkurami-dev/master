@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Row } from './row';
-import { OthelloBoard, LEN } from './othello';
+import { OthelloBoard, LEN, ID } from './othello';
 import { opponentSelect } from '../utils/opponentSelect';
 import { selectPosition } from '../utils/selectPosition';
 import { DefaultModal } from '../utils/modal';
 
 const player = 'x'; // プレイヤー
-const opponent = 'o'; // 対戦相手
-const rowArr = []; // オセロのX軸のindex
+//const opponent = 'o'; // 対戦相手
+const playerS = ['x', 'o'];
 
+// オセロのX軸のindex
+const rowArr = [];
 for(let i = 0; i < LEN; i++){
   rowArr.push(i);
 }
@@ -30,69 +32,86 @@ export const Board = () => {
   // 対戦相手が石を置くまで操作できないようにする
   const [isDisabled, setIsDisabled] = useState(false); 
   const [playState, setPlayState] = useState('対戦中');
+  const [ss, setSS] = useState([
+    {func: pc,  },
+    {func: npc, },
+  ]);
   //プレイヤーが石を置ける箇所を取得
   const [putPos, setPutPos] = useState([]);
   //
-  const [ModalParam, setModalParam] = useState({});
+  const [ModalParam, // setModalParam
+        ] = useState({title:""});
   useEffect(() => {
     setPutPos(othello.isPutPosition(player));
   }, []);
 
   // NPCの動作
-  function npc() {
+  function npc(act) {
     // 対戦相手の石を置ける箇所を取得
-    const opponentPutArr = othello.isPutPosition(opponent);
+    const opponentPutArr = othello.isPutPosition(act);
     // 石を置く箇所の優先順位を決める
-    const putPosition = opponentSelect(opponent, opponentPutArr);
+    const putPosition = opponentSelect(act, opponentPutArr);
     // より多く返せる箇所を選択
-    const select = selectPosition(putPosition, opponent, othello.checkStone, othello.board);
+    const select = selectPosition(putPosition, act, othello.checkStone, othello.board);
 
     // NPCがおける場所がなくなったので終了
-    if (!select) {
-      if (othello.isMatchEnd()) setPlayState('終了');
-      return false;
-    }
-    othello.putStone(select, opponent, count++); // 対戦相手の石を置く
-    setIsDisabled(false); // マスをdisabledを解除
-    const _newArray = [...othelloBoard];
-    setOthelloBoard(_newArray);
+    if (!select)
+      return ID.NO_PUT_LOCATION;
 
-    const flipPoss = othello.isPutPosition(player);
+    othello.putStone(select, act, count++);
+    setIsDisabled(false); // マスの操作抑止を解除
+    return ID.FLIP_OK;
+  }
+
+  // プレイヤーの動作
+  function pc(act, event) {
+    setIsDisabled(true); // 相手が石を置くまでマスの操作抑止を設定
+
+    // イベントから置いた位置を特定
+    const { col, row, name } = event.target.attributes;
+    const item = othello.board[Number(col.value)][Number(row.value)];
+    // 
+    const isPut = othello.putStone(item, act, count);
+    if (isPut) {
+      setIsDisabled(false); // マスの操作抑止を解除
+      return isPut;
+    }
+
+    count++;
+    setPlayState('NPCの番');
+    return ID.FLIP_OK;
+  }
+
+  // 次の操作が可能か
+  function isNext(act){
+    const n = act === 'o' ? 'x' : 'o';
+    const newArray = [...othelloBoard];
+    setOthelloBoard(newArray);
+
+    const flipPoss = othello.isPutPosition(n);
     if (flipPoss.length === 0) {
-      // プレイヤーの置く場所がない
-      return true;// NPCはおけたので true
+      // 相手の置く場所がない
+      return ID.NO_PUT_LOCATION;
     }
 
     setPutPos(flipPoss);
     setPlayState('プレイヤーの番');
-    return true;
-  }
-
-  function pc(event) {
-    const { col, row } = event.target.attributes;
-    const item = othello.board[Number(col.value)][Number(row.value)];
-    const isPut = othello.putStone(item, player, count++);
-
-    // おけないので終了
-    if (!isPut) return false;
-
-    const newArray = [...othelloBoard];
-    setOthelloBoard(newArray);
-
-    setIsDisabled(true); // 相手が石を置くまでマスをクリックできないようにする
-    setPlayState('NPCの番');
-
-    return true;
+    return ID.FLIP_OK;
   }
 
   // 操作タイミングでの処理
   async function clickSquare(event) {
-    // 石を置ける箇所がなければ処理を終了する
-    const isPut  = pc(event);
-    await wait(); // 1秒待つ
-    const next = npc();
-    if ((!isPut && !next) || othello.isMatchEnd ) {
-      
+    const arr = ['x', 'o'];
+    for(let i = 0; i < 2; i++){
+      const isPut = ss[i].func(arr[i], event);
+      // ユーザ操作で置けなかったら終了
+      if(isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT)
+        break;
+
+      const next = isNext( arr[i] );
+      if ((!isPut && !next) || othello.isMatchEnd ) {
+      }
+      await wait(); // 1秒待つ
     }
   }
 
