@@ -5,9 +5,10 @@ import { Square } from './square';
 
 function RowDraw(param) {
   const { board, col, row, isputstone } = param;
-  let isPut = 0;
+  if(!board) return "";
 
   // 石が置けるかをチェックする
+  let isPut = 0;
   if (isputstone) {
     for (const el of isputstone) {
       isPut = el.row === row && el.col === col ? 1 : 0;
@@ -20,7 +21,6 @@ function RowDraw(param) {
 
 export const Row = (param) => {
   const { array, col } = param;
-  //console.log("Row set", col);
   return (
     <div className="row" key={col}>
       {col}

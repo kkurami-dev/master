@@ -1,3 +1,6 @@
+/**
+ * オセロのメインクラス
+ */
 import { crossCheck } from './crossCheck';
 
 export const LEN = 8;
@@ -72,7 +75,7 @@ export class OthelloBoard {
     this.setdefault(this.board);
   }
 
-  setdefault(nowboard){
+  setdefault(){
     if(this.count === 0) return;
     console.log("setdefault", this.count);
     this.count = 0;
@@ -84,10 +87,10 @@ export class OthelloBoard {
         row_arr[ row ].v = null;
       }
     }
-    nowboard[3][3].v = 'o';
-    nowboard[3][4].v = 'x';
-    nowboard[4][3].v = 'x';
-    nowboard[4][4].v = 'o';
+    this.board[3][3].v = 'o';
+    this.board[3][4].v = 'x';
+    this.board[4][3].v = 'x';
+    this.board[4][4].v = 'o';
     this.count += 4;
   }
 
