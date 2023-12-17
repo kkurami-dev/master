@@ -111,7 +111,7 @@ export class OthelloBoard {
   }
   get ox_count(){
     const ox = this.getOX();
-    return `黒: ${ox.x} 白: ${ox.o}、`;
+    return `黒: ${ox.x}、白: ${ox.o}、`;
   }
 
   checkStone(item, player, board = this.board) {
