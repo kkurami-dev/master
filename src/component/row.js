@@ -20,6 +20,7 @@ function RowDraw(param) {
 
 export const Row = (param) => {
   const { array, col } = param;
+  //console.log("Row set", col);
   return (
     <div className="row" key={col}>
       {col}

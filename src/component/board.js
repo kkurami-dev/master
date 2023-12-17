@@ -4,10 +4,8 @@ import { OthelloBoard, LEN, ID } from './othello';
 import { opponentSelect } from '../utils/opponentSelect';
 import { selectPosition } from '../utils/selectPosition';
 import { DefaultModal } from '../utils/modal';
-
-const player = 'x'; // プレイヤー
-//const opponent = 'o'; // 対戦相手
-const playerS = ['x', 'o'];
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 
 // オセロのX軸のindex
 const rowArr = [];
@@ -16,7 +14,7 @@ for(let i = 0; i < LEN; i++){
 }
 
 // 1000ms待つ処理
-function wait(t = 1000) {
+function wait(t = 300) {
   return new Promise((resolve) => {
     setTimeout(function () {
       resolve();
@@ -24,6 +22,7 @@ function wait(t = 1000) {
   });
 }
 
+let GameStete = true;
 const othello = new OthelloBoard(); //OthelloBoardクラスのインスタンスを生成
 export const Board = () => {
   let count = 5;
@@ -33,19 +32,22 @@ export const Board = () => {
   const [isDisabled, setIsDisabled] = useState(false); 
   const [playState, setPlayState] = useState('対戦中');
   const [ss, setSS] = useState([
-    //{func: pc,  next: null},
-    {func: npc, next: null},
-    {func: npc, next: () => clickSquare()},
+    // {func: pc,  next: null, c: 0},
+    // {func: npc, next: null, c: 0},
+    {func: npc, next: null, c: 0},
+    {func: npc, next: () => clickSquare(), c: 0},
   ]);
   //プレイヤーが石を置ける箇所を取得
   const [putPos, setPutPos] = useState([]);
-  //
   const [ModalParam, // setModalParam
         ] = useState({title:""});
   useEffect(() => {
-    //
     console.log("useEffect []");
-    setPutPos(othello.isPutPosition(player));
+    //setPutPos(othello.isPutPosition("x"));
+    if(GameStete){
+      ReSet();
+      clickSquare(null);
+    }
   }, []);
 
   // NPCの動作
@@ -68,12 +70,12 @@ export const Board = () => {
 
   // プレイヤーの動作
   function pc(act, event) {
+    if(!event) return ID.ERROR;
     setIsDisabled(true); // 相手が石を置くまでマスの操作抑止を設定
 
     // イベントから置いた位置を特定
-    const { col, row, name } = event.target.attributes;
+    const { col, row } = event.target.attributes;
     const item = othello.board[Number(col.value)][Number(row.value)];
-    // 
     const isPut = othello.putStone(item, act, count);
     if (isPut) {
       setIsDisabled(false); // マスの操作抑止を解除
@@ -105,24 +107,40 @@ export const Board = () => {
   // 操作タイミングでの処理
   async function clickSquare(event) {
     const arr = ['x', 'o'];
+    let set = false;
     for(let i = 0; i < 2; i++){
       const isPut = ss[i].func(arr[i], event);
+      //console.log("isPut", isPut);
       // ユーザ操作で置けなかったら終了
-      if(isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT)
+      if(isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT){
         break;
+      }
 
       const next = isNext( arr[i] );
-      if ((!isPut && !next) || othello.isMatchEnd ) {
+      console.log("onClick", next, isPut);
+      if (isPut && next){
+        GameStete = true;
         return;
       }
+      set = true;
       await wait(); // 1秒待つ
-      if(ss[i].next) ss[i].next();
+      if(ss[i].next && set) ss[i].next();
     }
+  }
+
+  function ReSet() {
+    GameStete = false;
+    othello.setdefault(othelloBoard);
+    isNext( "o" );
+    setPlayState('開始');
   }
 
   return (
     <div className="container">
-      <div>{playState}</div>
+      <Stack spacing={2} direction="row">
+        <Button variant="contained" onClick={ReSet}>リセット</Button>
+        <div>{playState}</div>
+      </Stack>
       <div className="board">
         <div className="row">
           <div>+</div>

@@ -8,6 +8,7 @@ export const ID = {
   NO_PUT_LOCATION: 1,       // 置く場所がない
   ALREADY_STORE: 2, // すでに石が置いてある
   NOT_PUT: 3,       // 置けない
+  ERROR: 99,
 }
 
 // チェックする方向
@@ -55,6 +56,8 @@ function newCel(col, row) {
 
 export class OthelloBoard {
   constructor() {
+    this.uuid = crypto.randomUUID();
+    this.count = -1;
     this.number_of_moves = 3;
     this.len = LEN;
     this.max = LEN * LEN;
@@ -66,19 +69,25 @@ export class OthelloBoard {
         row_arr.push(newCel(col, row));
       }
     }
-    this.setdefault();
+    this.setdefault(this.board);
   }
 
-  setdefault(){
-    this.board.map((col) => {
-      col.map((cel) => {
-        cel.v = null;
-      });
-    });
-    this.board[3][3].v = 'o';
-    this.board[3][4].v = 'x';
-    this.board[4][3].v = 'x';
-    this.board[4][4].v = 'o';
+  setdefault(nowboard){
+    if(this.count === 0) return;
+    console.log("setdefault", this.count);
+    this.count = 0;
+
+    for (let col = 0; col < LEN; col++) {
+      const row_arr = this.board[col];
+      for (let row = 0; row < LEN; row++) {
+        row_arr[ row ].c = null;
+        row_arr[ row ].v = null;
+      }
+    }
+    nowboard[3][3].v = 'o';
+    nowboard[3][4].v = 'x';
+    nowboard[4][3].v = 'x';
+    nowboard[4][4].v = 'o';
   }
 
   get isMatchEnd(){
@@ -113,7 +122,7 @@ export class OthelloBoard {
     return putList;
   }
 
-  putStone(item, ox, count) {
+  putStone(item, ox) {
     // 既に石が置いてあれば処理を終了
     if (item.v) {
       console.log('すでに石が置いてあります');
@@ -130,8 +139,9 @@ export class OthelloBoard {
     }
 
     // 問題なければ石を置く
+    this.count++;
     item.v = ox.toUpperCase();
-    item.c = count;
+    item.c = this.count;
     this.number_of_moves++;
 
     // 置いた石との間にある石を返す

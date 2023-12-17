@@ -26,6 +26,8 @@ export const Square = (param) => {
       color = null;
       break;
   }
+  //console.log("Square set", color, param.value);
+
 
   let nop = false;
   if (color !== null || param.disabled) nop = true;
