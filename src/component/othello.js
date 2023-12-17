@@ -88,10 +88,27 @@ export class OthelloBoard {
     nowboard[3][4].v = 'x';
     nowboard[4][3].v = 'x';
     nowboard[4][4].v = 'o';
+    this.count += 4;
   }
 
   get isMatchEnd(){
     return this.number_of_moves === this.max;
+  }
+  get nowCount(){
+    return this.count;
+  }
+  getOX = () => {
+    const x_count = document.getElementsByName("act_x");
+    const o_count = document.getElementsByName("act_o");
+    return {x:x_count.length, o: o_count.length}
+  }
+  get win(){
+    const ox = this.getOX();
+    return ox.x.length > ox.o.length;
+  }
+  get ox_count(){
+    const ox = this.getOX();
+    return `黒: ${ox.x} 白: ${ox.o}、`;
   }
 
   checkStone(item, player, board = this.board) {

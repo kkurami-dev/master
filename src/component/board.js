@@ -25,7 +25,6 @@ function wait(t = 300) {
 let GameStete = true;
 const othello = new OthelloBoard(); //OthelloBoardクラスのインスタンスを生成
 export const Board = () => {
-  let count = 5;
   // オセロボードの状態をstateで管理する
   const [othelloBoard, setOthelloBoard] = useState(othello.board); 
   // 対戦相手が石を置くまで操作できないようにする
@@ -63,7 +62,7 @@ export const Board = () => {
     if (!select)
       return ID.NO_PUT_LOCATION;
 
-    othello.putStone(select, act, count++);
+    othello.putStone(select, act);
     setIsDisabled(false); // マスの操作抑止を解除
     return ID.FLIP_OK;
   }
@@ -76,13 +75,12 @@ export const Board = () => {
     // イベントから置いた位置を特定
     const { col, row } = event.target.attributes;
     const item = othello.board[Number(col.value)][Number(row.value)];
-    const isPut = othello.putStone(item, act, count);
+    const isPut = othello.putStone(item, act);
     if (isPut) {
       setIsDisabled(false); // マスの操作抑止を解除
       return isPut;
     }
 
-    count++;
     setPlayState('NPCの番');
     return ID.FLIP_OK;
   }
@@ -117,7 +115,7 @@ export const Board = () => {
       }
 
       const next = isNext( arr[i] );
-      console.log("onClick", next, isPut);
+      //console.log("onClick", next, isPut);
       if (isPut && next){
         GameStete = true;
         return;
@@ -163,7 +161,8 @@ export const Board = () => {
           ></Row>
         ))}
       </div>
-      {count - 1}個置いてある
+      {othello.ox_count}／
+      {othello.count}個置いてある
       <DefaultModal {...ModalParam} />
     </div>
   );
