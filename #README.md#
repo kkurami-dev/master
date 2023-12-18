@@ -19,6 +19,12 @@
 - パッケージ：https://community.chocolatey.org/packages
   choco install vscode -y
 
+## シンボリックリンク
+* 
+* サーバ上でのリンクの有効か
+現在の設定を確認
+> fsutil behavior query symlinkevaluation
+
 ## 一般ユーザのコンソールで
 
 npm i -g prettier eslint react-devtools

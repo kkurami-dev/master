@@ -37,9 +37,9 @@ export const Board = () => {
   const [isDisabled, setIsDisabled] = useState(false); 
   const [playState, setPlayState] = useState('対戦中');
   const ss_type = [
-    {type: 1, func: pc,  next: null, v: 0},
-    {type: 2, func: (act) => npc(act, {lv:6}), next: null, lv:0},
-    {type: 2, func: (act) => npc(act, {lv:1}), next: () => clickSquare(), lv:0},
+    {type: 1, func: pc,  next: null, data:{}},
+    {type: 2, func: npc, next: null, data:{lv:6}},
+    {type: 2, func: npc, next: clickSquare, data:{lv:1}},
   ];
   const ss = [
     ss_type[1],
@@ -54,7 +54,7 @@ export const Board = () => {
   useEffect(() => {
     if(GameStete){
       ReSet();
-      clickSquare(null);
+      if(ss[1].next) ss[1].next();
     }
   }, []);
 
@@ -110,7 +110,7 @@ export const Board = () => {
 
     const arr = ['x', 'o'];
     for(let i = 0; i < 2; i++){
-      const isPut = ss[i].func(arr[i], {ev:event, lv:ss[i].lv});
+      const isPut = ss[i].func(arr[i], {ev:event, ...ss[i].data});
       // ユーザ操作で置けていないので、やり直し
       if(isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT){
         break;
