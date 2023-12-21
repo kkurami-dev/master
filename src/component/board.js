@@ -1,12 +1,11 @@
 /**
 * オセロのメイン部
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Row } from './row';
 import { OthelloBoard, LEN, ID } from './othello';
 import { opponentSelect } from '../utils/opponentSelect';
 import { selectPosition } from '../utils/selectPosition';
-import { DefaultModal } from '../utils/modal';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -22,7 +21,7 @@ for(let i = 0; i < LEN; i++){
 }
 
 // 1000ms待つ処理
-function wait(t = 100) {
+function wait(t = 30) {
   return new Promise((resolve) => {
     setTimeout(function () {
       resolve();
@@ -30,6 +29,7 @@ function wait(t = 100) {
   });
 }
 
+let GameSet = true;
 export const Board = () => {
   // オセロボードの状態をstateで管理する
   const [othelloObj] = useState(new OthelloBoard());
@@ -41,105 +41,134 @@ export const Board = () => {
     {type: 2, func: npc, next: null, data:{lv:6}},
     {type: 2, func: npc, next: clickSquare, data:{lv:1}},
   ];
-  const ss = [
-    ss_type[1],
-    ss_type[2],
-  ];
-  let GameStete = true;
+  const ss = {
+    "0": ss_type[1],
+    "1": ss_type[2],
+    v: null,
+    p: null,
+    isPut: function ss(ev){
+      return this.p.func(this.v, {ev, ...this.p.data})
+    },
+    set now(V){
+      this.v = V
+      if( V === "x" ) this.p = this[ "0" ];
+      else this.p = this[ "1" ];
+    },
+    get type(){
+      return this.p.type;
+    },
+    get isPlayer(){
+      return this.p.type === 1;
+    },
+    get next(){
+      if( this.v === "x" ) return { type:this[ "1" ].type, v: "o" };
+      else return { type:this[ "0" ].type, v: "x"};
+    }
+  };
 
   //プレイヤーが石を置ける箇所を取得
   const [putPos, setPutPos] = useState([]);
-  const [ModalParam, // setModalParam
-        ] = useState({title:""});
-  useEffect(() => {
-    if(GameStete){
-      ReSet();
-      if(ss[1].next) ss[1].next();
-    }
-  }, []);
 
   // NPCの動作
   function npc(act, {lv}) {
-    // 対戦相手の石を置ける箇所を取得
-    const opponentPutArr = othelloObj.isPutPosition(act);
     // 石を置く箇所の優先順位を決める
+    const opponentPutArr = othelloObj.isPutPosition(act);
     const putPosition = opponentSelect(act, opponentPutArr);
-    // より多く返せる箇所を選択
     const select = selectPosition(putPosition, act, othelloObj, lv);
 
     // NPCがおける場所がなくなったので終了
     if (!select)
       return ID.NO_PUT_LOCATION;
-
-    othelloObj.putStone(select, act);
-    setIsDisabled(false); // マスの操作抑止を解除
-    return ID.FLIP_OK;
+    
+    return othelloObj.putStone(select, act);
   }
 
   // プレイヤーの動作
   function pc(act, {event}) {
     if(!event) return ID.ERROR;
-    setIsDisabled(true); // 相手が石を置くまでマスの操作抑止を設定
-
     // イベントから置いた位置を特定
     const { col, row } = event.target.attributes;
     const item = othelloObj.board[Number(col.value)][Number(row.value)];
-    const isPut = othelloObj.putStone(item, act);
-    if (isPut) {
-      setIsDisabled(false); // マスの操作抑止を解除
-      return isPut;
-    }
-    return ID.FLIP_OK;
+    return othelloObj.putStone(item, act);
   }
 
   // 次の操作が可能か
   function isNext(act){
     const n = act === 'o' ? 'x' : 'o';
-    const flipPoss = othelloObj.isPutPosition(n);
-    if (flipPoss.length === 0) {
+
+    // 両プレイヤーで置ける位置があるか
+    const is = {
+      x: othelloObj.isPutPosition('x'),
+      o: othelloObj.isPutPosition('o'),
+      get flip(){
+        return (this.x.length + this.o.length) > 0;
+      },
+    }
+    if (!is.flip){
+      GameSet = true;
+      const {x, o} = othelloObj.getOX();
+      if(x > o) setPlayState('黒の勝ち');
+      else if(x < o) setPlayState('白の勝ち');
+      else setPlayState('引き分け');
+      return ID.NOT_PUT;
+    }
+
+    if (is[ n ].length === 0) {
       // 相手の置く場所がない
       return ID.NO_PUT_LOCATION;
     }
-    setPutPos(flipPoss);
+    setPutPos(is[ n ]);
     return ID.FLIP_OK;
   }
 
   // 操作タイミングでの処理
   async function clickSquare(event) {
-    if(GameStete) return;
+    if(GameSet) return;
+    if(!isDisabled)// マスの操作抑止を解除
+      setIsDisabled(true);
 
     const arr = ['x', 'o'];
     for(let i = 0; i < 2; i++){
-      const isPut = ss[i].func(arr[i], {ev:event, ...ss[i].data});
-      // ユーザ操作で置けていないので、やり直し
+      // 今回の操作
+      ss.now = arr[i];
+      const isPut = ss.isPut(event);
       if(isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT){
         break;
       }
       await wait(); // 1秒待つ
 
-      // 両プレイヤーで置ける位置があるか
-      const is_x = othelloObj.isPutPosition('x');
-      const is_o = othelloObj.isPutPosition('o');
-      if (is_x.length === 0 && is_o.length === 0){
-        GameStete = true;
-        const {x, o} = othelloObj.getOX();
-        if(x > o) setPlayState('黒の勝ち');
-        else if(x < o) setPlayState('白の勝ち');
-        else setPlayState('引き分け');
+      // 次の操作判定
+      const next = isNext( arr[i] );
+      switch(next){
+      case ID.FLIP_OK:
+        if(ss[i].next) ss[i].next();
+        break;
+      case ID.NO_PUT_LOCATION:
+        i--;
+        continue;
+      default:
         return;
       }
-
-      isNext( arr[i] );
-      if(ss[i].next) ss[i].next();
     }
+    if(isDisabled && ss.isPlayer)// マスの操作抑止を解除
+      setIsDisabled(false);
   }
 
-  function ReSet() {
-    GameStete = false;
+  const ReSet = useCallback(function reset(){
+    console.log("ReSet useCallback", GameSet);
+    if(!GameSet) return;
+    GameSet = false;
+    
     othelloObj.setdefault();
     isNext( "o" );
     setPlayState('開始');
-  }
+    if(ss[1].next) ss[1].next();
+  }, [isNext, othelloObj, ss]);
+
+  useEffect(() => {
+    console.log("ReSet useEffect");
+    ReSet();
+  }, []);
 
   function PlayerSelect(id, msg){
     const [age, setAge] = React.useState('');
@@ -148,12 +177,12 @@ export const Board = () => {
       const v = event.target.value;
       if( v === 0 ) {
         ss[id] = ss_type[0];
-      } else if(id === 1 && ss[0].type === 2){
-        ss[id] = ss_type[2];
-        ss[id].lv = v;
       } else {
         ss[id] = ss_type[1];
-        ss[id].lv = v;
+        ss[id].data.lv = v;
+      }
+      if(id === 1 && ss[0].type !== 1){
+        ss[id].next = clickSquare;
       }
       setAge(v);
     };
@@ -219,7 +248,6 @@ export const Board = () => {
       </div>
       {othelloObj.ox_count}
       {othelloObj.count}個置いてある
-      <DefaultModal {...ModalParam} />
     </div>
   );
 };
