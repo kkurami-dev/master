@@ -36,11 +36,14 @@ export const Board = () => {
   // 対戦相手が石を置くまで操作できないようにする
   const [isDisabled, setIsDisabled] = useState(false); 
   const [playState, setPlayState] = useState('対戦中');
+  const [putPos, setPutPos] = useState([]);
+
   const ss_type = [
     {type: 1, func: pc,  next: null, data:{}},
     {type: 2, func: npc, next: null, data:{lv:6}},
     {type: 2, func: npc, next: clickSquare, data:{lv:1}},
   ];
+
   const ss = {
     "0": ss_type[1],
     "1": ss_type[2],
@@ -49,25 +52,23 @@ export const Board = () => {
     isPut: function ss(ev){
       return this.p.func(this.v, {ev, ...this.p.data})
     },
-    set now(V){
-      this.v = V
-      if( V === "x" ) this.p = this[ "0" ];
-      else this.p = this[ "1" ];
-    },
-    get type(){
-      return this.p.type;
+    get now(){
+      return { ...this.p, v: this.v };
     },
     get isPlayer(){
       return this.p.type === 1;
     },
     get next(){
-      if( this.v === "x" ) return { type:this[ "1" ].type, v: "o" };
-      else return { type:this[ "0" ].type, v: "x"};
+      if( this.v === "o" ) {
+        this.v = "x";
+        this.p = this[ "0" ]
+      } else {
+        this.v = "o";
+        this.p = this[ "1" ]
+      }
+      return { ...this.p, v: this.v };
     }
   };
-
-  //プレイヤーが石を置ける箇所を取得
-  const [putPos, setPutPos] = useState([]);
 
   // NPCの動作
   function npc(act, {lv}) {
@@ -75,18 +76,14 @@ export const Board = () => {
     const opponentPutArr = othelloObj.isPutPosition(act);
     const putPosition = opponentSelect(act, opponentPutArr);
     const select = selectPosition(putPosition, act, othelloObj, lv);
-
-    // NPCがおける場所がなくなったので終了
     if (!select)
       return ID.NO_PUT_LOCATION;
-    
     return othelloObj.putStone(select, act);
   }
 
-  // プレイヤーの動作
+  // イベントから置いた位置を特定
   function pc(act, {event}) {
     if(!event) return ID.ERROR;
-    // イベントから置いた位置を特定
     const { col, row } = event.target.attributes;
     const item = othelloObj.board[Number(col.value)][Number(row.value)];
     return othelloObj.putStone(item, act);
@@ -130,7 +127,7 @@ export const Board = () => {
     const arr = ['x', 'o'];
     for(let i = 0; i < 2; i++){
       // 今回の操作
-      ss.now = arr[i];
+      let {p , v } = ss.now;
       const isPut = ss.isPut(event);
       if(isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT){
         break;
@@ -138,10 +135,11 @@ export const Board = () => {
       await wait(); // 1秒待つ
 
       // 次の操作判定
-      const next = isNext( arr[i] );
+      const next = isNext( v );
       switch(next){
       case ID.FLIP_OK:
-        if(ss[i].next) ss[i].next();
+        let { p , v } = ss.next;
+        if(p.next) p.next();
         break;
       case ID.NO_PUT_LOCATION:
         i--;
@@ -160,9 +158,10 @@ export const Board = () => {
     GameSet = false;
     
     othelloObj.setdefault();
-    isNext( "o" );
+    let {p, v} = ss.next;
+    isNext( v );
     setPlayState('開始');
-    if(ss[1].next) ss[1].next();
+    if(p.next) p.next();
   }, [isNext, othelloObj, ss]);
 
   useEffect(() => {
@@ -201,7 +200,7 @@ export const Board = () => {
           >
             <MenuItem value={0}>Player</MenuItem>
             {[1,2,3,4,5,6].map((lv, idx) =>
-              <MenuItem value={lv} key={idx}>NPC レベル{lv}</MenuItem>
+              <MenuItem value={lv} p="npc" key={idx}>NPC レベル{lv}</MenuItem>
             )}
           </Select>
         </FormControl>

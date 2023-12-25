@@ -1,5 +1,8 @@
 # 参考資料
-## https://uguisu.skr.jp/othello/
+・[Reactでオセロゲームを作る](https://bagelee.com/programming/react-othello/)  
+　元ネタさせていただきました
+・[オセロ・リバーシプログラミング講座 ～勝ち方・考え方～](https://uguisu.skr.jp/othello/)  
+　NPCのロジック
 
 ## 追加機能済み
 ・複数回の試合を実行できるようにする
