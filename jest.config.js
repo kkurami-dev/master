@@ -3,7 +3,7 @@ module.exports = {
   testMatch: ['<rootDir>/src/**/*.test.js', '<rootDir>/src/**/*.test.jsx'],
 
   // Jestが処理するファイルの種類を指定
-  moduleFileExtensions: ['js', 'jsx', 'json', 'node'],
+  moduleFileExtensions: ['js', 'jsx', 'json', 'node', 'mjs'],
 
   // テストの実行に使用する環境を指定
   testEnvironment: 'jsdom',

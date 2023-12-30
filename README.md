@@ -11,7 +11,7 @@
 ・勝敗を表示
 ・白と黒の取得数を表示
 
-## 追加機能
+## 追加予定機能
 ・プレイヤーを後攻にする
 ・先攻／後攻のプレイヤー、NPCを選べるようにする
 ・ネットワーク対戦
@@ -41,9 +41,7 @@
 > fsutil behavior query symlinkevaluation
 
 ## 一般ユーザのコンソールで
-
 npm i -g prettier eslint react-devtools
-
 npm i -g eslint-plugin-eslint-comments
 
 # VSCode

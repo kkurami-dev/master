@@ -59,6 +59,8 @@ function newCel(col, row) {
 
 export class OthelloBoard {
   constructor() {
+    console.log("OthelloBoard constructor()");
+
     this.uuid = crypto.randomUUID();
     this.count = -1;
     this.number_of_moves = 3;
