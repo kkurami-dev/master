@@ -1,9 +1,9 @@
 import React from 'react';
-import { render, fireEvent, act, waitFor } from '@testing-library/react';
+import {render, fireEvent, act, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Board from '../../src/component/board';
 
-// setTimeoutをモック化
+// SetTimeoutをモック化
 jest.useFakeTimers();
 
 describe('Board Component', () => {
@@ -12,8 +12,8 @@ describe('Board Component', () => {
   });
 
   it('handles square click', async () => {
-    const { getByText } = render(<Board />);
-    
+    const {getByText} = render(<Board />);
+
     // ここにクリックのテストを記述
 
     // テスト中に発生する非同期のsetTimeoutを実行
@@ -28,8 +28,8 @@ describe('Board Component', () => {
   });
 
   it('handles reset click', async () => {
-    const { getByText } = render(<Board />);
-    
+    const {getByText} = render(<Board />);
+
     // ここにリセットのテストを記述
 
     // テスト中に発生する非同期のsetTimeoutを実行

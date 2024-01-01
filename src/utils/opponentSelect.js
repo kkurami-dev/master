@@ -1,29 +1,7 @@
 /**
  * オセロのメインクラス
  */
-// board の角の座標
-const angle = [
-  [0, 0],
-  [0, 7],
-  [7, 0],
-  [7, 7],
-];
-
-// board の角に隣接する位置の座標
-const angleAdjacent = [
-  [0, 1],
-  [1, 0],
-  [1, 1],
-  [0, 6],
-  [1, 6],
-  [1, 7],
-  [6, 0],
-  [6, 1],
-  [7, 1],
-  [6, 6],
-  [6, 7],
-  [7, 7],
-];
+import {angle, angleAdjacent} from './utilsData.js';
 
 // 一致した時
 function someElement(arr, opponentPutArr) {
@@ -41,8 +19,8 @@ function core(positionArr, opponentPutArr, match) {
 
   // 一致したもの配列に入れる
   const matchArr = [];
-  opponentPutArr.forEach((el) => {
-    positionArr.forEach((item) => {
+  opponentPutArr.forEach(el => {
+    positionArr.forEach(item => {
       const isMatch = el.row === item[0] && el.col === item[1];
 
       if (isMatch) {

@@ -1,7 +1,7 @@
-//import logo from './logo.svg';
+// Import logo from './logo.svg';
 import './App.css';
 
-import { Board } from './component/board';
+import {Board} from './component/board';
 
 function App() {
   return (
