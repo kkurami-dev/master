@@ -11,6 +11,20 @@ import {Row} from './row';
 import {initSS, PlayerSelect} from './player';
 console.log('-------- load --------');
 
+// データベースを開く
+const request = window.indexedDB.open("MyTestDatabase", 3);
+// エラーの対応
+request.onerror = (event) => {
+  console.error("なぜ私の ウェブアプリで IndexedDB を使わせてくれないのですか?!",);
+};
+// このイベントは最新のブラウザーにのみ実装されています
+request.onupgradeneeded = (event) => {
+  // IDBDatabase インターフェイスに保存します
+  const db = event.target.result;
+  // このデータベース用の objectStore を作成します
+  const objectStore = db.createObjectStore("name", { keyPath: "myKey" });
+};
+
 /**
  * オセロのX軸のindex
  */
