@@ -1,7 +1,7 @@
 /**
  * オセロのメインクラス
  */
-import {angle, angleAdjacent} from './utilsData.js';
+import {angle, angleAdjacent} from './utilsData';
 
 // 一致した時
 function someElement(arr, opponentPutArr) {

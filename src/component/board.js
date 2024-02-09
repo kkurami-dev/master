@@ -9,8 +9,10 @@ import Button from '@mui/material/Button';
 import {LEN, ID} from './othello';
 import {Row} from './row';
 import {initSS, PlayerSelect} from './player';
+
 console.log('-------- load --------');
 
+/*
 // データベースを開く
 const request = window.indexedDB.open("MyTestDatabase", 3);
 // エラーの対応
@@ -22,14 +24,14 @@ request.onupgradeneeded = (event) => {
   // IDBDatabase インターフェイスに保存します
   const db = event.target.result;
   // このデータベース用の objectStore を作成します
-  const objectStore = db.createObjectStore("name", { keyPath: "myKey" });
+  const obj = db.createObjectStore("name", { keyPath: "myKey" });
 };
-
+*/
 /**
  * オセロのX軸のindex
  */
 const rowArr = [];
-for (let i = 0; i < LEN; i++) {
+for (let i = 0; i < LEN; i+= 1) {
   rowArr.push(i);
 }
 
@@ -45,7 +47,7 @@ function wait(t = 30) {
 }
 
 let GameSet = true;
-export function Board() {
+function Board() {
   /*
    * オセロボードの状態をstateで管理する
    * 対戦相手が石を置くまで操作できないようにする
@@ -53,49 +55,7 @@ export function Board() {
   const [isDisabled, setIsDisabled] = useState(false);
   const [playState, setPlayState] = useState('対戦中');
   const [putPos, setPutPos] = useState([]);
-  const [ctx] = useState(initSS(clickSquare));
-
-  // 操作タイミングでの処理
-  async function clickSquare(event) {
-    if (GameSet) {
-      return;
-    }
-
-    if (!isDisabled)// マスの操作抑止を解除
-    {
-      setIsDisabled(true);
-    }
-
-    for (let i = 0; i < 2; i++) {
-      // 今回の操作
-      const isPut = ctx.ss.isPut(event);
-      if (isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT) {
-        break;
-      }
-      await wait(); // 1秒待つ
-
-      // 次の操作判定
-      const {next:after_func} = ctx.ss.now;
-      const nObj = ctx.ss.next;
-      const next = isNext(nObj);
-      switch (next) {
-      case ID.FLIP_OK:
-        if (after_func) {
-          after_func();
-        }
-        break;
-      case ID.NO_PUT_LOCATION:
-        i--;
-        continue;
-      default:
-        break;
-      }
-    }
-    if (ctx.ss.isPlayer)// マスの操作抑止を解除
-    {
-      setIsDisabled(false);
-    }
-  }
+  const [ctx, setCtx] = useState(null);
 
   /**
    * 次の操作が可能か
@@ -134,6 +94,47 @@ export function Board() {
     return ID.FLIP_OK;
   }
 
+  // 操作タイミングでの処理
+  async function clickSquare(event) {
+    if (GameSet) {
+      return;
+    }
+
+    if (!isDisabled)// マスの操作抑止を解除
+    {
+      setIsDisabled(true);
+    }
+
+    // 今回の操作
+    const isPut = ctx.ss.isPut(event);
+    if (isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT) {
+      return;
+    }
+    await wait(); // 1秒待つ
+
+    // 次の操作判定
+    const nObj = ctx.ss.next;
+    const next = isNext(nObj);
+    switch (next) {
+    case ID.FLIP_OK:{
+      const { next:AfterFunc } = ctx.ss.now;
+      if (AfterFunc) {
+        AfterFunc();
+      }
+      break;
+    }
+    case ID.NO_PUT_LOCATION:
+      return;
+    default:
+      break;
+    }
+
+    if (ctx.ss.isPlayer)// マスの操作抑止を解除
+    {
+      setIsDisabled(false);
+    }
+  }
+
   /**
    * リセット
    */
@@ -158,6 +159,8 @@ export function Board() {
       return;
     }
     ReSet();
+    if( ctx === null )
+      setCtx(initSS(clickSquare));
   }, [ReSet]);
 
   const {board, ox_count, count} = ctx.ss.obj;
@@ -195,3 +198,7 @@ export function Board() {
     </div>
   );
 }
+
+export {
+  Board
+};

@@ -1,6 +1,6 @@
 module.exports = {
   // テスト対象のファイルのパターン
-  testMatch : ['<rootDir>/src/**/*.test.js', '<rootDir>/src/**/*.test.jsx'],
+  testMatch : ['<rootDir>/test/**/*.test.js', '<rootDir>/test/**/*.test.jsx'],
 
   // Jestが処理するファイルの種類を指定
   moduleFileExtensions : ['js', 'jsx', 'json', 'node', 'mjs'],

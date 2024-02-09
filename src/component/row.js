@@ -20,6 +20,7 @@ function RowDraw(param) {
     }
   }
 
+  
   return <Square value={board[col][row]} isput={isPut} {...param} />;
 }
 
@@ -27,7 +28,7 @@ export const Row = param => {
   const {array, col} = param;
   return (
     <div className="row" key={col}>
-      {col}
+      <div className="col-num">{col}</div>
       {array.map(index => (
         <RowDraw key={index} {...param} row={index} />
       ))}

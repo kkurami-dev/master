@@ -1,0 +1,36 @@
+{
+  "FunctionName": "npc",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:npc",
+  "Runtime": "nodejs20.x",
+  "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+  "Handler": "index.handler",
+  "CodeSize": 8941,
+  "Description": "",
+  "Timeout": 30,
+  "MemorySize": 256,
+  "LastModified": "2022-01-08T12:22:13.847+0000",
+  "CodeSha256": "I6xc5xHEFoQPcwAVd7DYT94vfWeiFCgjflTF7xNb+FY=",
+  "Version": "$LATEST",
+  "Environment": {
+    "Variables": {
+      "ENVROMENT": "10",
+      "ENVROMENT2": "100"
+    }
+  },
+  "TracingConfig": {
+    "Mode": "PassThrough"
+  },
+  "RevisionId": "d9868ef0-70a0-4d15-be74-71349f691e00",
+  "Layers": [
+    {
+      "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:crypto:1",
+      "CodeSize": 2329
+    }
+  ],
+  "State": "Active",
+  "LastUpdateStatus": "Successful",
+  "PackageType": "Zip",
+  "Architectures": [
+    "x86_64"
+  ]
+}

@@ -4,17 +4,13 @@ set -aue
 #set -x
 echo "" > UpdateResult.log
 
-#array_up=(
-#    vci-authorizers
-#    test0001
-#    mySendToken
-#    myHelloWorld
-#    mySendToken
-#);
+array_up=(
+    npc
+);
 
-if [ "$1" != "" ]; then
-    array_up=$1
-fi
+# if [ "$1" != "" ]; then
+#     array_up=$1
+# fi
 
 PATH=/f/work/7-Zip:/f/tool:${PATH}
 CMDNAME=`basename $0`
@@ -71,11 +67,12 @@ zipUpload(){
 
     echo "# ${FPATH} の圧縮、アップロード、削除の一連処理"
     7z a -tzip -r ${ZIP} ./${FPATH}/*
+    echo "# aws lambda update-function-code"
     aws lambda update-function-code \
         --function-name ${FPATH} \
         --zip-file fileb://${ZIP2} \
-        --region "ap-northeast-1" \
-        --publish >> UpdateResult.log
+        --region "ap-northeast-1"  >> UpdateResult.log
+    echo "# update-function-code OK"
     rm -rf ${ZIP}
     sleep 1
 
@@ -88,6 +85,7 @@ zipUpload(){
         --cli-binary-format raw-in-base64-out \
         --payload '{"key": "value"}' out
     cat out | jq . >> UpdateResult.log
+
     #sed -i'' -e 's/"//g' out
     # LOG_STREAM=$(cat out | jq -r .logStreamName)
     # sleep 3
@@ -95,6 +93,7 @@ zipUpload(){
         #     --log-group-name "/aws/lambda/${FPATH}" \
         #     --log-stream-name ${LOG_STREAM} --limit 5
     rm -rf out
+    echo "# $FPATH OK"
 }
 
 for e in ${array_up[@]}; do

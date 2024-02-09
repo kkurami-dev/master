@@ -5,7 +5,7 @@
 import {
   Wait1,
   Wait2
-} from './utilsData.js';
+} from './utilsData.mjs';
 
 function getGP(arr, pos) {
   return arr[pos.col][pos.row];

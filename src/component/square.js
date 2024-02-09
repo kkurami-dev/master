@@ -34,8 +34,15 @@ export const Square = param => {
     nop = true;
   }
 
+  const {col, row, onClick} = param;
+  const input = {col, row, onClick};
   return (
-    <button className={cls} type="button" {...param} disabled={nop} name={`act_${value.v}`}>
+    <button className={cls}
+            type="button"
+            {...input}
+            disabled={nop}
+            name={`act_${value.v}`}
+    >
       <div className={color}>{now.c}</div>
     </button>
   );
