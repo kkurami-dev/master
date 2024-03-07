@@ -1,16 +1,16 @@
 /**
  * オセロのメイン部
  */
-import {useState, useEffect, useCallback} from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 
-import {LEN, ID} from './othello';
-import {Row} from './row';
-import {initSS, PlayerSelect} from './player';
+import { LEN, ID } from './othello';
+import { Row } from './row';
+import { initSS, PlayerSelect } from './player';
 
-console.log('-------- load --------');
+// console.log('-------- load --------');
 
 /*
 // データベースを開く
@@ -31,7 +31,7 @@ request.onupgradeneeded = (event) => {
  * オセロのX軸のindex
  */
 const rowArr = [];
-for (let i = 0; i < LEN; i+= 1) {
+for (let i = 0; i < LEN; i += 1) {
   rowArr.push(i);
 }
 
@@ -39,7 +39,7 @@ for (let i = 0; i < LEN; i+= 1) {
  * 1000ms待つ処理
  */
 function wait(t = 30) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve();
     }, t);
@@ -60,22 +60,25 @@ function Board() {
   /**
    * 次の操作が可能か
    */
-  function isNext({v, obj}) {
+  function isNext({ v, obj }) {
     // 両プレイヤーで置ける位置があるか
     const is = {
-      x : obj.isPutPosition('x'),
-      o : obj.isPutPosition('o'),
+      x: obj.isPutPosition('x'),
+      o: obj.isPutPosition('o'),
       get flip() {
-        return (this.x.length + this.o.length) > 0;
+        const xlen = obj.isPutPosition('x');
+        const olen = obj.isPutPosition('o');
+        return xlen + olen > 0;
       },
       get n() {
-        return this[v];
+        // return this[v];
+        return v
       },
     };
 
     if (!is.flip) {
       GameSet = true;
-      const {x, o} = obj.getOX();
+      const { x, o } = obj.getOX();
       if (x > o) {
         setPlayState('黒の勝ち');
       } else if (x < o) {
@@ -95,17 +98,18 @@ function Board() {
   }
 
   // 操作タイミングでの処理
-  async function clickSquare(event) {
+  const clickSquare = async (event) => {
     if (GameSet) {
       return;
     }
 
-    if (!isDisabled)// マスの操作抑止を解除
-    {
+    if (!isDisabled) {
+      // マスの操作抑止を解除
       setIsDisabled(true);
     }
 
     // 今回の操作
+    if(!ctx.ss) return;
     const isPut = ctx.ss.isPut(event);
     if (isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT) {
       return;
@@ -116,21 +120,21 @@ function Board() {
     const nObj = ctx.ss.next;
     const next = isNext(nObj);
     switch (next) {
-    case ID.FLIP_OK:{
-      const { next:AfterFunc } = ctx.ss.now;
-      if (AfterFunc) {
-        AfterFunc();
+      case ID.FLIP_OK: {
+        const { next: AfterFunc } = ctx.ss.now;
+        if (AfterFunc) {
+          AfterFunc();
+        }
+        break;
       }
-      break;
-    }
-    case ID.NO_PUT_LOCATION:
-      return;
-    default:
-      break;
+      case ID.NO_PUT_LOCATION:
+        return;
+      default:
+        break;
     }
 
-    if (ctx.ss.isPlayer)// マスの操作抑止を解除
-    {
+    if (ctx.ss.isPlayer) {
+      // マスの操作抑止を解除
       setIsDisabled(false);
     }
   }
@@ -139,9 +143,10 @@ function Board() {
    * リセット
    */
   const ReSet = useCallback(() => {
+    if(!ctx || !ctx.init) return;
     GameSet = false;
 
-    const {obj, loop} = ctx.init();
+    const { obj, loop } = ctx.init();
     setPutPos(obj.isPutPosition('x'));
     setPlayState('開始');
     if (loop) {
@@ -159,46 +164,49 @@ function Board() {
       return;
     }
     ReSet();
-    if( ctx === null )
-      setCtx(initSS(clickSquare));
+    if (ctx === null) setCtx(initSS(clickSquare));
   }, [ReSet]);
 
-  const {board, ox_count, count} = ctx.ss.obj;
+  // const { board, oxcount, count } = ctx?.ss?.obj;
+  let obj = {};
+  if(ctx && ctx.ss && ctx.ss.obj){
+    obj = ctx.ss.obj;
+  }
   return (
     <div className="container">
       <Stack spacing={2} direction="row">
-        <Button variant="contained" onClick={ReSet}>リセット</Button>
-        <PlayerSelect idx="x" msg="黒(先攻)" ctx={ctx}/>
-        <PlayerSelect idx="o" msg="白(後攻)" ctx={ctx}/>
+        <Button variant="contained" onClick={ReSet}>
+          リセット
+        </Button>
+        <PlayerSelect idx="x" msg="黒(先攻)" ctx={ctx} />
+        <PlayerSelect idx="o" msg="白(後攻)" ctx={ctx} />
         <div>{playState}</div>
       </Stack>
       <div className="board">
         <div className="row">
           <div>+</div>
-          {rowArr.map((i, idx) => (
-            <div className="title_row" key={idx}>
+          {rowArr.map((i) => (
+            <div className="title_row" key={i}>
               {i}
             </div>
           ))}
         </div>
-        {rowArr.map(index => (
+        {rowArr.map((index) => (
           <Row
             key={index}
             col={index}
             array={rowArr}
-            board={board}
+            board={obj?.board}
             isputstone={putPos}
             onClick={clickSquare}
             disabled={isDisabled}
-          ></Row>
+          />
         ))}
       </div>
-      {ox_count}
-      {count}個置いてある
+      {obj?.oxcount}
+      {obj?.count}個置いてある
     </div>
   );
 }
 
-export {
-  Board
-};
+export default Board;

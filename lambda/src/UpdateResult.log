@@ -1,0 +1,101 @@
+
+{
+    "FunctionName": "npc",
+    "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:npc",
+    "Runtime": "nodejs20.x",
+    "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+    "Handler": "index.handler",
+    "CodeSize": 2612,
+    "Description": "",
+    "Timeout": 30,
+    "MemorySize": 256,
+    "LastModified": "2024-01-18T12:53:20.000+0000",
+    "CodeSha256": "CqpLsrRLASANB5UTZfJEijBkZ3z7zeSNNTvmSfOfIo4=",
+    "Version": "$LATEST",
+    "Environment": {
+        "Variables": {
+            "ENVROMENT": "10",
+            "ENVROMENT2": "100"
+        }
+    },
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "a265d2f2-c682-4f84-a6b7-e5724c32245c",
+    "Layers": [
+        {
+            "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:crypto:1",
+            "CodeSize": 2329
+        }
+    ],
+    "State": "Active",
+    "LastUpdateStatus": "InProgress",
+    "LastUpdateStatusReason": "The function is being created.",
+    "LastUpdateStatusReasonCode": "Creating",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:ap-northeast-1::runtime:b9e93489dd72ca0040a595b33cc85a8b0635e8aeb4dca9749db38ed2bcd5d0a5"
+    }
+}
+{
+    "FunctionName": "npc",
+    "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:npc",
+    "Runtime": "nodejs20.x",
+    "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+    "Handler": "index.handler",
+    "CodeSize": 2612,
+    "Description": "",
+    "Timeout": 30,
+    "MemorySize": 256,
+    "LastModified": "2024-01-18T12:53:24.000+0000",
+    "CodeSha256": "CqpLsrRLASANB5UTZfJEijBkZ3z7zeSNNTvmSfOfIo4=",
+    "Version": "$LATEST",
+    "Environment": {
+        "Variables": {
+            "ENVROMENT": "10",
+            "ENVROMENT2": "100"
+        }
+    },
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "361c2543-13a5-4c18-9e8c-49eaea5b21fc",
+    "Layers": [
+        {
+            "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:crypto:1",
+            "CodeSize": 2329
+        }
+    ],
+    "State": "Active",
+    "LastUpdateStatus": "InProgress",
+    "LastUpdateStatusReason": "The function is being created.",
+    "LastUpdateStatusReasonCode": "Creating",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:ap-northeast-1::runtime:b9e93489dd72ca0040a595b33cc85a8b0635e8aeb4dca9749db38ed2bcd5d0a5"
+    }
+}
+{
+  "statusCode": 200,
+  "body": "\"Hello from Lambda!\""
+}
