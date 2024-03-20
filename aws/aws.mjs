@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
+
+import { STSClient, AssumeRoleCommand } from "@aws-sdk/client-sts";
+export const client = new STSClient({ region: REGION });
 import { STS } from 'aws-sdk';
+
+const awsid_root = process.env.REACT_APP_AWS_ROOT;
+const awsid_jump = process.env.REACT_APP_AWS_JUMP;
+
+// https://docs.aws.amazon.com/ja_jp/sdk-for-javascript/v3/developer-guide/javascript_sts_code_examples.html
+// 
 
 const SwitchRoleWithMfa = () => {
   const [username, setUsername] = useState('');
@@ -13,12 +22,18 @@ const SwitchRoleWithMfa = () => {
 
     const sts = new STS();
 
+    // 1. US, PW
+    //    -> 認証
+    // 2. MF
+    // 
+
     try {
       // ユーザー名とパスワードを使って一時的な認証情報を取得
       const loginData = await sts.assumeRoleWithWebIdentity({
-        RoleArn: 'YOUR_ROLE_ARN',
+        RoleArn: `arn:aws:iam::${awsid_root}:role/${username}`,
         RoleSessionName: 'session1',
-        WebIdentityToken: 'YOUR_WEB_IDENTITY_TOKEN',
+        //WebIdentityToken: 'YOUR_WEB_IDENTITY_TOKEN',
+        DurationSeconds: 900,
       }).promise();
 
       console.log('Login data:', loginData);
