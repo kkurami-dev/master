@@ -40,10 +40,10 @@ function mockFunc(key, param, callback) {
   };
 
   const arr_main = paramMap[key];
-  const mode_app = [{ f: Object.keys(arr_main[0]), in: arr_main[0], out: param }];
+  const mode_app = [{ f: Object.keys(arr_main[0]), in: arr_main[0] }];
 
   while (arr_main.length > 0) {
-    const { f, in:a, out } = mode_app[mode_app.length - 1];
+    const { f, in:a, b = param } = mode_app[mode_app.length - 1];
     const k = f.pop();
     if (undefined === k) {
       mode_app.pop();
@@ -55,7 +55,7 @@ function mockFunc(key, param, callback) {
     const type = is_type(obj_a);
 
     // パラメータに含まれるか
-    if (!param[k] || type !== is_type(param[k])) {
+    if (!b[k] || type !== is_type(b[k])) {
       arr_main.pop();
       continue;
     }
