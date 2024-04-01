@@ -9,7 +9,6 @@ const awsid_jump = process.env.REACT_APP_AWS_JUMP;
 
 // https://docs.aws.amazon.com/ja_jp/sdk-for-javascript/v3/developer-guide/javascript_sts_code_examples.html
 // 
-
 const SwitchRoleWithMfa = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
