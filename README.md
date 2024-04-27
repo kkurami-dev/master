@@ -63,3 +63,7 @@ Ctrl+Shift+\キーで対応する括弧（カッコ）にカーソルを移動�
 
 VSCode の折り畳みと展開のショートカット一覧
 https://rishuntrading.co.jp/blog/tools/vs-code_fold_unforld/
+
+# その他
+
+  

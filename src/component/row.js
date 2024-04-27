@@ -24,7 +24,7 @@ function RowDraw(param) {
   return <Square value={board[col][row]} isput={isPut} {...param} />;
 }
 
-export const Row = param => {
+export function Row(param) {
   const {array, col} = param;
   return (
     <div className="row" key={col}>
@@ -34,4 +34,4 @@ export const Row = param => {
       ))}
     </div>
   );
-};
+}

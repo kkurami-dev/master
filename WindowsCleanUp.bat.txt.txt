@@ -1,0 +1,48 @@
+@rem ダウンロードフォルダ内自動削除
+forfiles /p "%USERPROFILE%\Downloads" /D -2 /c "cmd /c del /F /S /Q @file"
+forfiles /p "%USERPROFILE%\Downloads" /D -2 /c "cmd /c IF @isdir==TRUE rmdir /S /Q 
+
+@rem Microsoft Updateキャッシュクリア
+net stop wuauserv
+SET TARGET_PATH=C:\WINDOWS\SoftwareDistribution\
+FOR /F %%1 IN ('DIR /AD /B %TARGET_PATH%') DO FOR /F %%2 IN ('DIR /AD /B "%TARGET_PATH%%%1\"') DO rmdir /S /Q %TARGET_PATH%%%1\%%2\
+FOR /F %%1 IN ('DIR /AD /B %TARGET_PATH%') DO rmdir /S /Q %TARGET_PATH%%%1\
+del /S /Q %TARGET_PATH%*.*
+net start wuauserv
+
+dism /Online /Cleanup-Image /StartComponentCleanup /ResetBase
+dism /online /cleanup-image /restorehealth
+sfc /scannow
+
+wsreset
+
+cleanmgr
+
+set devmgr_show_nonpresent_devices=1
+start devmgmt.msc
+
+winget upgrade --all --accept-package-agreements
+
+
+del C:\Windows\prefetch\*.* /s /q
+ipconfig /flushDNS
+rd /s SoftwareDistributionw
+
+
+schtasks.exe /Run /TN "\Microsoft\Windows\Servicing\StartComponentCleanup"
+
+
+@rem エッジのキャッシュをクリア Profile 1がDefaultになってる人もいるかも！
+DEL "%userprofile%\AppData\Local\Microsoft\Edge\User Data\Profile 1\Cache*" /F /Q
+DEL "%userprofile%\AppData\Local\Microsoft\Edge\User Data\Profile 1\Code Cache*" /F /Q
+DEL "%userprofile%\AppData\Local\Microsoft\Edge\User Data\Profile 1\GPUCache*" /F /Q
+
+@rem Localの直下にもMicrosoftEdgeのフォルダがあったので
+DEL "%userprofile%\AppData\Local\MicrosoftEdge\User\Default\Cache*" /F /Q
+DEL "%userprofile%\AppData\Local\MicrosoftEdge\User\Default\Code Cache*" /F /Q
+DEL "%userprofile%\AppData\Local\MicrosoftEdge\User\Default\GPUCache*" /F /Q
+
+@rem 休止状態にするときのメモリ書き込み先
+::powercfg.exe /hibernate off
+
+@pause

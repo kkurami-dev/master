@@ -13,7 +13,7 @@ function getGP(arr, pos) {
 
 function getAP(arr, poss) {
   let total = -100;
-  for (let i = 0; i < poss.length; i++) {
+  for (let i = 0; i < poss.length; i+= 1) {
     total += getGP(arr, poss[i]);
   }
   return total;
@@ -80,7 +80,7 @@ export const selectPosition = (arrPosition, opponent, obj, lv = 1) => {
   data.board = obj;
 
   // 石を置ける箇所の数だけチェックする
-  for (let i = 0; i < arrPosition.length; i++) {
+  for (let i = 0; i < arrPosition.length; i+= 1) {
     const pos = arrPosition[i];
 
     // 石を置ける位置を確認

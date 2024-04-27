@@ -4,6 +4,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import PropTypes from 'prop-types';
 
 import {opponentSelect} from '../utils/opponentSelect';
 import {selectPosition} from '../utils/selectPosition';
@@ -36,7 +37,7 @@ function initSS(click) {
 
   /* eslint-disable key-spacing */
   /* eslint-disable array-element-newline */
-  const ss_type = [
+  const SsType = [
     {type: 1, func: pc, next: null, data:{}},
     {type: 2, func: npc, next: null, data:{lv:6}},
     {type: 2, func: npc, next: click, data:{lv:1}},
@@ -46,18 +47,18 @@ function initSS(click) {
 
   const ss = {
     obj   : sOB,
-    x     : ss_type[1],
-    o     : ss_type[2],
+    x     : SsType[1],
+    o     : SsType[2],
     v     : 'x',
-    p     : ss_type[1],
+    p     : SsType[1],
     isPut : function ss(ev) {
       return this.p.func(this.v, {ev, ...this.p.data, ss : this});
     },
     set type({idx, id, lv}) {
-      ss_type[id].data.lv = lv;
-      this[idx] = ss_type[id];
+      SsType[id].data.lv = lv;
+      this[idx] = SsType[id];
       if (this.v === idx) {
-        this.p = ss_type[id];
+        this.p = SsType[id];
       }
       if (this.x.type !== 1) {
         this.o.next = click;
@@ -86,20 +87,20 @@ function initSS(click) {
     return {loop : ss.o.next, obj : sOB};
   }
 
-  return {ss, ss_type, init, ...ss.p};
+  return {ss, SsType, init, ...ss.p};
 }
 
-function PlayerSelect({idx, msg, ctx}) {
+function PlayerSelect({pidx, msg, ctx}) {
   const [age, setAge] = useState('');
 
   const handleChange = event => {
     const lv = event.target.value;
     if (lv === 0) {
-      ctx.ss.type = {idx, id : 0, lv : 0};// [id] = ss_type[0];
-    } else if (idx === 1 && ctx.ss.x.type !== 1) {
-      ctx.ss.type = {idx, id : 2, lv};
+      ctx.ss.type = {pidx, id : 0, lv : 0};// [id] = SsType[0];
+    } else if (pidx === 1 && ctx.ss.x.type !== 1) {
+      ctx.ss.type = {pidx, id : 2, lv};
     } else {
-      ctx.ss.type = {idx, id : 1, lv};
+      ctx.ss.type = {pidx, id : 1, lv};
     }
     setAge(lv);
   };
@@ -124,5 +125,11 @@ function PlayerSelect({idx, msg, ctx}) {
     </Box>
   );
 }
+
+PlayerSelect.propTypes = {
+  pidx: PropTypes.string,
+  msg: PropTypes.string,
+  ctx: PropTypes.object,
+};
 
 export {initSS, PlayerSelect};

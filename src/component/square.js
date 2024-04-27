@@ -1,7 +1,7 @@
 /**
  * 一つのマスの制御
  */
-export const Square = param => {
+export function Square(param) {
   const {value, isput} = param;
   const cls = isput ? 'put-square' : 'square';
 
@@ -46,4 +46,4 @@ export const Square = param => {
       <div className={color}>{now.c}</div>
     </button>
   );
-};
+}

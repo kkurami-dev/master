@@ -1,4 +1,4 @@
-export const crossCheck = (board, currentPosition, yAxis, xAxis, player) => {
+const crossCheck = (board, currentPosition, yAxis, xAxis, player) => {
   const change = [];
   let y = currentPosition.yIndex + yAxis;
   let x = currentPosition.xIndex + xAxis;
@@ -51,3 +51,5 @@ export const crossCheck = (board, currentPosition, yAxis, xAxis, player) => {
   change.push(...total);
   return change;
 };
+
+export default crossCheck;

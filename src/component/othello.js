@@ -1,7 +1,7 @@
 /**
- * オセロのメインクラス
+ * オセロのメインクラスファイル
  */
-import { crossCheck } from './crossCheck';
+import crossCheck from './crossCheck';
 
 export const LEN = 8;
 
@@ -28,12 +28,12 @@ const directions = [
 
 function newCel(col, row) {
   return {
-    ////////////////////////////////////////
+    /// /////////////////////////////////////
     Val: null,
     c: null,
     col,
     row,
-    ////////////////////////////////////////
+    /// /////////////////////////////////////
     get yIndex() {
       return this.col;
     },
@@ -47,11 +47,11 @@ function newCel(col, row) {
       if (this.Val === null) return null;
       return this.Val.toLowerCase();
     },
-    isAct: function (ox) {
+    isAct (ox) {
       if (this.v === ox || this.v === null) return true;
       return false;
     },
-    isNow: function (ox) {
+    isNow (ox) {
       return this.v !== ox;
     },
   };
@@ -67,11 +67,11 @@ export class OthelloBoard {
     this.len = LEN;
     this.max = LEN * LEN;
     this.board = [];
-    for (let col = 0; col < LEN; col++) {
-      const row_arr = [];
-      this.board.push(row_arr);
-      for (let row = 0; row < LEN; row++) {
-        row_arr.push(newCel(col, row));
+    for (let col = 0; col < LEN; col+= 1) {
+      const RowArr = [];
+      this.board.push(RowArr);
+      for (let row = 0; row < LEN; row+= 1) {
+        RowArr.push(newCel(col, row));
       }
     }
     this.setdefault(this.board);
@@ -82,11 +82,11 @@ export class OthelloBoard {
     console.log("setdefault", this.count);
     this.count = 0;
 
-    for (let col = 0; col < LEN; col++) {
-      const row_arr = this.board[col];
-      for (let row = 0; row < LEN; row++) {
-        row_arr[ row ].c = null;
-        row_arr[ row ].v = null;
+    for (let col = 0; col < LEN; col+= 1) {
+      const RowArr = this.board[col];
+      for (let row = 0; row < LEN; row+= 1) {
+        RowArr[ row ].c = null;
+        RowArr[ row ].v = null;
       }
     }
     this.board[3][3].v = 'o';
@@ -99,18 +99,25 @@ export class OthelloBoard {
   get isMatchEnd(){
     return this.number_of_moves === this.max;
   }
+
   get nowCount(){
     return this.count;
   }
-  getOX = () => {
-    const x_count = document.getElementsByName("act_x");
-    const o_count = document.getElementsByName("act_o");
-    return {x:x_count.length, o: o_count.length}
+
+  static getOX = () => {
+    const xCount = document.getElementsByName("act_x");
+    const oCount = document.getElementsByName("act_o");
+    return {
+      x: xCount.length,
+      o: oCount.length
+    }
   }
+
   get win(){
     const ox = this.getOX();
     return ox.x.length > ox.o.length;
   }
+
   get ox_count(){
     const ox = this.getOX();
     return `黒: ${ox.x}、白: ${ox.o}、`;
@@ -118,7 +125,7 @@ export class OthelloBoard {
 
   checkStone(item, player, board = this.board) {
     const change = [];
-    for (let i = 0; i < directions.length; i++) {
+    for (let i = 0; i < directions.length; i+= 1) {
       const el = directions[i];
       // 選択した箇所で相手の石を返せそうならその位置を配列に入れる
       const result = crossCheck(board, item, el[1], el[0], player);
@@ -129,9 +136,9 @@ export class OthelloBoard {
 
   isPutPosition(ox) {
     const putList = [];
-    for (let i = 0; i < this.board.length; i++) {
+    for (let i = 0; i < this.board.length; i+= 1) {
       const rowItem = this.board[i];
-      for (let j = 0; j < rowItem.length; j++) {
+      for (let j = 0; j < rowItem.length; j+= 1) {
         const el = rowItem[j];
         const flipItems = this.checkStone(el, ox);
 
@@ -144,14 +151,14 @@ export class OthelloBoard {
     return putList;
   }
 
-  putStone(item, ox) {
+  putStone(item, ox = {}) {
     // 既に石が置いてあれば処理を終了
     if (item.v) {
       console.log('すでに石が置いてあります');
       return ID.ALREADY_STORE;
     }
 
-    //判定
+    // 判定
     const willBeReturned = this.checkStone(item, ox);
 
     // 1つも石を返せなければ処理を終了
@@ -161,13 +168,13 @@ export class OthelloBoard {
     }
 
     // 問題なければ石を置く
-    this.count++;
+    this.count += 1;
     item.v = ox.toUpperCase();
     item.c = this.count;
-    this.number_of_moves++;
+    this.number_of_moves+= 1;
 
     // 置いた石との間にある石を返す
-    for (let i = 0, l = willBeReturned.length; i < l; i++) {
+    for (let i = 0, l = willBeReturned.length; i < l; i+= 1) {
       willBeReturned[i].v = ox;
     }
     return ID.FLIP_OK;

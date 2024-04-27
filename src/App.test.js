@@ -1,4 +1,4 @@
-//import { describe } from 'jest';
+// import { describe } from 'jest';
 /*
  * Import { render, screen } from '@testing-library/react';
  * import App from './App';
@@ -38,7 +38,7 @@ function mockFunc(key, param, callback) {
 
   const is_type = (a) => {
     if (Array.isArray(a)) return 'arr';
-    if ('object' === typeof a) return 'map';
+    if (typeof a === 'object') return 'map';
     return 'prim';
   };
   const re_set = () => {
