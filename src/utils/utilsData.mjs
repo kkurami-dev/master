@@ -49,12 +49,7 @@ const Wait2 = [
   [30, -12, 0, -1, -1, 0, -12, 30],
 ];
 
-export {
-  angle,
-  angleAdjacent,
-  Wait1,
-  Wait2
-};
+export { angle, angleAdjacent, Wait1, Wait2 };
 
 /* eslint-enable no-magic-numbers */
 /* eslint-enable array-element-newline */

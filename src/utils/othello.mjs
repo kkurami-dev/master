@@ -1,29 +1,29 @@
 /**
  * オセロのメインクラスファイル
  */
-import crossCheck from './crossCheck';
+import crossCheck from './crossCheck.mjs';
 
 export const LEN = 8;
 
 // 操作結果
 export const ID = {
-  FLIP_OK: 0,       // 裏返せた
-  NO_PUT_LOCATION: 1,       // 置く場所がない
+  FLIP_OK: 0, // 裏返せた
+  NO_PUT_LOCATION: 1, // 置く場所がない
   ALREADY_STORE: 2, // すでに石が置いてある
-  NOT_PUT: 3,       // 置けない
+  NOT_PUT: 3, // 置けない
   ERROR: 99,
-}
+};
 
 // チェックする方向
 const directions = [
-  [0, 1],   // 右
-  [0, -1],  // 左
-  [-1, 0],  // 上
-  [1, 0],   // 下
+  [0, 1], // 右
+  [0, -1], // 左
+  [-1, 0], // 上
+  [1, 0], // 下
   [-1, -1], // 左上
-  [1, 1],   // 左下
-  [-1, 1],  // 右上
-  [1, -1],  // 右下
+  [1, 1], // 左下
+  [-1, 1], // 右上
+  [1, -1], // 右下
 ];
 
 function newCel(col, row) {
@@ -47,11 +47,11 @@ function newCel(col, row) {
       if (this.Val === null) return null;
       return this.Val.toLowerCase();
     },
-    isAct (ox) {
+    isAct(ox) {
       if (this.v === ox || this.v === null) return true;
       return false;
     },
-    isNow (ox) {
+    isNow(ox) {
       return this.v !== ox;
     },
   };
@@ -59,7 +59,7 @@ function newCel(col, row) {
 
 export class OthelloBoard {
   constructor() {
-    console.log("OthelloBoard constructor()");
+    // console.log('OthelloBoard constructor()');
 
     this.uuid = crypto.randomUUID();
     this.count = -1;
@@ -67,26 +67,26 @@ export class OthelloBoard {
     this.len = LEN;
     this.max = LEN * LEN;
     this.board = [];
-    for (let col = 0; col < LEN; col+= 1) {
+    for (let col = 0; col < LEN; col += 1) {
       const RowArr = [];
       this.board.push(RowArr);
-      for (let row = 0; row < LEN; row+= 1) {
+      for (let row = 0; row < LEN; row += 1) {
         RowArr.push(newCel(col, row));
       }
     }
     this.setdefault(this.board);
   }
 
-  setdefault(){
-    if(this.count === 0) return;
-    console.log("setdefault", this.count);
+  setdefault() {
+    if (this.count === 0) return;
+    // console.log('setdefault', this.count);
     this.count = 0;
 
-    for (let col = 0; col < LEN; col+= 1) {
+    for (let col = 0; col < LEN; col += 1) {
       const RowArr = this.board[col];
-      for (let row = 0; row < LEN; row+= 1) {
-        RowArr[ row ].c = null;
-        RowArr[ row ].v = null;
+      for (let row = 0; row < LEN; row += 1) {
+        RowArr[row].c = null;
+        RowArr[row].v = null;
       }
     }
     this.board[3][3].v = 'o';
@@ -96,36 +96,36 @@ export class OthelloBoard {
     this.count += 4;
   }
 
-  get isMatchEnd(){
+  get isMatchEnd() {
     return this.number_of_moves === this.max;
   }
 
-  get nowCount(){
+  get nowCount() {
     return this.count;
   }
 
   static getOX = () => {
-    const xCount = document.getElementsByName("act_x");
-    const oCount = document.getElementsByName("act_o");
+    const xCount = document.getElementsByName('act_x');
+    const oCount = document.getElementsByName('act_o');
     return {
       x: xCount.length,
-      o: oCount.length
-    }
-  }
+      o: oCount.length,
+    };
+  };
 
-  get win(){
+  get win() {
     const ox = this.getOX();
     return ox.x.length > ox.o.length;
   }
 
-  get ox_count(){
+  get ox_count() {
     const ox = this.getOX();
     return `黒: ${ox.x}、白: ${ox.o}、`;
   }
 
   checkStone(item, player, board = this.board) {
     const change = [];
-    for (let i = 0; i < directions.length; i+= 1) {
+    for (let i = 0; i < directions.length; i += 1) {
       const el = directions[i];
       // 選択した箇所で相手の石を返せそうならその位置を配列に入れる
       const result = crossCheck(board, item, el[1], el[0], player);
@@ -136,9 +136,9 @@ export class OthelloBoard {
 
   isPutPosition(ox) {
     const putList = [];
-    for (let i = 0; i < this.board.length; i+= 1) {
+    for (let i = 0; i < this.board.length; i += 1) {
       const rowItem = this.board[i];
-      for (let j = 0; j < rowItem.length; j+= 1) {
+      for (let j = 0; j < rowItem.length; j += 1) {
         const el = rowItem[j];
         const flipItems = this.checkStone(el, ox);
 
@@ -154,7 +154,7 @@ export class OthelloBoard {
   putStone(item, ox = {}) {
     // 既に石が置いてあれば処理を終了
     if (item.v) {
-      console.log('すでに石が置いてあります');
+      // console.log('すでに石が置いてあります');
       return ID.ALREADY_STORE;
     }
 
@@ -163,7 +163,7 @@ export class OthelloBoard {
 
     // 1つも石を返せなければ処理を終了
     if (willBeReturned.length === 0) {
-      console.log('石を置けません');
+      // console.log('石を置けません');
       return ID.NOT_PUT;
     }
 
@@ -171,10 +171,10 @@ export class OthelloBoard {
     this.count += 1;
     item.v = ox.toUpperCase();
     item.c = this.count;
-    this.number_of_moves+= 1;
+    this.number_of_moves += 1;
 
     // 置いた石との間にある石を返す
-    for (let i = 0, l = willBeReturned.length; i < l; i+= 1) {
+    for (let i = 0, l = willBeReturned.length; i < l; i += 1) {
       willBeReturned[i].v = ox;
     }
     return ID.FLIP_OK;

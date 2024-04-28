@@ -22,7 +22,7 @@ const crossCheck = (board, currentPosition, yAxis, xAxis, player) => {
   // チェックする方向に置いた石と違う石があれば繰り返し処理をする
   let checkPositon = board[y][x];
   if (!checkPositon) {
-    console.error('checkPositon', checkPositon);
+    // console.error('checkPositon', checkPositon);
     return [];
   }
 

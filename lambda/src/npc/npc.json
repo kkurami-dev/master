@@ -30,7 +30,5 @@
   "State": "Active",
   "LastUpdateStatus": "Successful",
   "PackageType": "Zip",
-  "Architectures": [
-    "x86_64"
-  ]
+  "Architectures": ["x86_64"]
 }

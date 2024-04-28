@@ -1,7 +1,35 @@
 /**
  * オセロのメインクラス
  */
-import {angle, angleAdjacent} from './utilsData';
+import { angle, angleAdjacent } from './utilsData.mjs';
+
+// 石が置ける場所をチェックする
+function core(positionArr, opponentPutArr, match) {
+  let RetResult = [];
+
+  // 一致したもの配列に入れる
+  const matchArr = [];
+  opponentPutArr.forEach((el) => {
+    positionArr.forEach((item) => {
+      const isMatch = el.row === item[0] && el.col === item[1];
+
+      if (isMatch) {
+        matchArr.push(el);
+      }
+    });
+
+    if (match) {
+      RetResult = matchArr;
+    } else {
+      const isInclude = matchArr.includes(el);
+      if (!isInclude) {
+        RetResult.push(el);
+      }
+    }
+  });
+
+  return RetResult;
+}
 
 // 一致した時
 function someElement(arr, opponentPutArr) {
@@ -13,36 +41,8 @@ function differentElement(arr, opponentPutArr) {
   return core(arr, opponentPutArr, false);
 }
 
-// 石が置ける場所をチェックする
-function core(positionArr, opponentPutArr, match) {
-  let _result = [];
-
-  // 一致したもの配列に入れる
-  const matchArr = [];
-  opponentPutArr.forEach(el => {
-    positionArr.forEach(item => {
-      const isMatch = el.row === item[0] && el.col === item[1];
-
-      if (isMatch) {
-        matchArr.push(el);
-      }
-    });
-
-    if (match) {
-      _result = matchArr;
-    } else {
-      const isInclude = matchArr.includes(el);
-      if (!isInclude) {
-        _result.push(el);
-      }
-    }
-  });
-
-  return _result;
-}
-
 // 引数にはopponent(相手の石)とopponentPutArr(全ての石を置ける箇所)を受け取ります。
-export const opponentSelect = (opponent, opponentPutArr) => {
+const opponentSelect = (opponent, opponentPutArr) => {
   // 角に石を置けるかのチェック
   const anglePutArr = someElement(angle, opponentPutArr);
 
@@ -62,3 +62,5 @@ export const opponentSelect = (opponent, opponentPutArr) => {
   // 角に隣接している部分も含めて返す
   return opponentPutArr;
 };
+
+export default opponentSelect;

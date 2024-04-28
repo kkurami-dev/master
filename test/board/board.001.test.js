@@ -1,5 +1,5 @@
 import React from 'react';
-import {render, fireEvent, act, waitFor} from '@testing-library/react';
+import { render, fireEvent, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Board from '../../src/component/board';
 
@@ -12,7 +12,7 @@ describe('Board Component', () => {
   });
 
   it('handles square click', async () => {
-    const {getByText} = render(<Board />);
+    const { getByText } = render(<Board />);
 
     // ここにクリックのテストを記述
 
@@ -28,7 +28,7 @@ describe('Board Component', () => {
   });
 
   it('handles reset click', async () => {
-    const {getByText} = render(<Board />);
+    const { getByText } = render(<Board />);
 
     // ここにリセットのテストを記述
 

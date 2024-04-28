@@ -2,12 +2,10 @@
  * オセロのメイン部
  */
 import { useState, useEffect, useCallback } from 'react';
+import { Stack, Button } from '@mui/material';
 
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-
-import { LEN, ID } from './othello';
-import { Row } from './row';
+import { LEN, ID } from '../utils/othello.mjs';
+import Row from './row';
 import { initSS, PlayerSelect } from './player';
 
 // console.log('-------- load --------');
@@ -72,7 +70,7 @@ function Board() {
       },
       get n() {
         // return this[v];
-        return v
+        return v;
       },
     };
 
@@ -109,7 +107,7 @@ function Board() {
     }
 
     // 今回の操作
-    if(!ctx.ss) return;
+    if (!ctx.ss) return;
     const isPut = ctx.ss.isPut(event);
     if (isPut === ID.ALREADY_STORE || isPut === ID.NOT_PUT) {
       return;
@@ -137,13 +135,13 @@ function Board() {
       // マスの操作抑止を解除
       setIsDisabled(false);
     }
-  }
+  };
 
   /**
    * リセット
    */
   const ReSet = useCallback(() => {
-    if(!ctx || !ctx.init) return;
+    if (!ctx || !ctx.init) return;
     GameSet = false;
 
     const { obj, loop } = ctx.init();
@@ -169,7 +167,7 @@ function Board() {
 
   // const { board, oxcount, count } = ctx?.ss?.obj;
   let obj = {};
-  if(ctx && ctx.ss && ctx.ss.obj){
+  if (ctx && ctx.ss && ctx.ss.obj) {
     obj = ctx.ss.obj;
   }
   return (

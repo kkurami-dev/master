@@ -1,10 +1,12 @@
 # 参考資料
+
 ・[Reactでオセロゲームを作る](https://bagelee.com/programming/react-othello/)  
 　元ネタさせていただきました
 ・[オセロ・リバーシプログラミング講座 ～勝ち方・考え方～](https://uguisu.skr.jp/othello/)  
 　NPCのロジック
 
 ## 追加機能済み
+
 ・複数回の試合を実行できるようにする
 ・NPCとNPCで戦う
 ・NPCのロジックを複数選ぶ（レベル）
@@ -12,6 +14,7 @@
 ・白と黒の取得数を表示
 
 ## 追加予定機能
+
 ・プレイヤーを後攻にする
 ・先攻／後攻のプレイヤー、NPCを選べるようにする
 ・ネットワーク対戦
@@ -35,12 +38,14 @@
   choco install vscode -y
 
 ## シンボリックリンク
-* 
-* サーバ上でのリンクの有効か
-現在の設定を確認
-> fsutil behavior query symlinkevaluation
+
+-
+- サーバ上でのリンクの有効か
+  現在の設定を確認
+  > fsutil behavior query symlinkevaluation
 
 ## 一般ユーザのコンソールで
+
 npm i -g prettier eslint react-devtools
 npm i -g eslint-plugin-eslint-comments
 
@@ -65,5 +70,9 @@ VSCode の折り畳みと展開のショートカット一覧
 https://rishuntrading.co.jp/blog/tools/vs-code_fold_unforld/
 
 # その他
+## ファイルチェック
+find src -type f -name "*.*js*" -exec eslint --fix {} \;
+find src -type f -name "*.*js*" -exec prettier --write {} \;
 
-  
+## 設定
+* npm start でブラウザを起動させない「BROWSER=none」

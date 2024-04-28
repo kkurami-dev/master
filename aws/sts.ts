@@ -1,6 +1,6 @@
-import * as AWS from "aws-sdk";
-import { createInterface } from "readline";
-import * as fs from "fs";
+import * as AWS from 'aws-sdk';
+import { createInterface } from 'readline';
+import * as fs from 'fs';
 
 interface RoleProfile {
   mfaSerial: string;
@@ -8,9 +8,7 @@ interface RoleProfile {
 }
 
 // Get Credentials
-export const getCredentials = async (
-  profileName: string
-): Promise<AWS.Credentials | undefined> => {
+export const getCredentials = async (profileName: string): Promise<AWS.Credentials | undefined> => {
   const roleProfile = await getRoleProfile(profileName);
   if (!roleProfile) return undefined;
 
@@ -25,39 +23,31 @@ export const getCredentials = async (
 };
 
 // Get IAM Role profile
-export const getRoleProfile = async (
-  profileName: string
-): Promise<RoleProfile | undefined> => {
+export const getRoleProfile = async (profileName: string): Promise<RoleProfile | undefined> => {
   return new Promise((resolve, reject) => {
     // Read ~/.aws/config
-    const awsConfig = fs.readFileSync(
-      `${process.env.HOME}/.aws/config`,
-      "utf8"
-    );
-    const awsConfigLines = awsConfig.toString().split("\n");
+    const awsConfig = fs.readFileSync(`${process.env.HOME}/.aws/config`, 'utf8');
+    const awsConfigLines = awsConfig.toString().split('\n');
 
     const profileNameIndex = awsConfigLines.indexOf(`[profile ${profileName}]`);
 
     if (profileNameIndex == -1) {
-      reject(
-        `There were no matching profiles in "${process.env.HOME}/.aws/config".`
-      );
+      reject(`There were no matching profiles in "${process.env.HOME}/.aws/config".`);
     }
 
     // Get mfa serial of the profile
     const mfaSerialLine = awsConfigLines.filter(
       (line: string, index: number) =>
-        line.indexOf("mfa_serial = ") === 0 && index > profileNameIndex
+        line.indexOf('mfa_serial = ') === 0 && index > profileNameIndex
     )[0];
-    const mfaSerialIndex = mfaSerialLine.indexOf(" = ") + 3;
+    const mfaSerialIndex = mfaSerialLine.indexOf(' = ') + 3;
     const mfaSerial = mfaSerialLine.slice(mfaSerialIndex);
 
     // Get IAM Role Arn of the profile
     const roleArnlLine = awsConfigLines.filter(
-      (line: string, index: number) =>
-        line.indexOf("role_arn = ") === 0 && index > profileNameIndex
+      (line: string, index: number) => line.indexOf('role_arn = ') === 0 && index > profileNameIndex
     )[0];
-    const roleArnIndex = roleArnlLine.indexOf(" = ") + 3;
+    const roleArnIndex = roleArnlLine.indexOf(' = ') + 3;
     const roleArn = roleArnlLine.slice(roleArnIndex);
 
     resolve({
@@ -93,9 +83,7 @@ export const assumeRole = async (
 };
 
 // Read Input
-export const readInput = async (
-  questionText: string
-): Promise<string | undefined> => {
+export const readInput = async (questionText: string): Promise<string | undefined> => {
   const readline = createInterface({
     input: process.stdin,
     output: process.stdout,
