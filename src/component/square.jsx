@@ -36,7 +36,7 @@ export default function Square(param={}) {
   const { col, row, onClick } = param;
   return (
     <button className={cls}
-            {...{ col, row, onClick }}
+            col={col} row={row} onClick={onClick}
             type="button"
             disabled={nop}
             name={`act_${value.v}`}>

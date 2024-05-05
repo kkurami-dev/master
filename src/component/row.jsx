@@ -21,7 +21,7 @@ function RowDraw(param) {
     // }
   }
 
-  return <Square value={board[col][row]} isput={isPut} {...{col, row, onClick}} />;
+  return <Square value={board[col][row]} isput={isPut} col={col} row={row} onClick={onClick} />;
 }
 
 export default function Row(param) {
@@ -30,7 +30,13 @@ export default function Row(param) {
     <div className="row" key={col}>
       <div className="col-num">{col}</div>
       {array.map((index) => (
-        <RowDraw key={index} {...{ board, col, row, isputstone, onClick }} row={index} />
+        <RowDraw key={index}
+                 board={board}
+                 col={col}
+                 row={row}
+                 isputstone={isputstone}
+                 onClick={onClick}
+                 />
       ))}
     </div>
   );
