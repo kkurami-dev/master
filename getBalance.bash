@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # ポリゴンテストネットのMATICトークン量、gas手数料の情報を表示する
-WAIT=3
-IPKEY=**************************
+WAIT=300
+IPKEY=*******************
 
 getBalance(){
     MSG=$1
@@ -17,13 +17,13 @@ getBalance(){
 
     # Convert Wei to Ether (MATIC)
     BALANCE_MATIC1=$( expr $BALANCE_DEC / 1000000000000000000 )
-    BALANCE_MATIC2=$( expr $BALANCE_DEC / 100000000000000 )
-    BALANCE_MATIC3=$( expr ${BALANCE_MATIC1} \* 10000 )
+    BALANCE_MATIC2=$( expr $BALANCE_DEC / 1000000000000 )
+    BALANCE_MATIC3=$( expr ${BALANCE_MATIC1} \* 1000000 )
     BALANCE_MATIC4=$( expr ${BALANCE_MATIC2} - ${BALANCE_MATIC3} )
 
-    if [ $BALANCE_MATIC2 -lt 1000 ]; then
+    if [ $BALANCE_MATIC2 -lt 100000 ]; then
         RET="  $MSG $EOA: \e[31;5m$BALANCE_MATIC1.$BALANCE_MATIC4   "
-    elif [ $BALANCE_MATIC2 -lt 10000 ]; then
+    elif [ $BALANCE_MATIC2 -lt 1000000 ]; then
         RET="  $MSG $EOA: \e[32m$BALANCE_MATIC1.$BALANCE_MATIC4     "
     else
         RET="  $MSG $EOA: $BALANCE_MATIC1.$BALANCE_MATIC4           "
