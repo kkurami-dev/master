@@ -5,26 +5,27 @@ import { useState, useEffect, useCallback } from 'react';
 import { Stack, Button } from '@mui/material';
 
 import { LEN, ID } from '../utils/othello.mjs';
-import Row from './row';
-import { initSS, PlayerSelect } from './player';
+import Row from './row.tsx';
+import { initSS, PlayerSelect } from './player.tsx';
 
 // console.log('-------- load --------');
+// const { LEN, ID }:IOthello  = ot;
 
 /*
-// データベースを開く
-const request = window.indexedDB.open("MyTestDatabase", 3);
-// エラーの対応
-request.onerror = (event) => {
-  console.error("なぜ私の ウェブアプリで IndexedDB を使わせてくれないのですか?!",);
-};
-// このイベントは最新のブラウザーにのみ実装されています
-request.onupgradeneeded = (event) => {
-  // IDBDatabase インターフェイスに保存します
-  const db = event.target.result;
-  // このデータベース用の objectStore を作成します
-  const obj = db.createObjectStore("name", { keyPath: "myKey" });
-};
-*/
+   // データベースを開く
+   const request = window.indexedDB.open("MyTestDatabase", 3);
+   // エラーの対応
+   request.onerror = (event) => {
+   console.error("なぜ私の ウェブアプリで IndexedDB を使わせてくれないのですか?!",);
+   };
+   // このイベントは最新のブラウザーにのみ実装されています
+   request.onupgradeneeded = (event) => {
+   // IDBDatabase インターフェイスに保存します
+   const db = event.target.result;
+   // このデータベース用の objectStore を作成します
+   const obj = db.createObjectStore("name", { keyPath: "myKey" });
+   };
+ */
 /**
  * オセロのX軸のindex
  */
@@ -194,15 +195,15 @@ function Board() {
             key={index}
             col={index}
             array={rowArr}
-            board={obj?.board}
+            board={obj.board}
             isputstone={putPos}
             onClick={clickSquare}
             disabled={isDisabled}
           />
         ))}
       </div>
-      {obj?.oxcount}
-      {obj?.count}個置いてある
+      {obj.oxcount}
+      {obj.count}個置いてある
     </div>
   );
 }

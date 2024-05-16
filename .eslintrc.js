@@ -2,8 +2,10 @@ module.exports = {
   env: {
     browser: true,
     es2021: true,
-    "es6": true,
-    "jasmine": true
+    es6: true,
+    node: true,
+    jest: true,
+    jasmine: true,
   },
   extends: [
     'plugin:react/recommended',
@@ -11,13 +13,13 @@ module.exports = {
     "prettier",
   ],
   parserOptions: {
-    ecmaVersion: 6,
+    //ecmaVersion: 6,
+    //ecmaVersion: 'latest',
     project: './tsconfig.json',
     ecmaFeatures: {
-      jsx: true,
+      //jsx: true,
       mjs: true,
     },
-    ecmaVersion: 'latest',
     sourceType: 'module',
   },
   plugins: [
@@ -26,30 +28,31 @@ module.exports = {
   ],
   rules: {
     "react/react-in-jsx-scope": "off",
+    "no-undef": "off",
     "no-param-reassign": ["error", { "props": false }],
     "react/jsx-filename-extension": [1, { "extensions": [
       //".js", ".jsx", ".ts", ".tsx", ".mjs", ".json",
       "js", "jsx", "ts", "tsx",
       //"mjs",
-      "json"
+      //"json"
     ]}],
   },
   settings: {
     "import/extensions": [
-      //".js", ".jsx", ".ts", ".tsx", ".mjs", ".json",
-      // "js", "jsx", "ts", "tsx",
+      ".js", ".jsx", ".ts", ".tsx", ".mjs", ".json",
+      //"js", "jsx", "ts", "tsx",
       // "mjs", "json"
     ],
     "import/resolver": {
       node: { "extensions": [
         ".js", ".jsx", ".ts", ".tsx",
         //".mjs",
-        ".json",
+        //".json",
         //"js", "jsx", "ts", "tsx", "mjs", "json"
       ]},
-      // "babel-module": {"extensions": [
-      //   "js", "jsx", "ts", "tsx", "mjs", "json"
-      // ]},
+      //"babel-module": {"extensions": [
+      //  "js", "jsx", "ts", "tsx", "mjs", "json"
+      //]},
     }
   },
 };

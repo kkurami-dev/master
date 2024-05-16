@@ -1,12 +1,21 @@
 /**
  * 一つのマスの制御
  */
-export default function Square(param={}) {
+export type ISquare  = {
+  isput: boolean;
+  value: string;
+  col: number;
+  row: number;
+  onClick: any;
+  disabled?: boolean;
+}
+
+export default function Square(param: ISquare): VFC {
   const { value, isput } = param;
   const cls = isput ? 'put-square' : 'square';
 
   let now = '';
-  let color = null;
+  let color = '';
   switch (value.Val) {
     case 'O':
       now = value;
@@ -23,20 +32,22 @@ export default function Square(param={}) {
       color = 'player';
       break;
     default:
-      color = null;
+      color = '';
       break;
   }
   // Console.log("Square set", color, param.value);
 
   let nop = false;
-  if (color !== null || param.disabled) {
+  if (color !== '' ||
+      param?.disabled ) {
     nop = true;
   }
 
   const { col, row, onClick } = param;
   return (
     <button className={cls}
-            col={col} row={row} onClick={onClick}
+            data-col={col} data-row={row}
+            onClick={onClick}
             type="button"
             disabled={nop}
             name={`act_${value.v}`}>

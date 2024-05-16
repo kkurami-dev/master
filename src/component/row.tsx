@@ -1,7 +1,7 @@
 /**
  * 横一列の制御
  */
-import Square from './square';
+import Square from './square.tsx';
 
 function RowDraw(param) {
   const { board, col, row, isputstone, onClick } = param;

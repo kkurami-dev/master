@@ -10,6 +10,9 @@ FOR /F %%1 IN ('DIR /AD /B %TARGET_PATH%') DO rmdir /S /Q %TARGET_PATH%%%1\
 del /S /Q %TARGET_PATH%*.*
 net start wuauserv
 
+
+
+
 dism /Online /Cleanup-Image /StartComponentCleanup /ResetBase
 dism /online /cleanup-image /restorehealth
 sfc /scannow
@@ -44,5 +47,11 @@ DEL "%userprofile%\AppData\Local\MicrosoftEdge\User\Default\GPUCache*" /F /Q
 
 @rem 休止状態にするときのメモリ書き込み先
 ::powercfg.exe /hibernate off
+
+DEL /s /q 
+
+
+
+
 
 @pause
