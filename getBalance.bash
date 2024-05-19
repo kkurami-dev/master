@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # ポリゴンテストネットのMATICトークン量、gas手数料の情報を表示する
-WAIT=300
-IPKEY=*******************
+WAIT=3
+IPKEY=**********************
 
 getBalance(){
     MSG=$1
@@ -20,13 +20,16 @@ getBalance(){
     BALANCE_MATIC2=$( expr $BALANCE_DEC / 1000000000000 )
     BALANCE_MATIC3=$( expr ${BALANCE_MATIC1} \* 1000000 )
     BALANCE_MATIC4=$( expr ${BALANCE_MATIC2} - ${BALANCE_MATIC3} )
+    if [ 6 -gt ${#BALANCE_MATIC4} ]; then
+        BALANCE_MATIC4="0${BALANCE_MATIC4}"
+    fi
 
     if [ $BALANCE_MATIC2 -lt 100000 ]; then
-        RET="  $MSG $EOA: \e[31;5m$BALANCE_MATIC1.$BALANCE_MATIC4   "
+        RET="  $MSG $EOA: \e[31;5m$BALANCE_MATIC1.$BALANCE_MATIC4   \e[37m"
     elif [ $BALANCE_MATIC2 -lt 1000000 ]; then
-        RET="  $MSG $EOA: \e[32m$BALANCE_MATIC1.$BALANCE_MATIC4     "
+        RET="  $MSG $EOA: \e[32m$BALANCE_MATIC1.$BALANCE_MATIC4     \e[37m"
     else
-        RET="  $MSG $EOA: $BALANCE_MATIC1.$BALANCE_MATIC4           "
+        RET="  $MSG $EOA: $BALANCE_MATIC1.$BALANCE_MATIC4           \e[37m"
     fi
     eval "$3=\${RET}"
 }
@@ -67,11 +70,12 @@ watch () {
     echo -e "\e[0;0H"
 
     getBalance "NEW DEV" "0xc99c44e9115610d3e1682ffa7f2222281044e835" "A"
-    getBalance "OLD DEV" "0x4f0710fa3a66ea1e8cb1f75f035e86597e629909" "B"
-    getBalance "OLD STG" "0x6a55b7528152b5b7c5bacfe426e3664bd91b553a" "C"
+    getBalance "NEW STG" "0x78eC2078A739727B74bba6BFe55856f8EDc186e1" "B"
+    getBalance "OLD DEV" "0x4f0710fa3a66ea1e8cb1f75f035e86597e629909" "C"
+    getBalance "OLD STG" "0x6a55b7528152b5b7c5bacfe426e3664bd91b553a" "D"
 
-    OUTPUT="${A}\n${B}\n${C}"
-    echo -e "Every ${WAIT}.0s: MATIC Balance\n${OUTPUT}\n"
+    OUTPUT="${A}\n${B}\n${C}\n${D}"
+    echo -e "Every ${WAIT}.0s: MATIC Balance\n${OUTPUT}                   \n"
 
     getFee "AMOY" "https://gasstation-testnet.polygon.technology/amoy"
     getFee "MAINNET" "https://gasstation.polygon.technology/v2"
