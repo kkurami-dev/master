@@ -6,11 +6,8 @@ echo "" > UpdateResult.log
 
 array_up=(
     npc
+    lambda-mente
 );
-
-# if [ "$1" != "" ]; then
-#     array_up=$1
-# fi
 
 PATH=/f/work/7-Zip:/f/tool:${PATH}
 CMDNAME=`basename $0`
@@ -32,7 +29,7 @@ Configuration(){
     keys="FunctionName Handler Description Timeout MemorySize VpcConfig Environment Runtime DeadLetterConfig KMSKeyArn TracingConfig Layers FileSystemConfigs ImageConfig EphemeralStorage"
 
     # 設定ファイルからデータ読み込みし、更新できるパラメータのみ取得
-    org=$(cat ./$func/$func.json | sed -z 's/\r\n//g; s/\n//g')
+    org=$(cat ./src/$func/$func.json | sed -z 's/\r\n//g; s/\n//g')
     ret="{"
     for key in ${keys[@]}; do
         val=$(echo $org | jq -c .$key)
@@ -61,30 +58,28 @@ zipUpload(){
 
     # 引数よりアーカイブのファイル名作成
     ZIP=${PWD}/${FPATH}.zip
-    ZIP2=${FPATH}.zip
-    UZIP=${PWD}/${FPATH}.zip
-    UZIP=${UZIP#/i}
+    ZIP2=fileb://${FPATH}.zip
 
-    echo "# ${FPATH} の圧縮、アップロード、削除の一連処理"
-    7z a -tzip -r ${ZIP} ./${FPATH}/*
+    #echo "### ${FPATH} の圧縮、アップロード、削除の一連処理 ###"
+    echo "#### ${FPATH} ####"
+    7z a -tzip -r ${ZIP} ./src/${FPATH}/*
     echo "# aws lambda update-function-code"
     aws lambda update-function-code \
         --function-name ${FPATH} \
-        --zip-file fileb://${ZIP2} \
+        --zip-file ${ZIP2} \
         --region "ap-northeast-1"  >> UpdateResult.log
     echo "# update-function-code OK"
     rm -rf ${ZIP}
-    sleep 1
 
     Configuration $FPATH
-    sleep 4
+    sleep 1
 
     # 実行をログ確認
-    aws lambda invoke \
-        --function-name ${FPATH} \
-        --cli-binary-format raw-in-base64-out \
-        --payload '{"key": "value"}' out
-    cat out | jq . >> UpdateResult.log
+    # aws lambda invoke \
+    #     --function-name ${FPATH} \
+    #     --cli-binary-format raw-in-base64-out \
+    #     --payload '{"key": "value"}' out
+    # cat out | jq . >> UpdateResult.log
 
     #sed -i'' -e 's/"//g' out
     # LOG_STREAM=$(cat out | jq -r .logStreamName)

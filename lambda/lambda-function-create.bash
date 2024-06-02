@@ -1,20 +1,22 @@
 #!/bin/bash
 
-set -au
-
+set -aue
+#set -x
 array_up=(
-    mySendToken
+    test001
     #test0002
 );
 
-PATH=/e/work/7-Zip:${PATH}
+PATH=/f/work/7-Zip:/f/tool:${PATH}
 CMDNAME=`basename $0`
 if [ $# -gt 1 ]; then
     echo "Usage: ${CMDNAME} [profile]" 1>&2
     exit 1
 fi
 
+ALLCOUNT=0
 zipUpload(){
+    A=$((++ALLCOUNT))
     echo "#----------------------------------------"
     # 引数に命名
     FPATH=$1
@@ -23,7 +25,7 @@ zipUpload(){
     ZIP=${FPATH}.zip
 
     param=""
-    func_json=$(cat ${FPATH}/${FPATH}.json)
+    func_json=$(cat src/${FPATH}/${FPATH}.json)
     role=$(echo ${func_json} | jq -r '.Role' )
     handler=$(echo ${func_json} | jq -r '.Handler' )
     timeout=$(echo ${func_json} | jq -r '.Timeout' )
@@ -39,15 +41,18 @@ zipUpload(){
         param="${param} --environment ${envi}"
     fi
 
-    aws lambda delete-function --function-name ${FPATH}
+    #FUNC=${FPATH}${A}
+    FUNC=${FPATH}
+    #aws lambda delete-function --function-name ${FUNC}
 
-    echo "# ${FPATH} の圧縮、アップロード、削除の一連処理"
-    7z a -tzip -r ${ZIP} ./${FPATH}/*
+    #echo "# ${FPATH} の圧縮、アップロード、削除の一連処理"
+    echo "### ${FUNC} create ###"
+    7z a -tzip -r ${ZIP} ./src/${FPATH}/*
     aws lambda create-function \
-        --function-name ${FPATH} \
+        --function-name ${FUNC} \
         --zip-file fileb://${ZIP} \
         --region "ap-northeast-1" \
-        --runtime "nodejs14.x" \
+        --runtime "nodejs20.x" \
         --role $role \
         --handler $handler \
         --timeout $timeout \
@@ -56,6 +61,11 @@ zipUpload(){
         --publish  > ./${FPATH}.log
     rm -rf ${ZIP}
 }
+
+#for (( i=0; i<100; i++)); do
+#    zipUpload "test001"
+#done
+#exit 0
 
 # 対象の実行
 for e in ${array_up[@]}; do
