@@ -9,7 +9,6 @@ const client = new LambdaClient();
 async function updateLayers({layer, ver, reg}) {
   const functions = [];
   let AllItems = 0;
-  let exec = 0;
   const timeArr = [];
 
   // 各関数のレイヤーを更新
@@ -19,7 +18,7 @@ async function updateLayers({layer, ver, reg}) {
       const str = inlayer.Arn;
       const words = str.split(':');
       if( layer === words[6] ){
-        //console.log("f:", FunctionName, words[6], "v:", words[7], ver, "ex:", exec);
+        //console.log("f:", FunctionName, words[6], "v:", words[7], ver);
         if(Number( words[7] ) !== Number(ver) ) {
           words[7] = ver;
           updatei = 1;
@@ -32,12 +31,12 @@ async function updateLayers({layer, ver, reg}) {
     //console.log("f:", FunctionName, updatei, `${existingLayers}`);
     if(!updatei) {
       AllItems--;
-      exec--;
       return;
     }
 
     // 単位時間当たりの実行数計算用
-    timeArr.push( new Date().getTime() );
+    const tobj = {t:new Date().getTime(), s:1};
+    timeArr.push( tobj );
 
     // 更新
     functions.push( client.send(
@@ -48,7 +47,7 @@ async function updateLayers({layer, ver, reg}) {
       (err, data)=> {
         console.log("update", FunctionName, "err:", !!err, `${existingLayers} ${err}`)
         AllItems--;
-        exec--;
+        tobj.s = 2;
       }
     ));
   }
@@ -57,24 +56,22 @@ async function updateLayers({layer, ver, reg}) {
   // 無条件だとソケット数50 を超過してしまい、更新失敗してしまう
   const timeFunc = (param) => {
     const { thred, items, intervalID } = param;
-    console.log("timeFunc exec", thred, functions.length, param.count, exec, timeArr.length);
 
-    // 同時実行数制限
-    if( exec > 48 ){
-      //console.log("timeFunc wait dup", thred, AllItems );
-      return;
-    }
-
-    // 単位時間の実行数制限
+    // 実行数制限
     if( timeArr.length > 45 ){
       const nowTime = new Date().getTime();
-      const diff = nowTime - timeArr[0];
-      //console.log("timeFunc Rate exceeded", thred, AllItems, exec, diff, nowTime, timeArr[0] );
+      const diff = nowTime - timeArr[0].t;
+
+      // 単位時間の実行数制限
       if(diff < 1000 ){
-        console.log("timeFunc Rate exceeded", thred, AllItems, exec, diff );
+        console.log("timeFunc Rate exceeded", thred, AllItems, diff );
         return;
       }
-      timeArr.shift();
+
+      // 同時実行数制限
+      if( timeArr[0].s === 2 )
+        timeArr.shift();
+      return;
     }
 
     // 終了判定
@@ -84,7 +81,6 @@ async function updateLayers({layer, ver, reg}) {
       return;
     }
 
-    exec++;
     UpdateFunc( items[ param.count ] );
     param.count += 1;
   };
@@ -93,9 +89,7 @@ async function updateLayers({layer, ver, reg}) {
   let thred = 0;
   do {
     // 既存のレイヤーを取得
-    exec++;
     const response = await client.send(new ListFunctionsCommand({ Marker: nextMarker }));
-    exec--;
     const obj = {
       thred: ++thred,
       count: 0,
