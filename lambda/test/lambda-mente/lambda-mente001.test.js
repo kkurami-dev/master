@@ -16,7 +16,7 @@ function setData() {
       out: { TableNames: ['test'] },
     },
   ];
-  mockSet(def);
+  mockSet({def});
 }
 
 describe('get user data', () => {
