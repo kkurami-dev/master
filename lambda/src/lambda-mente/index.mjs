@@ -1,7 +1,9 @@
 import { updateLayers } from "./UpdateLayers.mjs";
+import { deleteDynamodb } from "./DeleteDynamoDB.mjs";
 
 const FuncMap = {
   updateLayers,
+  deleteDynamodb,
 };
 
 export const handler = async (event, context) => {

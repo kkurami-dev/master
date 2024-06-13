@@ -41,8 +41,8 @@ zipUpload(){
         param="${param} --environment ${envi}"
     fi
 
-    #FUNC=${FPATH}${A}
-    FUNC=${FPATH}
+    FUNC=${FPATH}${A}
+    #FUNC=${FPATH}
     #aws lambda delete-function --function-name ${FUNC}
 
     #echo "# ${FPATH} の圧縮、アップロード、削除の一連処理"
@@ -62,10 +62,10 @@ zipUpload(){
     rm -rf ${ZIP}
 }
 
-#for (( i=0; i<100; i++)); do
-#    zipUpload "test001"
-#done
-#exit 0
+for (( i=0; i<100; i++)); do
+    zipUpload "test001"
+done
+exit 0
 
 # 対象の実行
 for e in ${array_up[@]}; do
