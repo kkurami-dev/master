@@ -6,7 +6,7 @@ const FuncMap = {
   deleteDynamodb,
 };
 
-export default handler = async (event, context, callback) => {
+export const handler = async (event, context, callback) => {
   const param = {};
   Object.assign(param, { layer: 'crypto', ver: 3 }, event);
   return FuncMap[event.func](param, context, callback);

@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --detectOpenHandles"
   },
   "devDependencies": {
     "@aws-sdk/client-lambda": "^3.592.0",
