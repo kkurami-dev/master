@@ -5,19 +5,22 @@ import { ListTablesCommand, DescribeTableCommand, DynamoDBClient } from '@aws-sd
 import {
   LambdaClient,
   ListFunctionsCommand,
-  UpdateFunctionConfigurationCommand,
+  DeleteFunctionCommand,
 } from '@aws-sdk/client-lambda';
+import { fromInstanceMetadata } from '@aws-sdk/credential-providers';
+
+//
+// 引数の1つ目は使用するプロファイル名を指定する事
+//
+const credentials = fromIni(process.argv[0]);
 
 const FUNCS = {
   nopconf: gitFunction,
   delconf: listFunctions,
   exec: deleteFunction,
 };
-
-const afuncs = {
-};
-const dfuncs = {
-};
+const afuncs = {};
+const dfuncs = {};
 
 process.argv[0];
 
@@ -35,8 +38,8 @@ function gitFunction(dir){
 async function listFunctions(){
   const DelLambdaA = import("./DelLambdaA.json");
 
-  const client = new LambdaClient({});
-  const command = new ListFunctionsCommand({});
+  const client = new LambdaClient({credentials});
+  const command = new ListFunctionsCommand({credentials});
 
   const fMap = await client.send(command);
   // console.log("fMap", fMap);
@@ -52,7 +55,7 @@ async function deleteFunction(infile){
   const DelLambdaD = import("./DelLambdaD.json");
   
   // funcName
-  const client = new LambdaClient({});
+  const client = new LambdaClient({credentials});
   const command = new DeleteFunctionCommand({ FunctionName: funcName });
   return client.send(command);
 };
@@ -60,7 +63,7 @@ async function deleteFunction(infile){
 gitFunction("g:/osero/lambda/src");
 console.log("afuncs:", afuncs);
 
-for(let i = 0;i < process.argv.length; i++){
+for(let i = 1;i < process.argv.length; i++){
   console.log("argv[" + i + "] = " + process.argv[i]);
   await FUNCS[ process.argv[i] ]();
 }
