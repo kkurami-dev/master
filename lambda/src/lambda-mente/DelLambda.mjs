@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 
+import { fromIni } from '@aws-sdk/credential-providers';
 import { ListTablesCommand, DescribeTableCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   LambdaClient,
   ListFunctionsCommand,
   DeleteFunctionCommand,
 } from '@aws-sdk/client-lambda';
-import { fromInstanceMetadata } from '@aws-sdk/credential-providers';
 
 //
 // 引数の1つ目は使用するプロファイル名を指定する事
