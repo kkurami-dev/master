@@ -12,7 +12,7 @@ import {
 //
 // 引数の1つ目は使用するプロファイル名を指定する事
 //
-const credentials = fromIni(process.argv[0]);
+const credentials = fromIni(process.argv[2]);
 
 const FUNCS = {
   nopconf: gitFunction,
@@ -49,7 +49,9 @@ async function listFunctions(){
     i += 1;
     dfuncs[ item.FunctionName ] = i;
   });
-};
+
+  fs.writeFileSync("DelLambdaD.json", JSON.stringify(afuncs, " ", 2));
+}
 
 async function deleteFunction(infile){
   const DelLambdaD = import("./DelLambdaD.json");
@@ -63,7 +65,12 @@ async function deleteFunction(infile){
 gitFunction("g:/osero/lambda/src");
 console.log("afuncs:", afuncs);
 
-for(let i = 1;i < process.argv.length; i++){
-  console.log("argv[" + i + "] = " + process.argv[i]);
-  await FUNCS[ process.argv[i] ]();
+for(let i = 3;i < process.argv.length; i++){
+  const fn = process.argv[i];
+  switch( fn ){
+  case "nopconf": fs.writeFileSync("DelLambdaA.json", JSON.stringify(afuncs, " ", 2)); break;
+  default:
+    FUNCS[ fn ]();
+    break;
+  }
 }
