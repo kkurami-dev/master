@@ -34,7 +34,6 @@ for func in ${list[@]}; do
 done
 exit 0;
 
-
 for func in ${list[@]}; do
     aws lambda delete-function \
         --function-name ${func} \
