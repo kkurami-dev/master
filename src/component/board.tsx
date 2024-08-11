@@ -5,8 +5,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Stack, Button } from '@mui/material';
 
 import { LEN, ID } from '../utils/othello.mjs';
-import Row from './row.tsx';
+import Row from './row.tsx';// assert { type: "RowType" };
 import { initSS, PlayerSelect } from './player.tsx';
+
+// import assert from 'assert';
 
 // console.log('-------- load --------');
 // const { LEN, ID }:IOthello  = ot;
@@ -29,7 +31,7 @@ import { initSS, PlayerSelect } from './player.tsx';
 /**
  * オセロのX軸のindex
  */
-const rowArr = [];
+const rowArr: number[] = [];
 for (let i = 0; i < LEN; i += 1) {
   rowArr.push(i);
 }
@@ -37,7 +39,7 @@ for (let i = 0; i < LEN; i += 1) {
 /**
  * 1000ms待つ処理
  */
-function wait(t = 30) {
+function wait(t = 30) : any {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve();

@@ -1,9 +1,11 @@
 import { updateLayers } from './UpdateLayers.mjs';
 import { deleteDynamodb } from './DeleteDynamoDB.mjs';
+import { exportLogs } from './cloudwatchlog-export.mjs';
 
 const FuncMap = {
   updateLayers,
   deleteDynamodb,
+  exportLogs,
 };
 
 export const handler = async (event, context, callback) => {

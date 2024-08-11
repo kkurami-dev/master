@@ -1,29 +1,36 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 // AWS SDK V3 JavaScript のリファレンス
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/
 //   左のサービス一覧から対象サービスを選択、フィルタに操作を入れて検索
 
 // MFA認証
-import {
+const {
+  //STS,
   STSClient,
   AssumeRoleCommand,
-} from "@aws-sdk/client-sts";
-import { createInterface } from "readline";
-import * as  ini from 'ini'; // https://www.npmjs.com/package/ini
+  GetAccessKeyInfoCommand,
+} = require('@aws-sdk/client-sts');
+const { createInterface } = require('readline');
+const ini = require('ini'); // https://www.npmjs.com/package/ini
 
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/#fromini
-// import { fromIni } from "@aws-sdk/credential-provider-ini";
+//const { fromEnv } = require('@aws-sdk/credential-provider-node');
+const { fromIni } = require("@aws-sdk/credential-providers");
 
 // 各種AWS操作
 //import { ListTablesCommand, DescribeTableCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { LambdaClient, ListFunctionsCommand, DeleteFunctionCommand } from '@aws-sdk/client-lambda';
-import {
+const {
+  LambdaClient,
+  ListFunctionsCommand,
+  DeleteFunctionCommand,
+} = require('@aws-sdk/client-lambda');
+const {
   CloudFormationClient,
   ListStacksCommand,
   DeleteStackCommand,
-} from '@aws-sdk/client-cloudformation';
+} = require('@aws-sdk/client-cloudformation');
 
 //
 // 引数の1つ目は使用するプロファイル名を指定する事
@@ -40,7 +47,7 @@ const afuncs = {};
 // https://dev.classmethod.jp/articles/aws-sdk-for-javascript-v3-assume-role-and-create-ec2-instance/
 
 // Read Input : 標準入力からの文字列入力
-async function readInput( questionText ){
+async function readInput(questionText) {
   const readline = createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -51,24 +58,29 @@ async function readInput( questionText ){
       if (answerText) {
         resolve(answerText);
       } else {
-        reject("Failed read standard input.");
+        reject('Failed read standard input.');
       }
       readline.close();
     });
   });
-};
+}
 
 // Get IAM Role profile
-async function getRoleProfile( profile = "jvl" ){
-  const path = `${process.env["HOME"]}/.aws`;
+async function getRoleProfile(profile = 'jvl') {
+  const path = `${process.env['HOME']}/.aws`;
   const cdl = ini.parse(fs.readFileSync(`${path}/credentials`, 'utf-8'));
   const cfg = ini.parse(fs.readFileSync(`${path}/config`, 'utf-8'));
 
   // プロファイルのソース
-  const srcName = cfg[ profile ].credential_source;
-  const keys = cdl[ srcName ];
-  keys.RoleArn = cfg[ profile ].role_arn;
-  return keys;
+  const nowCfg = cfg[profile];
+  // return nowCfg;
+  const srcName = nowCfg.credential_source;
+  const nowCdl = cdl[srcName];
+  // process.env.AWS_ACCESS_KEY_ID = nowCdl.aws_access_key_id;
+  // process.env.AWS_SECRET_ACCESS_KEY = nowCdl.aws_secret_access_key;
+  const out = {};
+  Object.assign(out, nowCfg, nowCdl);
+  return out;
 
   // 使えそうで使えない
   // const inProf = fromIni({ profile })
@@ -76,19 +88,26 @@ async function getRoleProfile( profile = "jvl" ){
 }
 
 // Assume Role
-async function assumeRole(roleProfile ){
+async function assumeRole(roleProfile) {
+  // Make Credensial
+  const iniret = fromIni({profile: roleProfile.credential_source});
+  const cond = await iniret();
+  //credentials = await iniret();
+  const stsClient = new STSClient({ region: 'ap-northeast-1', credentials: cond });
+  const sc = new GetAccessKeyInfoCommand();
+  const scresponse = await stsClient.send(sc);
+  console.log('GetAccessKeyInfoCommand', scresponse);
+
   // Input MFA Token
   const mfaToken = await readInput(`MFA token for ${roleProfile.mfaSerial} > `);
-
-  const stsClient = new STSClient({ region: 'ap-northeast-1' });
   const command = new AssumeRoleCommand({
     // The Amazon Resource Name (ARN) of the role to assume.
-    RoleArn: roleProfile.RoleArn, // "ROLE_ARN",
-    SerialNumber: roleProfile.mfaSerial,
+    RoleArn: roleProfile.role_arn, // "ROLE_ARN",
+    SerialNumber: roleProfile.mfa_serial,
     TokenCode: mfaToken,
 
     // sdk 用
-    RoleSessionName: "session1",
+    RoleSessionName: 'session1',
     DurationSeconds: 3600, // 1H
   });
   const response = await stsClient.send(command);
@@ -96,12 +115,12 @@ async function assumeRole(roleProfile ){
 }
 
 // Get Credentials
-async function getCredentials(profileName){
+async function getCredentials(profileName) {
   const roleProfile = await getRoleProfile(profileName);
-  if (!roleProfile) throw new Error("getRoleProfile");
+  if (!roleProfile) throw new Error('getRoleProfile');
 
   const cdl = await assumeRole(roleProfile);
-  if (!cdl) throw new Error("assumeRole");
+  if (!cdl) throw new Error('assumeRole');
 
   credentials = new STSClient({
     accessKeyId: cdl.AccessKeyId,
@@ -109,10 +128,10 @@ async function getCredentials(profileName){
     sessionToken: cdl.SessionToken,
   });
   return credentials;
-};
+}
 
 ////////////////////////////////////////////////////////////////////////////////
-// 
+//
 // const { defaultProvider } = require('@aws-sdk/credential-provider-node');
 // (async () => {
 //     const credential = await (defaultProvider())();
@@ -206,7 +225,7 @@ const FUNCS = {
   exec_la: deleteFunction,
   del_st_aconf: listStack,
   exec_st: deleteStack,
-  prof: getRoleProfile,
+  prof: getCredentials,
 };
 for (let i = 3; i < ARGV.length; i++) {
   const fn = ARGV[i];

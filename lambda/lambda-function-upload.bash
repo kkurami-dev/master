@@ -5,7 +5,8 @@ set -aue
 echo "" > UpdateResult.log
 
 array_up=(
-    npc
+    # npc
+    # lambda-mente
     lambda-mente
 );
 
