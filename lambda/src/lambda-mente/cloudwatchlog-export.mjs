@@ -25,6 +25,7 @@ const cloudWatchLogsClient = new CloudWatchLogsClient();
  *     対象のログストリームを削除します。
  */
 async function deleteLogsByPeriod(param = {}) {
+  // パラメータサンプル
   const {
     logGroupName = '/aws/lambda/my-log-group', // ロググループ名
     startTime = new Date('2024-01-01T00:00:00Z').getTime(), // 開始期間
@@ -78,6 +79,7 @@ async function deleteLogsByPeriod(param = {}) {
  *   エクスポートが完了したら、DeleteLogGroupCommand を使用してロググループを削除します。
  */
 async function exportLogsMain(event = {}) {
+  // パラメータサンプル
   const {
     // エクスポート設定
     logGroupName = '/aws/lambda/lambda-mente', // エクスポートしたいロググループ
@@ -100,7 +102,7 @@ async function exportLogsMain(event = {}) {
   const exportTaskResponse = await cloudWatchLogsClient.send(exportTaskCommand);
   console.log('Export Task Created:', exportTaskResponse.taskId);
 
-  // エクスポートタスクのポーリング
+  // エクスポートタスクのポーリング関数
   const EndCheck = async (obj) => {
     console.log('EndCheck:', obj.Loop++);
 
@@ -127,7 +129,7 @@ async function exportLogsMain(event = {}) {
     }
   };
 
-  // エクスポートタスクの完了処理
+  // エクスポートタスクの完了処理関数
   const PolingEndFunc = async ({ intervalID, resolve }) => {
     // ポーリング停止
     clearInterval(intervalID);
@@ -144,12 +146,13 @@ async function exportLogsMain(event = {}) {
   };
 
   const PolingFunc = new Promise((resolve) => {
+    // ポーリング、終了の開始設定
     const obj = {
-      isExportComplete: false,
-      PolingEndFunc,
-      intervalID: null,
-      resolve,
-      Loop: 0,
+      isExportComplete: false, // ポーリングステータス
+      PolingEndFunc, // ポーリング終了時の関数
+      intervalID: null, // ポーリングID
+      resolve, // エクスポート過料通知
+      Loop: 0, // ログ用のポーリング回数
     };
 
     // 完了していなければ、少し待機してから再チェック
@@ -176,7 +179,6 @@ export { exportLogs };
 /*
   パケットポリシー
   実際の環境に合わせて「【バケット名】,【リージョン】,【AWSアカウントID】」を修正してください。
-
   {
     "Version": "2012-10-17",
     "Statement": [
