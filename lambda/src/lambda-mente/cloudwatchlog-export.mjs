@@ -24,7 +24,7 @@ const cloudWatchLogsClient = new CloudWatchLogsClient();
  * 3.該当するログストリームを削除:
  *     対象のログストリームを削除します。
  */
-async function deleteLogsByPeriod(param = {}) {
+function deleteLogsByPeriod(param = {}) {
   // パラメータサンプル
   const {
     logGroupName = '/aws/lambda/my-log-group', // ロググループ名
@@ -32,37 +32,44 @@ async function deleteLogsByPeriod(param = {}) {
     endTime = new Date('2024-02-01T00:00:00Z').getTime(), // 終了期間
   } = param;
 
-  try {
+  async function DelLoop(cb, resolve, Token = undefined){
+    const describeLogStreamsCommand = new DescribeLogStreamsCommand({
+      logGroupName,
+      orderBy: 'LastEventTime',
+      descending: false,
+      nextToken: Token,
+    });
+
     // ログストリームを取得
-    let nextToken;
-    do {
-      const describeLogStreamsCommand = new DescribeLogStreamsCommand({
+    const describeLogStreamsResponse = await cloudWatchLogsClient.send(
+      describeLogStreamsCommand
+    );
+    const next = describeLogStreamsResponse.nextToken;
+
+    const streamsToDelete = describeLogStreamsResponse.logStreams.filter((stream) => {
+      const lastEventTimestamp = stream.lastEventTimestamp || 0;
+      return lastEventTimestamp >= startTime && lastEventTimestamp <= endTime;
+    });
+
+    // ログストリームを削除
+    for (const stream of streamsToDelete) {
+      const deleteLogStreamCommand = new DeleteLogStreamCommand({
         logGroupName,
-        orderBy: 'LastEventTime',
-        descending: false,
-        nextToken,
+        logStreamName: stream.logStreamName,
       });
+      await cloudWatchLogsClient.send(deleteLogStreamCommand);
+      console.log(`Deleted log stream: ${stream.logStreamName}`);
+    }
 
-      const describeLogStreamsResponse = await cloudWatchLogsClient.send(describeLogStreamsCommand);
-      nextToken = describeLogStreamsResponse.nextToken;
-
-      const streamsToDelete = describeLogStreamsResponse.logStreams.filter((stream) => {
-        const lastEventTimestamp = stream.lastEventTimestamp || 0;
-        return lastEventTimestamp >= startTime && lastEventTimestamp <= endTime;
-      });
-
-      for (const stream of streamsToDelete) {
-        const deleteLogStreamCommand = new DeleteLogStreamCommand({
-          logGroupName,
-          logStreamName: stream.logStreamName,
-        });
-        await cloudWatchLogsClient.send(deleteLogStreamCommand);
-        console.log(`Deleted log stream: ${stream.logStreamName}`);
-      }
-    } while (nextToken);
-  } catch (error) {
-    console.error('Error deleting logs:', error);
+    // 続きか終了
+    if( next ) cb( cb, resolve, next );
+    else resolve({ status:0 , msg: "Del OK." });
   }
+
+  // 削除の開始
+  return new Promise((resolve) => {
+    DelLoop( DelLoop, resolve );
+  })
 }
 
 /**
@@ -78,6 +85,57 @@ async function deleteLogsByPeriod(param = {}) {
  * 3.ロググループの削除:
  *   エクスポートが完了したら、DeleteLogGroupCommand を使用してロググループを削除します。
  */
+
+// 2.エクスポートタスクのポーリング関数
+async function EndCheck(obj){
+  console.log('EndCheck:', obj.Loop++);
+
+  // エクスポート完了処理の実施
+  if (obj.isExportComplete) {
+    await obj.PolingEndFunc(obj);
+    return;
+  }
+
+  const describeExportTasksCommand = new DescribeExportTasksCommand({
+    taskId: obj.taskId,
+  });
+
+  const describeExportTasksResponse = await cloudWatchLogsClient.send(describeExportTasksCommand);
+  const taskStatus = describeExportTasksResponse.exportTasks[0]?.status?.code;
+
+  console.log('Current Task Status:', taskStatus);
+
+  if (taskStatus === 'COMPLETED') {
+    obj.isExportComplete = true;
+    console.log('Export Task Completed Successfully.');
+  } else if (taskStatus === 'FAILED') {
+    throw new Error('Export Task Failed.');
+  }
+};
+
+// 3.エクスポートタスクの完了処理関数
+async function PolingEndFunc({ intervalID, resolve, logGroupName, fromTime, toTime }){
+  // ポーリング停止
+  clearInterval(intervalID);
+
+  // エクスポートタスクを削除
+
+  // ロググループを削除
+  // const deleteLogGroupCommand = new DeleteLogGroupCommand({ logGroupName });
+  // cloudWatchLogsClient.send(deleteLogGroupCommand);
+  // console.log(`Log group ${logGroupName} deleted successfully.`);
+  // ログストリームの削除
+  await deleteLogsByPeriod({
+    logGroupName,
+    startTime: fromTime,
+    endTime: toTime,
+  });
+
+  // 削除完了を上位に通知
+  resolve({ status: 0 });
+};
+
+// Lmabda 事のループ
 async function exportLogsMain(event = {}) {
   // パラメータサンプル
   const {
@@ -102,50 +160,8 @@ async function exportLogsMain(event = {}) {
   const exportTaskResponse = await cloudWatchLogsClient.send(exportTaskCommand);
   console.log('Export Task Created:', exportTaskResponse.taskId);
 
-  // エクスポートタスクのポーリング関数
-  const EndCheck = async (obj) => {
-    console.log('EndCheck:', obj.Loop++);
-
-    // エクスポート完了処理の実施
-    if (obj.isExportComplete) {
-      await obj.PolingEndFunc(obj);
-      return;
-    }
-
-    const describeExportTasksCommand = new DescribeExportTasksCommand({
-      taskId: exportTaskResponse.taskId,
-    });
-
-    const describeExportTasksResponse = await cloudWatchLogsClient.send(describeExportTasksCommand);
-    const taskStatus = describeExportTasksResponse.exportTasks[0]?.status?.code;
-
-    console.log('Current Task Status:', taskStatus);
-
-    if (taskStatus === 'COMPLETED') {
-      obj.isExportComplete = true;
-      console.log('Export Task Completed Successfully.');
-    } else if (taskStatus === 'FAILED') {
-      throw new Error('Export Task Failed.');
-    }
-  };
-
-  // エクスポートタスクの完了処理関数
-  const PolingEndFunc = async ({ intervalID, resolve }) => {
-    // ポーリング停止
-    clearInterval(intervalID);
-
-    // エクスポートタスクを削除
-
-    // ロググループを削除
-    const deleteLogGroupCommand = new DeleteLogGroupCommand({ logGroupName });
-    cloudWatchLogsClient.send(deleteLogGroupCommand);
-    console.log(`Log group ${logGroupName} deleted successfully.`);
-
-    // 削除完了を上位に通知
-    resolve({ status: 0 });
-  };
-
-  const PolingFunc = new Promise((resolve) => {
+  // 完了を待つための Promise を返す
+  return new Promise((resolve) => {
     // ポーリング、終了の開始設定
     const obj = {
       isExportComplete: false, // ポーリングステータス
@@ -153,14 +169,14 @@ async function exportLogsMain(event = {}) {
       intervalID: null, // ポーリングID
       resolve, // エクスポート過料通知
       Loop: 0, // ログ用のポーリング回数
+      taskId: exportTaskResponse.taskId,
+      event,
     };
 
     // 完了していなければ、少し待機してから再チェック
+    // EndCheck の 完了コールバックで resolve, タイマー停止する
     obj.intervalID = setInterval(EndCheck, 1000, obj);
   });
-
-  // 完了を待つための Promise を返す
-  return PolingFunc;
 }
 
 async function exportLogs() {
