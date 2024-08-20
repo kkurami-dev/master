@@ -5,12 +5,12 @@
     "Runtime": "nodejs20.x",
     "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
     "Handler": "index.handler",
-    "CodeSize": 9640,
+    "CodeSize": 9795,
     "Description": "",
     "Timeout": 60,
     "MemorySize": 2048,
-    "LastModified": "2024-08-11T12:28:41.000+0000",
-    "CodeSha256": "BGVyWE5oyUkcM1lE0puYbkxVQ/mF0hC0UfvIp5DCqpE=",
+    "LastModified": "2024-08-13T13:15:48.000+0000",
+    "CodeSha256": "vUqsJ2kmZ8Oc6Vfo493wCBzp9eL9o8N87k3wnGLqrPY=",
     "Version": "$LATEST",
     "Environment": {
         "Variables": {
@@ -21,7 +21,59 @@
     "TracingConfig": {
         "Mode": "PassThrough"
     },
-    "RevisionId": "11a6c5ed-b1d0-480d-8131-896582f4d5c3",
+    "RevisionId": "da55e5b4-78e3-4593-a67d-3767bdb4985f",
+    "Layers": [
+        {
+            "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:crypto:1",
+            "CodeSize": 2329
+        },
+        {
+            "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:web3:12",
+            "CodeSize": 21431492
+        }
+    ],
+    "State": "Active",
+    "LastUpdateStatus": "InProgress",
+    "LastUpdateStatusReason": "The function is being created.",
+    "LastUpdateStatusReasonCode": "Creating",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:ap-northeast-1::runtime:66a145a0c659d27a0f5c781ef79f03464c01811b9c2f47d1287ba3f315da8983"
+    }
+}
+{
+    "FunctionName": "lambda-mente",
+    "FunctionArn": "arn:aws:lambda:ap-northeast-1:176264229023:function:lambda-mente",
+    "Runtime": "nodejs20.x",
+    "Role": "arn:aws:iam::176264229023:role/DynamoDBLmbdaFull",
+    "Handler": "index.handler",
+    "CodeSize": 9795,
+    "Description": "",
+    "Timeout": 60,
+    "MemorySize": 2048,
+    "LastModified": "2024-08-13T13:15:51.000+0000",
+    "CodeSha256": "vUqsJ2kmZ8Oc6Vfo493wCBzp9eL9o8N87k3wnGLqrPY=",
+    "Version": "$LATEST",
+    "Environment": {
+        "Variables": {
+            "ENVROMENT": "10",
+            "ENVROMENT2": "100"
+        }
+    },
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "838d303d-3e09-42ed-8859-8d40b371d1ed",
     "Layers": [
         {
             "Arn": "arn:aws:lambda:ap-northeast-1:176264229023:layer:crypto:1",
