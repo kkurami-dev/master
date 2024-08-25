@@ -6,7 +6,7 @@
   "Handler": "index.handler",
   "CodeSize": 8941,
   "Description": "",
-  "Timeout": 60,
+  "Timeout": 120,
   "MemorySize": 2048,
   "LastModified": "2022-01-08T12:22:13.847+0000",
   "CodeSha256": "I6xc5xHEFoQPcwAVd7DYT94vfWeiFCgjflTF7xNb+FY=",

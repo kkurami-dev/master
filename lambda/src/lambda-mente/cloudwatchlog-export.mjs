@@ -8,6 +8,7 @@
  *   バックアップ対象の s3 バケットは事前に作成し、このソースの末尾のバケットポリシーの設定が必要
  *   この Lambda に cloudwatch-logs の書き込み、削除、状態取得などの権限も必要
  * 設定:
+ *   event.bucketName                : エクスポート先の s3 バケット名 ( 必須 )
  *   env.DEL_LOG_MIN or event.logmin : バックアップ対象とする最小サイズ ( 300 Kbyte )
  *   env.DEL_LOG_MAX or event.delmax : 1回でバックアップの最大個数     ( 50 個 )
  *   env.DEL_LOG_DAY                 : 残すログの日数                 ( 30 日 )
@@ -30,6 +31,7 @@ import {
 
   DescribeLogGroupsCommand,
   CreateExportTaskCommand,
+  CancelExportTaskCommand,
   DescribeExportTasksCommand,
   //DeleteLogGroupCommand,
   DescribeLogStreamsCommand,
@@ -137,10 +139,25 @@ async function exportPoring(obj){
   const { taskId, isExportComplete, logGroupName } = obj;
   //console.log('EndCheck:', taskId, isExportComplete);
 
-  // 3.エクスポートタスクの完了後、ログストリームをリストアップ
+  // インターバルの停止
   if (isExportComplete) {
-    clearInterval(obj.intervalID);
-    // ログストリームの削除
+    if(obj.intervalID){
+      clearInterval(obj.intervalID);
+      obj.intervalID = null;
+    } else {
+      return;
+    }
+
+    // エクスポートタスクの削除？
+    // try {
+    //   const command = new CancelExportTaskCommand({ taskId });
+    //   const response = await cloudWatchLogsClient.send(command);
+    //   console.log("Export task canceled successfully:", response);
+    // } catch (error) {
+    //   console.error("Error canceling export task:", error);
+    // }
+    
+    // ログストリームの削除開始
     listLogs(listLogs, obj);
     return;
   }
@@ -173,9 +190,9 @@ async function exportMain(event) {
     bucketName,// S3バケット名
     bucketPrefix = 'logs/', // S3バケット内のフォルダパス（任意）
     // fromTime = Date.now() - 7 * 24 * 60 * 60 * 1000, // 1週間前からのログ
-    // toTime = Date.now(), // 現在のログまで
+    toTime = Date.now(), // 現在のログまで
     fromTime = 1607040000000, // 最も古いログから
-    toTime = Date.now() - DEL_LOG_DAY * 24 * 60 * 60 * 1000, // 1ヵ月前のログまで
+    //toTime = Date.now() - DEL_LOG_DAY * 24 * 60 * 60 * 1000, // 1ヵ月前のログまで
   } = event;
 
   // エクスポートタスクを作成
@@ -233,6 +250,7 @@ async function exportLogs(event, context) {
         .sort((a, b) => b.storedBytes - a.storedBytes)// ログのサイズが大きいほうから対象に
         .filter(input => {// サイズ、個数で対象を絞る
           const {logGroupName, storedBytes} = input;
+          console.log("back up log:", logGroupName, storedBytes);
 
           // 小さいログは対象外にする
           //if(storedBytes < (1024 * 1024 * 10)) return;// 10M までは対象にしない
@@ -241,7 +259,6 @@ async function exportLogs(event, context) {
           // 同時実行数の制限50 があるため、50以上は対象としない
           if( count++ > delmax ) return false;
 
-          console.log("back up log:", logGroupName, storedBytes);
           return true;
         });
 
