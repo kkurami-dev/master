@@ -242,8 +242,18 @@ async function exportLogs(event, context) {
   const functions = [];
 
   // なければエクスポート一覧を作成
-  const command = new DescribeLogGroupsCommand({});
-  const response = await cloudWatchLogsClient.send(command);
+  const logGroups = [];
+  const getFuncs = async (func, resolve, nextToken=undefined) => {
+    const command = new DescribeLogGroupsCommand({ nextToken });
+    const response = await cloudWatchLogsClient.send(command);
+    if( response.nextToken ){
+      logGroups.push( ...response.logGroups );
+      func( func, resolve, response.nextToken );
+    } else {
+      resolve();
+    }
+  };
+  await new Promise((resolve) => getFuncs( getFuncs, resolve ));
 
   let count = 0;
   const list = response.logGroups
