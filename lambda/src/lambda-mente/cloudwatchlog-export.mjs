@@ -246,8 +246,8 @@ async function exportLogs(event, context) {
   const getFuncs = async (func, resolve, nextToken=undefined) => {
     const command = new DescribeLogGroupsCommand({ nextToken });
     const response = await cloudWatchLogsClient.send(command);
+    logGroups.push( ...response.logGroups );
     if( response.nextToken ){
-      logGroups.push( ...response.logGroups );
       func( func, resolve, response.nextToken );
     } else {
       resolve();
@@ -256,7 +256,7 @@ async function exportLogs(event, context) {
   await new Promise((resolve) => getFuncs( getFuncs, resolve ));
 
   let count = 0;
-  const list = response.logGroups
+  const list = logGroups
         .sort((a, b) => b.storedBytes - a.storedBytes)// ログのサイズが大きいほうから対象に
         .filter(input => {// サイズ、個数で対象を絞る
           const {logGroupName, storedBytes} = input;
