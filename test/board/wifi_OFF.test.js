@@ -15,25 +15,15 @@ fixture('HOTEL LOCAL').page(`http://${ID}:${PW}@192.168.20.3/wifi/multi.html`); 
 // テストケース1
 test('有効/無効のトグル', async (t) => {
   // 要素の取得
-  //const onoff = await Selector('input').withAttribute('m_validWifi_2g');
   const onoff = await Selector('#m_validWifi_2g');
-  //const onoff = await Selector('[#m_validWifi_2g]');
-  //const offB = onoff.withAttribute('value', '1');
   const v1 = await onoff.value;
   if(v1 === "0") return;
   const offB = onoff.sibling();
   const 適用 = await Selector('input[type="submit"][value="適用"]');
 
-  return;
   // テスト開始
   await t
     // それぞれの動作
     .click(offB)
     .click(適用);
 });
-
-// 確認
-// await t
-//   .expect(Selector('body > div > div:nth-child(1) > div > h2').innerText).eql('マイページ');
-
-// http://admin:Kuramitsu440@192.168.20.3/
