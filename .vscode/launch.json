@@ -1,0 +1,33 @@
+{
+  // IntelliSense を使用して利用可能な属性を学べます。
+  // 既存の属性の説明をホバーして表示します。
+  // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "name": "vscode-jest-tests.v2.osero",
+      "request": "launch",
+      "args": [
+        //"npx",
+        "testcafe",
+        "edge",
+        "./test/board/testcafe.test.js"
+        // "test",
+        // "--runInBand",
+        // "--watchAll=false",
+        // "--testNamePattern",
+        // "${jest.testNamePattern}",
+        // "--runTestsByPath",
+        // "${jest.testFile}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      //"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/react-scripts",
+      "runtimeExecutable": "npx",
+      "protocol": "inspector"
+    }
+  ]
+}
