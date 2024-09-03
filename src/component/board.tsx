@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Stack, Button } from '@mui/material';
 
 import { LEN, ID } from '../utils/othello.mjs';
-import Row from './row.tsx';// assert { type: "RowType" };
+import Row from './Row.tsx';// assert { type: "RowType" };
 import { initSS, PlayerSelect } from './player.tsx';
 
 // import assert from 'assert';
