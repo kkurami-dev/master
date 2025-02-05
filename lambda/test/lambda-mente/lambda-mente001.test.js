@@ -1,48 +1,69 @@
-import { jest, describe, it, expect } from '@jest/globals';
-import { ListTablesCommand, DescribeTableCommand } from '@aws-sdk/client-dynamodb';
+import { jest, describe, it, expect, test } from '@jest/globals';
 
-import { handler as Mente } from '../../src/lambda-mente/index.mjs';
-import { mockSet } from '../test-common';
+const fixed = new Date('2022-1-1T00:00:00');
+jest.useFakeTimers().setSystemTime(fixed.getTime());
 
-function setData() {
-  // jest.useFakeTimers();
-  const TableNames = [];
-  for(let i = 0; i < 100; i += 1){
-    TableNames.push( "testTable" + i );
-  }
-  const def = [
-    {
-      com: ListTablesCommand,
-      in: {},
-      out: { TableNames },
-    },
-  ];
-  for(let i = 0; i < TableNames.length; i += 1){
-    def.push({
-      com: ListTablesCommand,
-        in: { TableNames: TableNames[i]},
-      out: {  },
-    });
-  }
-  mockSet({ def });
+/*
+  まとめ
+  方法                |  説明
+  doneコールバック      | 簡単な方法ですが、お願いdone()忘れに注意してください
+  Promise             |  returnでJestに処理の完了を伝える
+  async/await         |  awaitを使って考えて書く
+  jest.useFakeTimers  |  setTimeoutの時間をスキップできる
+  テストの実行時間を短縮したい場合は、フェイクコンピューター
+  ( jest.useFakeTimers())を使うのがおすすめです。
+ */
+
+function delayedFunction(callback) {
+  setTimeout(() => {
+    callback('Hello, Jest!');
+  }, 1000);
 }
 
-describe('get user data', () => {
-  it('should get user names', async () => {
-    // jest.useFakeTimers();
-    // jest.spyOn(global, 'setTimeout');
-    // jest.spyOn(global, 'setInterval');
-    // すべてのタイマーが実行されるまで早送りします
-    // jest.advanceTimersByTime(1000);
-    setData();
-    let result = null;
-    const cb = (ret) => {
-      result = ret;
-    };
-    await Mente({ func: 'deleteDynamodb' }, {}, cb);
-    // jest.runAllTimers();
-
-    expect(result).toBe(null);
-    //expect(result.Item).toStrictEqual(expectValue.Item)
+it('setTimeout を使った関数のテスト (done)', (done) => {
+  delayedFunction((message) => {
+    expect(message).toBe('Hello, Jest!');
+    done(); // テストの終了を知らせる
   });
+});
+
+function delayedPromise() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve('Hello, Jest!');
+    }, 1000);
+  });
+}
+
+test('setTimeout を使った関数のテスト (Promise)', () => {
+  return delayedPromise().then((message) => {
+    expect(message).toBe('Hello, Jest!');
+  });
+});
+
+test('setTimeout を使った関数のテスト (async/await)', async () => {
+  const message = await delayedPromise();
+  expect(message).toBe('Hello, Jest!');
+});
+
+//jest.useFakeTimers();
+
+test('setTimeout を使った関数のテスト (jest.useFakeTimers)', () => {
+  // OK
+  const mockCallback = jest.fn();
+  delayedFunction(mockCallback);
+
+  // タイマーを手動で進める
+  jest.runAllTimers();
+  expect(mockCallback).toHaveBeenCalledWith('Hello, Jest!');
+});
+
+test('setTimeout を使った関数のテスト (jest.advanceTimersByTime)', () => {
+  // OK
+  const mockCallback = jest.fn();
+  delayedFunction(mockCallback);
+
+  // 1000ms 進める
+  jest.advanceTimersByTime(1000);
+  expect(mockCallback).toHaveBeenCalledWith('Hello, Jest!');
 });
