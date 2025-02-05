@@ -1,4 +1,4 @@
-declare module '../utils/othello.mjs' {
+declare module 'othello' {
   // export function myFunction(arg: string): void;
   // その他のエクスポート
   export const ID: number;

@@ -1,9 +1,34 @@
 {
   "name": "osero",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "main": "src/index.js",
+  "exports": "src/index.js",
   "module": "src/App.js",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "src/",
+    "LICENSE",
+    "package.json",
+    "README.md"
+  ],
+  "keywords": [
+    "jtc",
+    "legacy",
+    "halfwidth",
+    "fullwidth",
+    "hiragana",
+    "katakana",
+    "windows-31j",
+    "euc-jp",
+    "cp930",
+    "cp939",
+    "csv",
+    "fixlen"
+  ],
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
