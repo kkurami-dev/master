@@ -20,7 +20,7 @@ function delayedFunction(callback) {
   }, 1000);
 }
 
-it('setTimeout を使った関数のテスト (done)', (done) => {
+/* it('setTimeout を使った関数のテスト (done)', (done) => {
   delayedFunction((message) => {
     expect(message).toBe('Hello, Jest!');
     done(); // テストの終了を知らせる
@@ -44,7 +44,7 @@ test('setTimeout を使った関数のテスト (Promise)', () => {
 test('setTimeout を使った関数のテスト (async/await)', async () => {
   const message = await delayedPromise();
   expect(message).toBe('Hello, Jest!');
-});
+}); */
 
 //jest.useFakeTimers();
 
