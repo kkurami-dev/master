@@ -9,6 +9,8 @@
 import {
   CloudWatchLogsClient,
   DescribeLogGroupsCommand,
+  StartQueryCommand,
+  GetQueryResultsCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import fs from 'fs';
@@ -19,12 +21,9 @@ const s3Client = new S3Client();
 const LOG_QUERY = process.env.LOG_QUERY || "";
 
 function getFileName(ev, ctx){
-
-
-
-  const tmp1 = '/tmp/cloudwatchlogQuery1-';
-  const tmp2 = '/tmp/cloudwatchlogQuery2-';
-  const out = 'cloudwatchlogQuery/';
+  const tmp1 = '/tmp/cloudwatchlogQuery1-' + ctx.awsRequestId;
+  const tmp2 = '/tmp/cloudwatchlogQuery2-' + ctx.awsRequestId;
+  const out = 'cloudwatchlogQuery/20240215.cvs'
   const idx = 'cloudwatchlogQuery/index.txt';
   const bucketName = "";
 
@@ -50,21 +49,16 @@ async function uploadFile(type, param) {
 
 async function downloadFile(type, param) {
   const Key = type ? param.out : param.idx;
-  const tmp = type ? param.tmp1 : param.tmp2;
 
-  let data = {};
   try {
     const command = new GetObjectCommand({ Bucket: param.bucketName, Key });
     const { Body } = await s3Client.send(command);
-
-    const fileStream = fs.createWriteStream(tmp);
-    Body.pipe(fileStream);
-
-    console.log(`File downloaded: ${tmp}`);
+    const str = await Body.transformToString();
+    return JSON.parse(str);
   } catch (error) {
     console.error("Error downloading file:", error);
   }
-  return data;
+  return {};
 }
 
 // ロググループをすべてリストアップする
@@ -75,35 +69,121 @@ async function downloadFile(type, param) {
   タスクキュー（Timer Queue） に追加され、現在の実行中のコードがすべて
   終わった後に処理されます。
  */
-async function listLogGroup( cb ){
+function listLogGroup( queryLogObj ){
   const getFuncs = async (param) => {
-    const {func, nextToken, ti} = param;
-    param.ti = null;
-    clearTimeout( ti );
+    const {func, nextToken,} = param;
 
     const command = new DescribeLogGroupsCommand({ nextToken });
     const response = await logsClient.send(command);
+    param.nextToken = response.nextToken;
+    console.log("list response", response);
 
-    await cb( response );
+    // 対象のフィルタ
+    // 50以上なら qcb を複数回呼ぶ
+    const logGroups = [];
+    response?.logGroups?.forEach(({storedBytes, logGroupName})=> {
+      if( storedBytes === 0 ) return;
 
-    if( response.nextToken ){
-      param.nextToken = response.nextToken;
-      param.ti = setTimeout( func, 0, obj );
+      logGroups.push( logGroupName );
+    });
+    const qp = {...queryLogObj, logGroups};
+    param.qcb( qp );
+
+    if( param.nextToken ){
+      param.lfunc( param );
+    } else {
+      console.log("list END.");
     }
   };
 
-  const obj = {
-    ti: null,
-    func: getFuncs,
-  };
-  obj.ti = setTimeout(getFuncs, 0, obj);
+  getFuncs({...queryLogObj, lfunc: getFuncs });
 }
+
+function queryLog(queryLogObj){
+  console.log("queryLog start.");
+
+  // クエリー開始
+  const query = async (obj) => {
+    const { logGroup, queryString, startTime, endTime } = obj;
+    const startQueryCommand = new StartQueryCommand({
+      logGroupNames: logGroup, // クエリー対象のロググループ
+      startTime: startTime.getTime(), // ミリ秒単位の Unix タイムスタンプ
+      endTime: endTime.getTime(),
+      queryString: queryString,
+    });
+    const { queryId } = await logsClient.send(startQueryCommand);
+
+    obj.queryId = queryId;
+    obj.qth = setTimeout(obj.qfunc, 1000, obj);
+  };
+
+  // クエリー結果待ち
+  const waitLog = async (obj) => {
+    const {queryId, qth, resolve} = obj;
+    obj.qth = null;
+    clearTimeout(qth);
+
+    const getQueryResultsCommand = new GetQueryResultsCommand({ queryId });
+    const response = await logsClient.send(getQueryResultsCommand);
+    const { status, results } = response;
+    if(status === "Running" || status === "Scheduled"){
+      obj.qth = setTimeout(obj.qfunc, 1000, obj);
+    } else {
+      console.log("query END response", response);
+      const wp = { ...queryLogObj, response};
+      obj.wcb( wp );
+      if(queryLogObj.listEnd){
+        resolve();
+      }
+    }
+  };
+
+  query({...queryLogObj, qfunc: waitLog});
+}
+
+
+async function writeLog( queryLogObj ){
+  console.log("writeLog start.");
+}
+
 
 async function queryLogs(ev, ctx){
-  const {query = null} = ev;
 
-  listLogGroup( cb );
+  const {query = null} = ev;
+  const jst = new Date().toLocaleString({ timeZone: 'Asia/Tokyo' });
+  console.log("jst", jst);
+
+  const startTime = new Date();
+  startTime.setHours(startTime.getHours() - 24); // 24時間前
+  const param = {
+    startTime,
+    endTime: new Date(),
+    queryString: `
+fields @timestamp, @message
+| filter @message like /ERROR/
+| sort @timestamp desc
+| limit 20
+`,
+    qcb: queryLog,
+    wcb: writeLog,
+  }
+
+  await new Promise((ok, ng)=>{
+    param.resolve = ok;
+    try {
+      listLogGroup( param );
+    } catch(e){
+      console.error(e);
+      ng(e);
+    }
+  });
 }
+
+export const handler = async (event, context, callback) => {
+  return await queryLogs(event, context);
+};
 
 // スクリプトを実行
 export { queryLogs };
+
+
