@@ -18,6 +18,8 @@ function npc(act, { lv, ss }) {
   return ss.obj.putStone(select, act);
 }
 
+let a = "a";
+
 // イベントから置いた位置を特定
 function pc(act, { ev, ss }) {
   if (!ev) {

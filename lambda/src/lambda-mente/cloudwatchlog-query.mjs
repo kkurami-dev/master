@@ -18,16 +18,16 @@ import fs from 'fs';
 const logsClient = new CloudWatchLogsClient();
 const s3Client = new S3Client();
 
-const LOG_QUERY = process.env.LOG_QUERY || "";
+const LOG_QUERY = process.env.LOG_QUERY || '';
 
-function getFileName(ev, ctx){
+function getFileName(ev, ctx) {
   const tmp1 = '/tmp/cloudwatchlogQuery1-' + ctx.awsRequestId;
   const tmp2 = '/tmp/cloudwatchlogQuery2-' + ctx.awsRequestId;
-  const out = 'cloudwatchlogQuery/20240215.cvs'
+  const out = 'cloudwatchlogQuery/20240215.cvs';
   const idx = 'cloudwatchlogQuery/index.txt';
-  const bucketName = "";
+  const bucketName = '';
 
-  return {idx, out, tmp1, tmp2, bucketName};
+  return { idx, out, tmp1, tmp2, bucketName };
 }
 
 async function uploadFile(type, param) {
@@ -39,7 +39,7 @@ async function uploadFile(type, param) {
     Bucket: param.bucketName,
     Key,
     Body: fileStream,
-    ContentType: "application/octet-stream", // 適宜変更
+    ContentType: 'application/octet-stream', // 適宜変更
   };
 
   const command = new PutObjectCommand(uploadParams);
@@ -56,7 +56,7 @@ async function downloadFile(type, param) {
     const str = await Body.transformToString();
     return JSON.parse(str);
   } catch (error) {
-    console.error("Error downloading file:", error);
+    console.error('Error downloading file:', error);
   }
   return {};
 }
@@ -69,38 +69,38 @@ async function downloadFile(type, param) {
   タスクキュー（Timer Queue） に追加され、現在の実行中のコードがすべて
   終わった後に処理されます。
  */
-function listLogGroup( queryLogObj ){
+function listLogGroup(queryLogObj) {
   const getFuncs = async (param) => {
-    const {func, nextToken,} = param;
+    const { func, nextToken } = param;
 
     const command = new DescribeLogGroupsCommand({ nextToken });
     const response = await logsClient.send(command);
     param.nextToken = response.nextToken;
-    console.log("list response", response);
+    console.log('list response', response);
 
     // 対象のフィルタ
     // 50以上なら qcb を複数回呼ぶ
     const logGroups = [];
-    response?.logGroups?.forEach(({storedBytes, logGroupName})=> {
-      if( storedBytes === 0 ) return;
+    response?.logGroups?.forEach(({ storedBytes, logGroupName }) => {
+      if (storedBytes === 0) return;
 
-      logGroups.push( logGroupName );
+      logGroups.push(logGroupName);
     });
-    const qp = {...queryLogObj, logGroups};
-    param.qcb( qp );
+    const qp = { ...queryLogObj, logGroups };
+    param.qcb(qp);
 
-    if( param.nextToken ){
-      param.lfunc( param );
+    if (param.nextToken) {
+      param.lfunc(param);
     } else {
-      console.log("list END.");
+      console.log('list END.');
     }
   };
 
-  getFuncs({...queryLogObj, lfunc: getFuncs });
+  getFuncs({ ...queryLogObj, lfunc: getFuncs });
 }
 
-function queryLog(queryLogObj){
-  console.log("queryLog start.");
+function queryLog(queryLogObj) {
+  console.log('queryLog start.');
 
   // クエリー開始
   const query = async (obj) => {
@@ -119,39 +119,38 @@ function queryLog(queryLogObj){
 
   // クエリー結果待ち
   const waitLog = async (obj) => {
-    const {queryId, qth, resolve} = obj;
+    const { queryId, qth, resolve } = obj;
     obj.qth = null;
     clearTimeout(qth);
 
     const getQueryResultsCommand = new GetQueryResultsCommand({ queryId });
     const response = await logsClient.send(getQueryResultsCommand);
     const { status, results } = response;
-    if(status === "Running" || status === "Scheduled"){
+    if (status === 'Running' || status === 'Scheduled') {
       obj.qth = setTimeout(obj.qfunc, 1000, obj);
     } else {
-      console.log("query END response", response);
-      const wp = { ...queryLogObj, response};
-      obj.wcb( wp );
-      if(queryLogObj.listEnd){
+      console.log('query END response', response);
+      const wp = { ...queryLogObj, response };
+      obj.wcb(wp);
+      if (queryLogObj.listEnd) {
         resolve();
       }
     }
   };
 
-  query({...queryLogObj, qfunc: waitLog});
+  query({ ...queryLogObj, qfunc: waitLog });
 }
 
-
-async function writeLog( queryLogObj ){
-  console.log("writeLog start.");
+async function writeLog(queryLogObj) {
+  console.log('writeLog start.');
 }
 
+let ok = null;
 
-async function queryLogs(ev, ctx){
-
-  const {query = null} = ev;
+async function queryLogs(ev, ctx) {
+  const { query = null } = ev;
   const jst = new Date().toLocaleString({ timeZone: 'Asia/Tokyo' });
-  console.log("jst", jst);
+  console.log('jst', jst);
 
   const startTime = new Date();
   startTime.setHours(startTime.getHours() - 24); // 24時間前
@@ -166,24 +165,51 @@ fields @timestamp, @message
 `,
     qcb: queryLog,
     wcb: writeLog,
-  }
+  };
 
-  await new Promise((ok, ng)=>{
+  let ok = null;
+
+  await new Promise((ok, ng) => {
     param.resolve = ok;
     try {
-      listLogGroup( param );
-    } catch(e){
+      listLogGroup(param);
+    } catch (e) {
       console.error(e);
       ng(e);
     }
   });
+  return;
 }
 
 export const handler = async (event, context, callback) => {
-  return await queryLogs(event, context);
+  ok = 'a';
+  return await queryLogs(event, context, ok);
 };
+
+if (ok) {
+  ok = 2;
+  if (ok == 2) {
+    ok = 3;
+    if (ok === 3) {
+      ok = 5;
+      if (ok === 3) {
+        ok = 5;
+        if (ok === 3) {
+          ok = 5;
+          if (ok === 3) {
+            ok = 5;
+            if (ok === 3) {
+              ok = 5;
+              if (ok === 3) {
+                ok = 5;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 // スクリプトを実行
 export { queryLogs };
-
-

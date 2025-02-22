@@ -1,3 +1,11 @@
+# VSCode
+* 初期化
+~~~~
+  Remove-Item -Recurse -Force $env:USERPROFILE\.vscode
+  Remove-Item -Recurse -Force $env:APPDATA\Code
+~~~~
+
+
 # 参考資料
 
 ・[Reactでオセロゲームを作る](https://bagelee.com/programming/react-othello/)  
