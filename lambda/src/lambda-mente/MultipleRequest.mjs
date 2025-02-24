@@ -34,18 +34,18 @@ function ExeFunc(data, param){
   const execFlag = Decision(Option, data);
 
   if (!execFlag) {
-    AllItems -= 1;
+    param.AllItems -= 1;
     return;
   }
 
   // 単位時間当たりの実行数計算用
   const tobj = { t: new Date().getTime(), s: 1 };
-  timeArr.push(tobj);
+  param.timeArr.push(tobj);
 
   // 更新
-  functions.push(
+  param.functions.push(
     Execution(opt, data, () => {
-      AllItems -= 1;
+      param.AllItems -= 1;
       tobj.s = 2;
     })
   );
@@ -54,12 +54,13 @@ function ExeFunc(data, param){
  // 一定間隔で Update を実行する関数
   // 無条件だとソケット数50 を超過してしまい、更新失敗してしまう
 function timeFunc(param){
-  const { thred, items, intervalID,
-          functions,
-          timeArr,
-          AllItems,
-          Setting,
-        } = param;
+  const {
+    thred, items, intervalID,
+    // functions,
+    timeArr,
+    AllItems,
+    Setting,
+  } = param;
 
   // 実行数制限
   if (timeArr.length > Setting.dupNum) {
@@ -92,16 +93,16 @@ function checkLoop(cb, resolve, i){
   if (AllItems > 0) {
     const n = i + 1;
     setTimeout(cb, 100, cb, resolve, n);
+    resolve(i);
     return;
   }
-  resolve(i);
-}
 
-functions.push(
-  new Promise((resolve) => {
-    setTimeout(checkLoop, 100, checkLoop, resolve, count);
-  })
-);
+  functions.push(
+    new Promise((resolve) => {
+      setTimeout(checkLoop, 100, checkLoop, resolve, count);
+    })
+  );
+}
 
 async function MultipleRequest(Setting, Option = {}) {
   //const { Search, Decision, Execution, dupNum = 45, dupTime = 1100 } = funcs;
@@ -148,3 +149,4 @@ async function MultipleRequest(Setting, Option = {}) {
 }
 
 export { MultipleRequest };
+

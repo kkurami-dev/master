@@ -18,7 +18,12 @@ import fs from 'fs';
 const logsClient = new CloudWatchLogsClient();
 const s3Client = new S3Client();
 
-const LOG_QUERY = process.env.LOG_QUERY || '';
+const LOG_QUERY = process.env.LOG_QUERY || `
+fields @timestamp, @message
+| filter @message like /ERROR/
+| sort @timestamp desc
+| limit 20
+`;
 
 function getFileName(ev, ctx) {
   const tmp1 = '/tmp/cloudwatchlogQuery1-' + ctx.awsRequestId;
@@ -70,7 +75,7 @@ async function downloadFile(type, param) {
   終わった後に処理されます。
  */
 function listLogGroup(queryLogObj) {
-  const getFuncs = async (param) => {
+  async function getFuncs(param){
     const { func, nextToken } = param;
 
     const command = new DescribeLogGroupsCommand({ nextToken });
@@ -81,7 +86,7 @@ function listLogGroup(queryLogObj) {
     // 対象のフィルタ
     // 50以上なら qcb を複数回呼ぶ
     const logGroups = [];
-    response?.logGroups?.forEach(({ storedBytes, logGroupName }) => {
+    response?.logGroups?.forEach(function ({ storedBytes, logGroupName }){
       if (storedBytes === 0) return;
 
       logGroups.push(logGroupName);
@@ -103,7 +108,7 @@ function queryLog(queryLogObj) {
   console.log('queryLog start.');
 
   // クエリー開始
-  const query = async (obj) => {
+  async function query(obj){
     const { logGroup, queryString, startTime, endTime } = obj;
     const startQueryCommand = new StartQueryCommand({
       logGroupNames: logGroup, // クエリー対象のロググループ
@@ -118,7 +123,7 @@ function queryLog(queryLogObj) {
   };
 
   // クエリー結果待ち
-  const waitLog = async (obj) => {
+  async function waitLog(obj){
     const { queryId, qth, resolve } = obj;
     obj.qth = null;
     clearTimeout(qth);
@@ -157,19 +162,14 @@ async function queryLogs(ev, ctx) {
   const param = {
     startTime,
     endTime: new Date(),
-    queryString: `
-fields @timestamp, @message
-| filter @message like /ERROR/
-| sort @timestamp desc
-| limit 20
-`,
+    queryString: LOG_QUERY,
     qcb: queryLog,
     wcb: writeLog,
   };
 
   let ok = null;
 
-  await new Promise((ok, ng) => {
+  await new Promise(function (ok, ng){
     param.resolve = ok;
     try {
       listLogGroup(param);
@@ -181,7 +181,7 @@ fields @timestamp, @message
   return;
 }
 
-export const handler = async (event, context, callback) => {
+async function handler(event, context, callback){
   ok = 'a';
   return await queryLogs(event, context, ok);
 };
