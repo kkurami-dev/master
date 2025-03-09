@@ -5,6 +5,24 @@
  *   エクスポートは s3 に /logs/Lambdaグループ名/タスクID/ログストリーム名/連番.gz
  *   でファイルが作成されます。
  *
+下記の全体と要件で Nodejs を使い aws lambda のソースを作成してください
+前提
+  1.aws sdk は v3 を使用する事
+  2.処理はなるべく関数化すること
+  3.Lambdaの最大実行時間は 14 分で続きは次回実行時に行う
+  4.Lambda のパラメータで下記を設定できるようにする
+  ・バケット名
+  ・StartQueryCommand のクエリー分
+要件
+ 1. DescribeLogGroupsCommand でロググループの一覧を作成
+ 2. 1 の内容は s3 に検索結果としてログクループ名、ログサイズの保存を行う
+ 3. CludWatch Log のログサイズが０の場合は何もしない
+ 4. 2 のファイルが存在していた場合、2の記録されているログサイズと今回のサイズが同一なら何もしない
+ 5. ログクループ名を配列に保持
+ 6. 5 の件数が 50 件に達したら、StartQueryCommand を実行し、配列に保持
+ 7. すべてのロググループの判定が完了し、5 の配列に端数がある場合、残り分について 6 を実行
+ 8. 6 の配列を非同期に GetQueryResultsCommand 実行状態を取得し、ログ取得が完了していた場合、結果を今日の日付で s3 に書き出す
+ *
  */
 import {
   CloudWatchLogsClient,
@@ -25,7 +43,7 @@ fields @timestamp, @message
 | limit 20
 `;
 
-function getFileName(ev, ctx) {
+function getFileName(ctx) {
   const tmp1 = '/tmp/cloudwatchlogQuery1-' + ctx.awsRequestId;
   const tmp2 = '/tmp/cloudwatchlogQuery2-' + ctx.awsRequestId;
   const out = 'cloudwatchlogQuery/20240215.cvs';
@@ -35,16 +53,24 @@ function getFileName(ev, ctx) {
   return { idx, out, tmp1, tmp2, bucketName };
 }
 
-async function uploadFile(type, param) {
+async function uploadFile(type, ctx, mode) {
+  const param = getFileName(ctx);
   const Key = type ? param.out : param.idx;
   const tmp = type ? param.tmp1 : param.tmp2;
 
-  const fileStream = fs.createReadStream(tmp);
+  let Body = "";
+  let ContentType = 'application/octet-stream';
+  if(mode){
+    Body = JSON.stringify(mode);
+    ContentType = null;
+  } else {
+    Body = fs.createReadStream(tmp);
+  }
   const uploadParams = {
     Bucket: param.bucketName,
     Key,
-    Body: fileStream,
-    ContentType: 'application/octet-stream', // 適宜変更
+    Body,
+    ContentType, // 適宜変更
   };
 
   const command = new PutObjectCommand(uploadParams);
@@ -52,7 +78,8 @@ async function uploadFile(type, param) {
   console.log(`File uploaded successfully: s3://${param.bucketName}/${Key}`);
 }
 
-async function downloadFile(type, param) {
+async function downloadFile(type, ctx) {
+  const param = getFileName(ctx);
   const Key = type ? param.out : param.idx;
 
   try {
@@ -74,7 +101,14 @@ async function downloadFile(type, param) {
   タスクキュー（Timer Queue） に追加され、現在の実行中のコードがすべて
   終わった後に処理されます。
  */
-function listLogGroup(queryLogObj) {
+async function listLogGroup(queryLogObj, ctx) {
+
+  const oldfuncs = await downloadFile(0, ctx);
+  const newfuncs = {
+    funcs:{}
+  };
+
+  // ロググループの選定
   async function getFuncs(param){
     const { func, nextToken } = param;
 
@@ -84,27 +118,44 @@ function listLogGroup(queryLogObj) {
     console.log('list response', response);
 
     // 対象のフィルタ
-    // 50以上なら qcb を複数回呼ぶ
-    const logGroups = [];
-    response?.logGroups?.forEach(function ({ storedBytes, logGroupName }){
+    // ・50以上なら qcb を複数回呼ぶ
+    // ・サイズが０なら無視
+    // ・前回とサイズが同じなら無視
+    let logcount = 0;
+    let logGroups = [];
+    response?.logGroups?.forEach(function ({ storedBytes, logGroupName }, idx){
+      newfuncs.funcs[logGroupName] = storedBytes;
       if (storedBytes === 0) return;
+      if (oldfuncs.funcs[logGroupName] === storedBytes) return;
 
       logGroups.push(logGroupName);
+      logcount += 1;
+      if(logGroups.length > 49){
+        const listEnd = (!param.nextToken && response.logGroups.length === (idx + 1));
+        param.qcb({ ...queryLogObj, logGroups, listEnd });
+        logGroups = [];
+      }
     });
-    const qp = { ...queryLogObj, logGroups };
-    param.qcb(qp);
+    if(logGroups.length){
+      const listEnd = !param.nextToken;
+      param.qcb({ ...queryLogObj, logGroups, listEnd });
+    }
 
-    if (param.nextToken) {
+    if (logcount === 0 && !param.nextToken) {
+      param.resolve();
+    } else if (param.nextToken) {
       param.lfunc(param);
     } else {
+      await uploadFile(0, ctx, newfuncs);
       console.log('list END.');
     }
   };
 
+  // 選定の開始
   getFuncs({ ...queryLogObj, lfunc: getFuncs });
 }
 
-function queryLog(queryLogObj) {
+function queryLogExecute(queryLogObj) {
   console.log('queryLog start.');
 
   // クエリー開始
@@ -124,7 +175,7 @@ function queryLog(queryLogObj) {
 
   // クエリー結果待ち
   async function waitLog(obj){
-    const { queryId, qth, resolve } = obj;
+    const { queryId, qth } = obj;
     obj.qth = null;
     clearTimeout(qth);
 
@@ -136,13 +187,14 @@ function queryLog(queryLogObj) {
     } else {
       console.log('query END response', response);
       const wp = { ...queryLogObj, response };
-      obj.wcb(wp);
+      await obj.wcb(wp);
       if (queryLogObj.listEnd) {
-        resolve();
+        obj.resolve();
       }
     }
   };
 
+  // クエリーの実行
   query({ ...queryLogObj, qfunc: waitLog });
 }
 
@@ -150,9 +202,7 @@ async function writeLog(queryLogObj) {
   console.log('writeLog start.');
 }
 
-let ok = null;
-
-async function queryLogs(ev, ctx) {
+async function queryLambdaAllLog(ev, ctx) {
   const { query = null } = ev;
   const jst = new Date().toLocaleString({ timeZone: 'Asia/Tokyo' });
   console.log('jst', jst);
@@ -160,19 +210,18 @@ async function queryLogs(ev, ctx) {
   const startTime = new Date();
   startTime.setHours(startTime.getHours() - 24); // 24時間前
   const param = {
-    startTime,
-    endTime: new Date(),
+    // 対象時間範囲
+    startTime, endTime: new Date(),
+    // 対象のログ検索クエリ
     queryString: LOG_QUERY,
-    qcb: queryLog,
-    wcb: writeLog,
+    // 対象の検索、実行結果の保存
+    qcb: queryLogExecute, wcb: writeLog,
   };
-
-  let ok = null;
 
   await new Promise(function (ok, ng){
     param.resolve = ok;
     try {
-      listLogGroup(param);
+      listLogGroup(param, ctx);
     } catch (e) {
       console.error(e);
       ng(e);
@@ -182,34 +231,11 @@ async function queryLogs(ev, ctx) {
 }
 
 async function handler(event, context, callback){
-  ok = 'a';
-  return await queryLogs(event, context, ok);
+  return await queryLambdaAllLog(event, context, callback);
 };
 
-if (ok) {
-  ok = 2;
-  if (ok == 2) {
-    ok = 3;
-    if (ok === 3) {
-      ok = 5;
-      if (ok === 3) {
-        ok = 5;
-        if (ok === 3) {
-          ok = 5;
-          if (ok === 3) {
-            ok = 5;
-            if (ok === 3) {
-              ok = 5;
-              if (ok === 3) {
-                ok = 5;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 // スクリプトを実行
-export { queryLogs };
+export {
+  handler,
+  queryLogs
+};
