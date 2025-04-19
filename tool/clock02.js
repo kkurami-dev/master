@@ -127,6 +127,7 @@ function isNowDay(month, day){
 
 function setJapnHoliday(year, month, day) {
   if(day > 31) return;
+  const hString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   // 休日設定実処理
   const setHoliday = () => {
@@ -136,7 +137,6 @@ function setJapnHoliday(year, month, day) {
       setTimeout(() => setJapnHoliday(year, month, day), 1000);
     }
 
-    const hString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const hDay = config[year].json[hString];
     if(hDay){
       element.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
@@ -163,6 +163,16 @@ function setJapnHoliday(year, month, day) {
     setHoliday();
     return;
   } else if(config[year]){
+    // ネットワーク不調対策
+    if(config[year].retray[hString]) config[year].retray[hString] += 1;
+    else config[year].retray = {
+      [hString]: 1,
+    }
+    if(config[year].retray[hString] > 3) {
+      config[year].retray[hString] = 0;
+      return;
+    }
+
     setTimeout(()=> setJapnHoliday(year, month, day), 1000);
     return;
   }
@@ -170,12 +180,17 @@ function setJapnHoliday(year, month, day) {
 
   // Web から休日一覧を取得
   const req = `https://holidays-jp.github.io/api/v1/date.json?year=${year}`;
-  window.fetch(req)
-    .then((response)=> response.json())
-    .then((json) => {
-      config[year].json = json;
-      setHoliday();
-  });
+  try {
+    window.fetch(req)
+      .then((response)=> response.json())
+      .then((json) => {
+        config[year].json = json;
+        setHoliday();
+      });
+  } catch(err){
+    // ネットワーク不調対策
+    return;
+  }
 }
 
 function createCalendar(year, month) {
