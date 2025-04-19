@@ -145,38 +145,46 @@ body {
   font-size: calc(var(--clocksize)* 0.15);
   text-align: center;
 }
+
 #calendar {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  background: #000;
 }
-
+#next {
+  display: flex;
+  flex-wrap: wrap;
+  background: #000;
+  color: #fff;
+}
+#prev {
+  display: flex;
+  flex-wrap: wrap;
+  background: #000;
+  color: #fff;
+}
 section {
   margin: 10px;
 }
-
 h1 {
+  margin: 0px;
   font-size: 18px;
 }
-
 table {
   border-spacing: 0;
   border-collapse: collapse;
 }
-
 td {
   border: 1px solid #ddd;
-  padding: 5px;
+  padding: 1px 5px;
   text-align: center;
 }
-
 td:first-child {
   color: red;
 }
-
 td:last-child {
   color: royalblue;
 }
-
 td.is-disabled {
   color: #ccc;
 }
