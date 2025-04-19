@@ -1,17 +1,16 @@
 body {
-  display: flex;
+  /* display: flex; */
   justify-content: flex-start;
-  align-items: center;
   margin: 0;
   /* 時計全体の大きさ */
-  /* ウインドーのスクロール幅に対する割合で指定 */
-  --clocksize: 80vw;
+  --clocksize: 80vh;
   background: #000;
   color: #fff;
 }
 
 /* 時計の枠 */
 .clock {
+  transform: translateX(50%);
   position: absolute;
   top: 5%; /* これは画面上から下方向にずらす距離 */
   border: 1px solid;
@@ -139,8 +138,9 @@ body {
 
 /* デジタル時計 */
 .digital_clock {
+  transform: translateX(50%);
   position: absolute;
-  top: calc(var(--clocksize) * 1.1); /* これは画面上から下方向にずらす距離 */
+  top: calc(var(--clocksize) * 1.03); /* これは画面上から下方向にずらす距離 */
   width: var(--clocksize);
   font-size: calc(var(--clocksize)* 0.15);
   text-align: center;
