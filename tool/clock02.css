@@ -136,16 +136,7 @@ body {
   background: #fff;
 }
 
-/* デジタル時計 */
-.digital_clock {
-  transform: translateX(50%);
-  position: absolute;
-  top: calc(var(--clocksize) * 1.03); /* これは画面上から下方向にずらす距離 */
-  width: var(--clocksize);
-  font-size: calc(var(--clocksize)* 0.15);
-  text-align: center;
-}
-
+/* カレンダー */
 #calendar {
   display: flex;
   flex-direction: column;
@@ -158,11 +149,12 @@ section {
 }
 h1 {
   margin: 0px;
-  font-size: 18px;
+  font-size: 20px;
 }
 table {
   border-spacing: 0;
   border-collapse: collapse;
+  font-size: 25px;
 }
 tr: now-week {
   background-color: #ADD8E6; /* 薄い青 */
@@ -175,6 +167,7 @@ td {
   border: 1px solid #ddd;
   padding: 1px 5px;
   text-align: center;
+  
 }
 td:first-child {
   color: red;
