@@ -151,20 +151,10 @@ body {
   flex-direction: column;
   background: #000;
 }
-#next {
-  display: flex;
-  flex-wrap: wrap;
-  background: #000;
-  color: #fff;
-}
-#prev {
-  display: flex;
-  flex-wrap: wrap;
-  background: #000;
-  color: #fff;
-}
+
 section {
   margin: 10px;
+  margin-bottom: 0;
 }
 h1 {
   margin: 0px;
@@ -173,6 +163,13 @@ h1 {
 table {
   border-spacing: 0;
   border-collapse: collapse;
+}
+tr: now-week {
+  background-color: #ADD8E6; /* 薄い青 */
+  background-color: #fff5e5;/*背景色*/
+}
+tr.now-week {
+  background-color: #205429;
 }
 td {
   border: 1px solid #ddd;
@@ -183,8 +180,43 @@ td:first-child {
   color: red;
 }
 td:last-child {
-  color: royalblue;
+  color: rgb(100, 180, 255);
 }
 td.is-disabled {
   color: #ccc;
+}
+
+td.now-day {
+  position: relative; /* 擬似要素の基準位置 */
+  text-decoration: none; /* 既存の下線を削除 */
+}
+td.now-day::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px; /* 下線の位置 */
+  width: 100%;
+  height: 3px; /* 下線の太さ（二本分） */
+  background: linear-gradient(to right, white, blue); /* グラデーション */
+  background-size: 200% 100%; /* アニメーションの準備 */
+  background-position: 0 0; /* 初期位置 */
+  animation: gradient-underline 2s infinite alternate; /* アニメーション */
+}
+@keyframes gradient-underline {
+  0% {
+    background-position: 0 0; /* 開始時の色 */
+  }
+  100% {
+    background-position: -100% 0; /* 終了時の色 */
+  }
+}
+td.calendar_td::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-bottom: 20px solid blue;
 }

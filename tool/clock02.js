@@ -1,3 +1,25 @@
+const weeks = ['日', '月', '火', '水', '木', '金', '土'];
+const date = new Date();
+let year = date.getFullYear();
+let month = date.getMonth() + 1;
+const config = {
+  show: 3,
+  ccHday:{
+    "2025-04-28": "有休消化日",
+    "2025-04-30": "有休奨励日(アニバーサリー休暇)",
+    "2025-05-01": "有休奨励日(アニバーサリー休暇)",
+    "2025-05-02": "有休奨励日(アニバーサリー休暇)",
+    "2025-08-12": "夏季休日、年末年始休",
+    "2025-08-13": "夏季休日、年末年始休",
+    "2025-08-14": "夏季休日、年末年始休",
+    "2025-08-15": "有休消化日",
+    "2025-09-11": "有休奨励日(アニバーサリー休暇)",
+    "2025-12-22": "有休消化日",
+  },
+  nHday:{
+  },
+}
+
 //文字盤作成
 function drawClockFace() {
   const clockFace = document.querySelector(".clockFace");
@@ -107,14 +129,6 @@ function reloadClock(){
   // location.href = location.href;
 }
 
-const weeks = ['日', '月', '火', '水', '木', '金', '土'];
-const date = new Date();
-let year = date.getFullYear();
-let month = date.getMonth() + 1;
-const config = {
-  show: 3,
-}
-
 function showCalendar(year, month) {
   for ( let i = 0; i < config.show; i++) {
     const calendarHtml = createCalendar(year, month);
@@ -130,6 +144,85 @@ function showCalendar(year, month) {
   }
 }
 
+function getNowDay() {
+  // 今日の日付を取得できるnew Dateを格納
+  const today = new Date();
+
+  // 年・月・日・曜日を取得
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const date = today.getDate();
+  const day = today.getDay();
+  return [year, month, date, day];
+}
+function isNowWeerk(month, day){
+  const nowDay = getNowDay();
+  if(month === nowDay[1] && day <= nowDay[2] && nowDay[2] <= (day + 7)){
+    return true;
+  }
+  return false;
+}
+function isNowDay(month, day){
+  const nowDay = getNowDay();
+  if(month === nowDay[1] && day === nowDay[2]){
+    return true;
+  }
+  return false;
+}
+
+function setJapnHoliday(year, month, day) {
+  if(day > 31) return;
+
+  // 休日設定実処理
+  const setHoliday = () => {
+    const qString = `td.calendar_td[data-date="${year}/${month}/${day}"]`;
+    const element = document.querySelector(qString);
+    if(!element){
+      setTimeout(() => setJapnHoliday(year, month, day), 1000);
+    }
+
+    const hString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const hDay = config[year].json[hString];
+    if(hDay){
+      element.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+      element.title = hDay;
+    }
+    const ccDay = config.ccHday[hString];
+    if(ccDay){
+      element.style.position = "relative";
+      element.classList.add = "cc-holiday";
+      if(element.title) element.title += ccDay;
+      else element.title = ccDay;
+    }
+    const nDay = config.nHday[hString];
+    if(nDay){
+      element.style.position = "relative";
+      element.classList.add = "n-holiday";
+      if(element.title) element.title += nDay;
+      else element.title = nDay;
+    }
+  };
+
+  // 休日一覧を取得中ならリトライ、あれば休日設定
+  if(config[year] && config[year].json){
+    setHoliday();
+    return;
+  } else if(config[year]){
+    setTimeout(()=> setJapnHoliday(year, month, day), 1000);
+    return;
+  }
+  config[year] = {};
+
+  // Web から休日一覧を取得
+  const req = `https://holidays-jp.github.io/api/v1/date.json?year=${year}`;
+  window.fetch(req)
+    .then((response)=> response.json())
+    .then((json) => {
+      config[year].json = json;
+      setHoliday();
+  });
+}
+
 function createCalendar(year, month) {
   const startDate = new Date(year, month - 1, 1) // 月の最初の日を取得
   const endDate = new Date(year, month,  0) // 月の最後の日を取得
@@ -140,30 +233,38 @@ function createCalendar(year, month) {
   let dayCount = 1 // 日にちのカウント
   let calendarHtml = '' // HTMLを組み立てる変数
 
-  calendarHtml += '<h1>' + year  + '/' + month + '</h1>'
-  calendarHtml += '<table>'
+  calendarHtml += '<h1>' + year  + '/' + month + '</h1>';
+  calendarHtml += '<table>';
 
   // 曜日の行を作成
   for (let i = 0; i < weeks.length; i++) {
-    calendarHtml += '<td>' + weeks[i] + '</td>'
+    calendarHtml += '<td>' + weeks[i] + '</td>';
   }
 
   for (let w = 0; w < 6; w++) {
-    calendarHtml += '<tr>'
+    if(isNowWeerk(month, dayCount)){
+      calendarHtml += '<tr class="now-week">';
+    } else {
+      calendarHtml += '<tr>';
+    }
     for (let d = 0; d < 7; d++) {
+      const dd = `data-date="${year}/${month}/${dayCount}"`;
+      setJapnHoliday(year, month, dayCount);
       if (w == 0 && d < startDay) {
         // 1行目で1日の曜日の前
-        let num = lastMonthendDayCount - startDay + d + 1
-        calendarHtml += '<td class="is-disabled">' + num + '</td>'
+        let num = lastMonthendDayCount - startDay + d + 1;
+        calendarHtml += `<td class="is-disabled" ${dd}>${num}</td>`;
+        continue;
       } else if (dayCount > endDayCount) {
         // 末尾の日数を超えた
-        let num = dayCount - endDayCount
-        calendarHtml += '<td class="is-disabled">' + num + '</td>'
-        dayCount++
+        let num = dayCount - endDayCount;
+        calendarHtml += `<td class="is-disabled" ${dd}>${num}</td>`;
+      } else if (isNowDay(month, dayCount)){
+        calendarHtml += `<td class="now-day" ${dd}>${dayCount}</td>`;
       } else {
-        calendarHtml += `<td class="calendar_td" data-date="${year}/${month}/${dayCount}">${dayCount}</td>`
-        dayCount++
+        calendarHtml += `<td class="calendar_td" ${dd}>${dayCount}</td>`;
       }
+      dayCount++
     }
     calendarHtml += '</tr>'
   }
@@ -202,5 +303,5 @@ function createCalendar(year, month) {
 drawClockFace();
 setInterval(updateClock, 1000);
 updateClock();
-setInterval(reloadClock, 3500);
+//setInterval(reloadClock, 3500);
 showCalendar(year, month);
