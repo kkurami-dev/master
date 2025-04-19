@@ -5,20 +5,24 @@ let month = date.getMonth() + 1;
 const config = {
   show: 3,
   ccHday:{
-    "2025-04-28": "有休消化日",
-    "2025-04-30": "有休奨励日(アニバーサリー休暇)",
-    "2025-05-01": "有休奨励日(アニバーサリー休暇)",
-    "2025-05-02": "有休奨励日(アニバーサリー休暇)",
-    "2025-08-12": "夏季休日、年末年始休",
-    "2025-08-13": "夏季休日、年末年始休",
-    "2025-08-14": "夏季休日、年末年始休",
-    "2025-08-15": "有休消化日",
-    "2025-09-11": "有休奨励日(アニバーサリー休暇)",
-    "2025-12-22": "有休消化日",
+    "2025-04-28": {title:"有休消化日",                     type:1},
+    "2025-04-30": {title:"有休奨励日(アニバーサリー休暇)", type:2},
+    "2025-05-01": {title:"有休奨励日(アニバーサリー休暇)", type:2},
+    "2025-05-02": {title:"有休奨励日(アニバーサリー休暇)", type:2},
+    "2025-08-12": {title:"夏季休日",                       type:3},
+    "2025-08-13": {title:"夏季休日",                       type:3},
+    "2025-08-14": {title:"夏季休日",                       type:3},
+    "2025-08-15": {title:"有休消化日",                     type:1},
+    "2025-09-22": {title:"有休奨励日(アニバーサリー休暇)", type:2},
+    "2025-12-29": {title:"有休消化日",                     type:1},
+    "2025-12-30": {title:"年末年始休",                     type:3},
+    "2025-12-31": {title:"年末年始休",                     type:3},
+    "2026-01-02": {title:"年末年始休",                     type:3},
   },
   nHday:{
   },
   lastUpdate: null,
+  nowWeekNum: 0,
 }
 
 // 文字盤作成
@@ -142,7 +146,7 @@ function setJapnHoliday(year, month, day) {
       element.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
       element.title = hDay;
     }
-    const ccDay = config.ccHday[hString];
+    const ccDay = config.ccHday[hString].title;
     if(ccDay){
       element.style.position = "relative";
       element.classList.add = "cc-holiday";
@@ -164,8 +168,9 @@ function setJapnHoliday(year, month, day) {
     return;
   } else if(config[year]){
     // ネットワーク不調対策
-    if(config[year].retray[hString]) config[year].retray[hString] += 1;
-    else config[year].retray = {
+    if(config[year].retray && config[year].retray[hString]){
+      config[year].retray[hString] += 1;
+    } else config[year].retray = {
       [hString]: 1,
     }
     if(config[year].retray[hString] > 3) {
@@ -203,12 +208,13 @@ function createCalendar(year, month) {
   let dayCount = 1 // 日にちのカウント
   let calendarHtml = '' // HTMLを組み立てる変数
 
-  calendarHtml += '<h1>' + year  + '/' + month + '</h1>';
+  const gengou = year - 2019;
+  calendarHtml += `<h1>${year}年 ${month}月(令和${gengou}年)</h1>`;
   calendarHtml += '<table>';
 
   // 曜日の行を作成
   for (let i = 0; i < weeks.length; i++) {
-    calendarHtml += '<td>' + weeks[i] + '</td>';
+    calendarHtml += '<td class="week-day">' + weeks[i] + '</td>';
   }
 
   for (let w = 0; w < 6; w++) {
@@ -230,6 +236,7 @@ function createCalendar(year, month) {
         let num = dayCount - endDayCount;
         calendarHtml += `<td class="is-disabled" ${dd}>${num}</td>`;
       } else if (isNowDay(month, dayCount)){
+        config.nowWeekNum = w;
         calendarHtml += `<td class="now-day" ${dd}>${dayCount}</td>`;
       } else {
         calendarHtml += `<td class="calendar_td" ${dd}>${dayCount}</td>`;
@@ -258,11 +265,13 @@ function updateClock() {
   const minutes = now.getMinutes();
   const hours = now.getHours();
 
-  // 日付表示
+  // その他情報表示
   const dateArea = document.querySelector(".dateArea");
   if(!dateArea) return;
-  let dateText = `${year}年${("0" + month).slice(-2)}月${("0" + date).slice(-2)}日（${dayArr[day]}）`;
-  dateArea.textContent = dateText;
+  let countH = hours - 8 + (Math.floor(minutes / 15) * 0.25 );
+  countH -= 0.5;
+  if( hours >= 12 ) countH -= 1;
+  dateArea.textContent = `第${config.nowWeekNum + 1}週目 ${dayArr[day]}曜日 ${countH}h`;
 
   // 午前午後表示
   const branchAmPm = document.querySelector(".branchAmPm");

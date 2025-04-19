@@ -3,7 +3,7 @@ body {
   justify-content: flex-start;
   margin: 0;
   /* 時計全体の大きさ */
-  --clocksize: 80vh;
+  --clocksize: 84vh;
   background: #000;
   color: #fff;
 }
@@ -12,7 +12,7 @@ body {
 .clock {
   transform: translateX(50%);
   position: absolute;
-  top: 5%; /* これは画面上から下方向にずらす距離 */
+  top: 3%; /* これは画面上から下方向にずらす距離 */
   border: 1px solid;
   /*正方形を指定*/
   width: var(--clocksize);
@@ -73,6 +73,7 @@ body {
      */
   transform: rotate(calc(30deg * var(--i))) translate(0, calc(var(--clocksize) * -0.5 * 0.78 - var(--i) * (var(--clocksize)* 0.08) * 0.01) );
   transform-origin: center;
+  margin-bottom: 30px;
 }
 
 /* 文字 */
@@ -91,6 +92,7 @@ body {
   width: var(--clocksize);
   font-size: calc(var(--clocksize)* 0.04);
   text-align: center;
+  left: 10px;
 }
 /* 午前午後表示 */
 .branchAmPm {
@@ -119,15 +121,28 @@ body {
 }
 /* 短針 */
 .hour {
-  height: 2%;  /* 針の太さ */
-  width: 35%;  /* 針の長さ */
+  height: 2.2%;  /* 針の太さ */
+  width: 32%;  /* 針の長さ */
   background: #fff;
+  border-radius: 30%;
 }
+div#hour::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: black; /* くり抜く部分の色 */
+  clip-path: circle(50px at 50% 50%); /* 中央をくり抜く */
+}
+
 /* 長針 */
 .minute {
   height: 1%;  /* 針の太さ */
   width: 40%;  /* 針の長さ */
   background: #fff;
+  border-radius: 30%;
 }
 /* 秒針 */
 .second {
@@ -141,6 +156,7 @@ body {
   display: flex;
   flex-direction: column;
   background: #000;
+  margin-left: 15px;
 }
 
 section {
@@ -154,7 +170,7 @@ h1 {
 table {
   border-spacing: 0;
   border-collapse: collapse;
-  font-size: 25px;
+  font-size: 27px;
 }
 tr: now-week {
   background-color: #ADD8E6; /* 薄い青 */
@@ -164,10 +180,9 @@ tr.now-week {
   background-color: #205429;
 }
 td {
-  border: 1px solid #ddd;
+  border: 0px solid #ddd;
   padding: 1px 5px;
   text-align: center;
-  
 }
 td:first-child {
   color: red;
@@ -176,7 +191,12 @@ td:last-child {
   color: rgb(100, 180, 255);
 }
 td.is-disabled {
-  color: #ccc;
+  color: #5C5C5C;
+}
+td.week-day {
+  font-size: 15px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 td.now-day {
