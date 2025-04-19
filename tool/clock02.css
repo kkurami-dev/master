@@ -3,7 +3,7 @@ body {
   justify-content: flex-start;
   margin: 0;
   /* 時計全体の大きさ */
-  --clocksize: 84vh;
+  --clocksize: 87vh;
   background: #000;
   color: #fff;
 }

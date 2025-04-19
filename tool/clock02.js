@@ -129,7 +129,7 @@ function isNowDay(month, day){
   return false;
 }
 
-function setJapnHoliday(year, month, day) {
+function setJapanHoliday(year, month, day) {
   if(day > 31) return;
   const hString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
@@ -138,7 +138,8 @@ function setJapnHoliday(year, month, day) {
     const qString = `td.calendar_td[data-date="${year}/${month}/${day}"]`;
     const element = document.querySelector(qString);
     if(!element){
-      setTimeout(() => setJapnHoliday(year, month, day), 1000);
+      setTimeout(() => setJapanHoliday(year, month, day), 1000);
+      return;
     }
 
     const hDay = config[year].json[hString];
@@ -146,15 +147,15 @@ function setJapnHoliday(year, month, day) {
       element.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
       element.title = hDay;
     }
-    const ccDay = config.ccHday[hString].title;
-    if(ccDay){
+    if(config.ccHday[hString]){
+      const ccDay = config.ccHday[hString].title;
       element.style.position = "relative";
       element.classList.add = "cc-holiday";
       if(element.title) element.title += ccDay;
       else element.title = ccDay;
     }
-    const nDay = config.nHday[hString];
-    if(nDay){
+    if(config.nHday[hString]){
+      const nDay = config.nHday[hString].title;
       element.style.position = "relative";
       element.classList.add = "n-holiday";
       if(element.title) element.title += nDay;
@@ -178,7 +179,7 @@ function setJapnHoliday(year, month, day) {
       return;
     }
 
-    setTimeout(()=> setJapnHoliday(year, month, day), 1000);
+    setTimeout(()=> setJapanHoliday(year, month, day), 1000);
     return;
   }
   config[year] = {};
@@ -225,7 +226,7 @@ function createCalendar(year, month) {
     }
     for (let d = 0; d < 7; d++) {
       const dd = `data-date="${year}/${month}/${dayCount}"`;
-      setJapnHoliday(year, month, dayCount);
+      setJapanHoliday(year, month, dayCount);
       if (w == 0 && d < startDay) {
         // 1行目で1日の曜日の前
         let num = lastMonthendDayCount - startDay + d + 1;
