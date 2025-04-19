@@ -93,8 +93,21 @@ function updateClock() {
   const minutes_digital = minutes;
   const seconds_digital = seconds;
   digital_clock.textContent = ( '0' + hours_digital ).slice( -2 ) + ":" + ( '0' + minutes ).slice( -2 ) + ":" + ( '0' + seconds ).slice( -2 );
+
 }
+
+function reloadClock(){
+  // JavaScript でページをリフレッシュする方法 – JS でページを再読み込みする方法
+  // https://www.freecodecamp.org/japanese/news/javascript-refresh-page-how-to-reload-a-page-in-js/
+  //location.reload();
+  //location.reload(true);
+  location.replace();
+  //location.href = location.href;
+}
+
+
 
 drawClockFace();
 setInterval(updateClock, 1000);
 updateClock();
+setInterval(reloadClock, 3500);
