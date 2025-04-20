@@ -94,14 +94,6 @@ body {
   text-align: center;
   left: 10px;
 }
-/* 午前午後表示 */
-.branchAmPm {
-  position: absolute;
-  top: 35%; /* これは画面上から下方向にずらす距離 */
-  width: var(--clocksize);
-  font-size: calc(var(--clocksize)* 0.04);
-  text-align: center;
-}
 
 /* 時計の針共通 */
 .hand {
