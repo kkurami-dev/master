@@ -4,8 +4,10 @@ body {
   margin: 0;
   /* 時計全体の大きさ */
   --clocksize: 87vh;
-  background: #000;
-  color: #fff;
+  background: black;
+  color: white;
+
+  overflow-x: hidden;
 }
 
 /* 時計の枠 */
@@ -140,40 +142,45 @@ div#hour::before {
 .second {
   height: 1px;  /* 針の太さ */
   width: 45%;  /* 針の長さ */
-  background: #fff;
+  background: red;
+
+  /* アニメーション(イージング)を指定 */
+  transition-duration: 0.2s;
+  transition-timing-function: linear;
 }
 
-/* カレンダー */
+/* カレンダー全体 */
 #calendar {
-  display: flex;
   flex-direction: column;
-  background: #000;
   margin-left: 15px;
+  width: 260px;
 }
-
-section {
+#calendar section {
   margin: 10px;
   margin-bottom: 0;
 }
-h1 {
+/* 年月 */
+h2[id^="mcy"]{
   margin: 0px;
   font-size: 20px;
 }
-table {
+#calendar section table {
   border-spacing: 0;
-  border-collapse: collapse;
-  font-size: 27px;
+  font-size: 30px;
 }
-tr: now-week {
-  background-color: #ADD8E6; /* 薄い青 */
-  background-color: #fff5e5;/*背景色*/
-}
+/* 今週行 */
 tr.now-week {
   background-color: #205429;
 }
-td {
-  border: 0px solid #ddd;
-  padding: 1px 5px;
+/* 曜日行 */
+td.week-day {
+  text-align: center;
+  font-size: 15px;
+  padding: 0;
+}
+/* 日付 */
+td[id^="mcdd"]{
+  padding: 0px 5px;
   text-align: center;
 }
 td:first-child {
@@ -185,12 +192,7 @@ td:last-child {
 td.is-disabled {
   color: #5C5C5C;
 }
-td.week-day {
-  font-size: 15px;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
+/* 今日 */
 td.now-day {
   position: relative; /* 擬似要素の基準位置 */
   text-decoration: none; /* 既存の下線を削除 */
@@ -215,6 +217,7 @@ td.now-day::after {
     background-position: -100% 0; /* 終了時の色 */
   }
 }
+/* 行事がある日 */
 td.calendar_td::before {
   content: '';
   position: absolute;
@@ -226,4 +229,34 @@ td.calendar_td::before {
   border-bottom: 30px solid blue;
 
   opacity: 0.6;/* 透過指定 */
+}
+
+/* 右から出るメニュー */
+.right-content button {
+  position: absolute;
+  background-color: black;
+  width: 30px;
+  height: 60px;
+  transition: 0.3s;
+}
+.right-content.open button::after {
+  content: '＞';
+}
+.right-content button::after {
+  content: '＜';
+  color: white;
+}
+.right-content {
+  position: absolute;
+  top: 0;
+  right: -130px;
+  width: 160px;
+  height: 100%;
+  transition: 0.5s;
+}
+.right-content.open {
+  right: 0px;
+}
+.right-content div {
+  padding-left: 40px;
 }

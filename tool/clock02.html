@@ -5,19 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>時計</title>
     <style>
-      @import url("./clock02.css");
+      @import "./clock02.css";
     </style>
   </head>
   <body>
     <div class="clock" inert>
-      <div class="clockFace"></div> 
+      <div class="clockFace"></div>
       <div class="dateArea"></div>
       <div class="hand hour" id="hour"></div>
       <div class="hand minute" id="minute"></div>
       <div class="hand second" id="second"></div>
     </div>
     <div id="calendar"></div>
-    <div id="menu"></div>
+
+    <div class="right-content">
+      <button id="demo"></button>
+      <a href=""><div class="">HOME</div></a>
+      <a href=""><div class="">COMPANY</div></a>
+      <a href=""><div class="">NEWS</div></a>
+      <a href=""><div class="">CONTACT</div></a>
+    </div>
+
     <script type="text/javascript" language="JavaScript" src="./clock02.js"></script>
   </body>
 </html>

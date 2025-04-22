@@ -32,9 +32,38 @@ const config = {
   nowWeekNum: 0,
   lastUpdate: {},
   lastSeconds: -1,
+  lastAngle: 0,
   iH: null,
 }
 const weeks = ['日', '月', '火', '水', '木', '金', '土'];
+
+const dbFuncs = {
+  open: (dbName) => {
+    const openReq  = indexedDB.open(dbName);
+
+    // DB名を指定して接続。DBがなければ新規作成される。
+    openReq.onupgradeneeded = function(event){
+      // onupgradeneededは、DBのバージョン更新(DBの新規作成も含む)時のみ実行
+      console.log('db upgrade');
+    }
+    // onupgradeneeded の後に実行。更新がない場合はこれだけ実行
+    openReq.onsuccess = function(event){
+      console.log('db open success');
+      var db = event.target.result;
+      // 接続を解除する
+      db.close();
+    }
+    openReq.onerror = function(event){
+      // 接続に失敗
+      console.log('db open error');
+    }
+  },
+  get: () => {
+  },
+  set: () => {
+  },
+};
+
 
 // 文字盤作成
 function DrawClockFace() {
@@ -91,18 +120,17 @@ function reloadClock(){
 }
 */
 function getNowDay(today) {
-  // 今日の日付を取得できるnew Dateを格納
-  if(!today) today = new Date();
-
   // 年・月・日・曜日を取得
   const year = today.getFullYear();
   const month = today.getMonth() + 1;
   const date = today.getDate();
   const day = today.getDay();
+  const sec = today.getSeconds();
   const msec = today.getTime();
   today = null;
 
-  return [year, month, date, day, msec];
+  /*      0     1      2     3    4     5 */
+  return [year, month, date, day, msec, sec];
 }
 
 function setWeek(month, day, now, obj) {
@@ -166,7 +194,7 @@ function setDay(obj, w, d) {
     cl = "now-day";
   }
 
-  const dd = `data-date="${month}/${dayNo}" id="mcdd-${dayNo}"`;
+  const dd = `id="mcdd-${dayNo}"`;
   if(obj.calendarHtml){
     obj.calendarHtml += `<td class="${cl}" ${dd}>${num}</td>`;
   } else {
@@ -183,44 +211,7 @@ function setDay(obj, w, d) {
 
   obj.dayNo += 1;
   obj.dayCount += ret;
-
   return {year, month, day: num, dayNo};
-}
-
-function ShowCalendar(now) {
-  // 日付が変わってなければ更新しない
-  const nowDay = getNowDay(now);
-  if(config.lastUpdate.d === nowDay[2]){
-    return;
-  }
-
-  let year = nowDay[0];
-  let month = nowDay[1];
-  const day = nowDay[2];
-  const s = nowDay[4];
-  Object.assign(config.lastUpdate, {
-    m: month,
-    d: day,
-    s,
-  });
-
-  const obj = { yearNo: 1, weekNo: 1, dayNo: 1, now };
-  for ( let i = 0; i < config.show; i++) {
-    Object.assign(obj, {year, month});
-    const calendarHtml = createCalendar(year, month, now, obj);
-    if(calendarHtml){
-      const sec = document.createElement('section');
-      sec.innerHTML = calendarHtml;
-      document.querySelector('#calendar').appendChild(sec);
-    }
-
-    month++
-    if (month > 12) {
-      year++
-      month = 1
-    }
-    obj.yearNo += 1;
-  }
 }
 
 function isNowWeerk(month, day, now){
@@ -302,6 +293,7 @@ function setJapanHoliday(inObj) {
   config[year] = {json: null};
 
   // Web から休日一覧を取得
+  // バケットストレージに保存する
   const req = `https://holidays-jp.github.io/api/v1/date.json?year=${year}`;
   try {
     window.fetch(req)
@@ -334,7 +326,7 @@ function createCalendar(year, month, now, obj) {
     hel.textContent = yStr;
     obj.calendarHtml = null;
   } else {
-    obj.calendarHtml += `<h1 id="mcy:${obj.yearNo}">${yStr}</h1>`;
+    obj.calendarHtml += `<h2 id="mcy:${obj.yearNo}">${yStr}</h2>`;
     obj.calendarHtml += '<table>';
 
     // 曜日の行を作成
@@ -354,6 +346,44 @@ function createCalendar(year, month, now, obj) {
 
   if (obj.calendarHtml) obj.calendarHtml += '</table>'
   return obj.calendarHtml
+}
+
+function DB({func, name, key}) {
+  
+}
+
+function ShowCalendar(now) {
+
+  // 日付が変わってなければ更新しない
+  const nowDay = getNowDay(now);
+  if(config.lastUpdate.d === nowDay[2]){
+    return;
+  }
+
+  let year = nowDay[0];
+  let month = nowDay[1];
+  Object.assign(config.lastUpdate, {
+    m: month,
+    d: nowDay[2],
+  });
+
+  const obj = { yearNo: 1, weekNo: 1, dayNo: 1, now };
+  for ( let i = 0; i < config.show; i++) {
+    Object.assign(obj, {year, month});
+    const calendarHtml = createCalendar(year, month, now, obj);
+    if(calendarHtml){
+      const sec = document.createElement('section');
+      sec.innerHTML = calendarHtml;
+      document.querySelector('#calendar').appendChild(sec);
+    }
+
+    month++
+    if (month > 12) {
+      year++
+      month = 1
+    }
+    obj.yearNo += 1;
+  }
 }
 
 // 日時の更新
@@ -387,32 +417,56 @@ function UpdateClockAll(now) {
   hourHand.style.transform = `rotate(${hourDegree}deg)`;
 }
 
-function UpdateClock() {
+/**
+ * 秒針
+ *  ・1秒で6 度動く
+ *  ・200msec 毎に位置を指定
+ *  ・1秒で 1.2 度の角度変化
+ *  ・角度の最小単位は 0.1 度
+ */
+function UpdateClock(obj) {
+  if(obj?.ti) clearTimeout(obj.ti);
   // 日時取得
-  let now = new Date();
+  const now = new Date();
+  const nowDay = getNowDay(now);
+  const secondHand = document.querySelector('#second');
 
   // 計算量を減らして調整済みの秒針の角度
-  const msAngle = ((now.getTime() % 60000) * 0.006) + 90;
-  const secondHand = document.querySelector('#second');
-  secondHand.style.transform = `rotate(${msAngle}deg)`;
+  const totalSeconds = (nowDay[4] / 1000) % 60;
+  const msAngle = totalSeconds * 6 + 90;
 
-  const seconds = now.getSeconds();
-  if(config.lastSeconds === seconds) {
-    now = null;
+  // 逆回転防止のため、角度がへる場合は一旦アニメーションなしで
+  // 0.1度傾かせ、次からアニメションの再開を行う
+  if(msAngle < 91.2){
+    secondHand.style.transitionDuration = "0.0s";
+    secondHand.style.transform = `rotate(${msAngle - 1.1}deg)`;
+    const obj = {};
+    obj.ti = setTimeout(UpdateClock, 0, obj);// アニメションするため、一回まつ
     return;
   }
+  secondHand.style.transitionDuration = "0.2s";
+  secondHand.style.transform = `rotate(${msAngle}deg)`;
 
-  config.lastSeconds = seconds;
   // 全体は1秒に1回更新
-  UpdateClockAll(now);
+  if(config.lastSeconds === nowDay[5]) {
+    return;
+  }
+  config.lastSeconds = nowDay[5];
+  UpdateClockAll( now );
   // カレンダーの更新確認は1秒に1回
   ShowCalendar( now );
+}
 
-  now = null;
+function RightContent(obj) {
+  const right_content = document.querySelector('.right-content');
+  const cll = right_content.classList;
+  cll.toggle('open');
 }
 
 if(config.iH === null){
   DrawClockFace();
-  config.iH = setInterval(UpdateClock, 60);
+  config.iH = setInterval(UpdateClock, 200);
   //setInterval(reloadClock, 3500);
+
+  document.getElementById('demo').addEventListener('click', RightContent);
 }
