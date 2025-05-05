@@ -32,7 +32,7 @@ const config = {
   // 状態
   nowWeekNum: 0,
   lastUpdate: {},
-  lastSeconds: -1,
+  lastSeconds: -2,
   lastAngle: 0,
   iH: null,
 }
@@ -209,7 +209,7 @@ function setWeek(month, day, now, obj) {
 ////////////////////////////////////////
 function setDay(obj, w, d) {
   let {
-    year, month,
+    year, month
   } = obj
   const {
     now, 
@@ -244,13 +244,16 @@ function setDay(obj, w, d) {
     cl = "now-day";
   }
 
-  const dd = `id="mcdd-${dayNo}"`;
+  const ydm = `${year}-${month}-${num}`;
+  const dd = `mcdd-${dayNo}`;
   if(obj.calendarHtml){
-    obj.calendarHtml += `<td class="${cl}" ${dd}>${num}</td>`;
+    obj.calendarHtml += `<td class="${cl}" id=${dd} data-date="${ydm}">${num}</td>`;
   } else {
     const el = document.getElementById(`mcdd-${dayNo}`);
     // el.className = cl;
     //el.class = cl;
+    el.dataset.date = ydm;
+    el.innerHTML = num;
     const cll = el.classList;
     cll.forEach(key => {
       if(key === cl) return;
@@ -266,7 +269,8 @@ function setDay(obj, w, d) {
 
 function isNowWeerk(month, day, now){
   const nowDay = getNowDay(now);
-  if(month === nowDay[1] && day <= nowDay[2] && nowDay[2] <= (day + 6)){
+  const wday = nowDay[2] - day;
+  if(month === nowDay[1] && nowDay[3] === wday){
     return true;
   }
   return false;
@@ -281,15 +285,23 @@ function isNowDay(month, day, now){
 }
 
 function setHoliday(obj) {
-  const {year, month, day, dayNo} = obj;
+  const {dayNo} = obj;
   const element = document.getElementById(`mcdd-${dayNo}`);
   if(!element){
     obj.tHandle = setTimeout(setJapanHoliday, 1000, obj);
     return;
   }
+  const date = element.dataset.date.split("-");// 非同期設定のため、dataプロパティから日付取得
+  const year = date[0];
+  const month = date[1];
+  const day = date[2];
 
-  const hString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const hString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   element.title = "";
+  Object.assign(element.style, {
+    backgroundColor: "",
+    position: "",
+  });
   const hDay = config[year].json[hString];
   if(hDay){
     element.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
@@ -473,7 +485,13 @@ function UpdateClockAll(now) {
 function UpdateClock(obj) {
   if(obj?.ti) clearTimeout(obj.ti);
   // 日時取得
-  const now = new Date();
+  let now = null;
+  if(config.lastSeconds === -2){
+    now = new Date("2025-04-30T17:32:30");
+    config.lastSeconds = -1;
+  } else {
+    now = new Date();
+  }
   const nowDay = getNowDay(now);
   const secondHand = document.querySelector('#second');
 
