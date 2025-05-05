@@ -1,7 +1,13 @@
 /**
  * 時計、カレンダーのスクリプト
+ *
+ * 参考URL
+ *    時計： https://techlife.asahi.com/n/n6e0eb40e78d5
+ *    カレンダー： https://qiita.com/kan_dai/items/b1850750b883f83b9bee
+ *    円グラフ：https://fuuno.net/ani/ani89/circle_graph.html
  */
 const DB_VERSION = 2;
+const SVG_NS = "http://www.w3.org/2000/svg";
 const config = {
   // 稼働時間
   workStart : { hours: 8, minutes: 0.5 },// 作業開始時間 8.5 = 8:30
@@ -38,7 +44,7 @@ const config = {
 }
 const weeks = ['日', '月', '火', '水', '木', '金', '土'];
 
-function mngDB( param = {} ){
+function initDB( param = {} ){
   if(param.db) return;
   
   const {
@@ -70,15 +76,13 @@ function mngDB( param = {} ){
       return;
     }
 
-    // 接続を解除する
     db.close();
   }
   openReq.onerror = function(event){
-    // 接続に失敗
     console.error('db open');
   }
 }
-function mngDBsub( param ){
+function mngDB( param ){
   const typeMap = {
     1:{ f: "readwrite", e: "add" },
     2:{ f: "readwrite", e: "put" },
@@ -86,7 +90,7 @@ function mngDBsub( param ){
   };
   const tF = typeMap[ param.type ];
   if(!param.db){
-    param.func = mngDBsub;
+    param.func = initDB;
     mngDB(param);
     return;
   }
@@ -104,15 +108,15 @@ function mngDBsub( param ){
 // data = { id : 'A1', name : 'test'};
 function addDB( param = {} ){
   param.type = 1;
-  mngDBsub( param );
+  mngDB( param );
 }
 function putDB( param = {} ){
   param.type = 2;
-  mngDBsub( param );
+  mngDB( param );
 }
 function getDB( param = {} ){
   param.type = 3;
-  mngDBsub( param );
+  mngDB( param );
 }
 
 // 文字盤作成
@@ -194,6 +198,7 @@ function setWeek(month, day, now, obj) {
       obj.calendarHtml += `<tr id="${welStr}">`;
     }
   } else {
+    // 描画済み部品の更新
     const el = document.getElementById(welStr);
     const cll = el.classList;
     let cl = "";
@@ -249,9 +254,8 @@ function setDay(obj, w, d) {
   if(obj.calendarHtml){
     obj.calendarHtml += `<td class="${cl}" id=${dd} data-date="${ydm}">${num}</td>`;
   } else {
+    // 描画済み部品の更新
     const el = document.getElementById(`mcdd-${dayNo}`);
-    // el.className = cl;
-    //el.class = cl;
     el.dataset.date = ydm;
     el.innerHTML = num;
     const cll = el.classList;
@@ -411,7 +415,6 @@ function createCalendar(year, month, now, obj) {
 }
 
 function ShowCalendar(now) {
-
   // 日付が変わってなければ更新しない
   const nowDay = getNowDay(now);
   if(config.lastUpdate.d === nowDay[2]){
@@ -466,13 +469,165 @@ function UpdateClockAll(now) {
   if( hours >= 12 ) countH -= 1;
   dateArea.textContent = `第${config.nowWeekNum + 1}週目 ${weeks[day]}曜日 ${countH}h`;
 
-  // 時計の針を回す
+  // 時計の長針、短針の表示更新
   const minuteHand = document.querySelector('#minute');
   const minuteDegree = ((minutes / 60) * 360) + ((seconds/60)*6) + 90;
   minuteHand.style.transform = `rotate(${minuteDegree}deg)`;
   const hourHand = document.querySelector('#hour');
   const hourDegree = ((hours / 12) * 360) + ((minutes/60)*30) + 90;
   hourHand.style.transform = `rotate(${hourDegree}deg)`;
+}
+
+/**
+ * 予定関連
+ */
+function getTimePercent(inHour, minute) {
+  const hour = Number( inHour ) % 12;
+  const totalMinutes = hour * 60 + Number(minute);  // 経過分
+  const percent = (totalMinutes / (12 * 60)) * 100;  // 12時間=720分
+  return Number(percent.toFixed(2));  // 小数2桁に丸める
+}
+function createSector2(param = {}) {
+  const {
+    donuts = 80,
+    area = [
+      {rate: 35, color:"crimson"},
+      {rate: 45, color:"yellowgreen"},
+      {rate: 20, color:"#999"},
+    ],
+  } = param;
+  const graph_areas = document.querySelectorAll(".circle_graph_area");
+
+  // 各グラフエリアに対しての処理。
+  graph_areas.forEach(function(value, area_num) {
+    let masked = document.getElementById(`masked${area_num}`);
+    let svg_area = document.getElementById(`svg${area_num}`);
+    let initArea = true;
+    if(!masked){
+      // 縦横比をスタイリング
+      value.style.aspectRatio = "1/1";
+
+      // svg_area の生成
+      svg_area = document.createElementNS(SVG_NS, "svg");
+      svg_area.setAttribute("id", `svg${area_num}`);
+      svg_area.setAttribute("viewBox", "0 0 100 100");
+      value.appendChild(svg_area);
+
+      // mask されるグループを生成
+      masked = document.createElementNS(SVG_NS, "g");
+      // id を付与。あとでこの id を取得して mask する。
+      masked.setAttribute("id", `masked${area_num}`);
+      svg_area.appendChild(masked);
+    } else {
+      initArea = false;
+    }
+
+    // 扇作成。中心の座標と初期角度0を設定。
+    let prex = 50;
+    let prey = 10;
+    let sumdegree = 0;
+
+    // 扇形を作成
+    area.forEach(({rate, color}, idx)=>{
+      // 入力された%値から角度を算出。
+      let degree = 360 * rate / 100;
+      // 自動配色。
+      let wari = 360 / area.length;
+      let tasi = 360 - wari;
+      let def_hue = (wari + tasi * idx) % 360;
+      // 具体的な色指定がなければ自動配色を適用。
+      if(!color) {
+        color = `hsl(${def_hue},50%,69%)`;
+      }
+      // degreeが180以上か否かで、第４引数の値を分岐。
+      let dai4;
+      if(degree <= 180) {
+        dai4 = 0;
+      } else {
+        dai4 = 1;
+      }
+      // 要素の合計が100%を越えたら、警告。
+      if((degree + sumdegree) > 360) {
+        alert(`${area_num + 1}つ目のグラフ、内容の合計が100%を越えています。`)
+      }
+      // 扇形外周部のxy座標
+      let afx = Math.sin((degree + sumdegree) * Math.PI / 180) * 40 + 50;
+      let afy = 50 - Math.cos((degree + sumdegree) * Math.PI / 180) * 40;
+      afx = Math.trunc(afx * 1000) / 1000;
+      afy = Math.trunc(afy * 1000) / 1000;
+
+      // 塗りとパスデータ
+      if(initArea){
+        const oug = document.createElementNS(SVG_NS, "path");
+        oug.setAttribute("id", `${area_num}path${idx}`);
+        oug.setAttribute("fill", color);
+        oug.setAttribute("d",`M50,50 L${prex},${prey} A40,40 0 ${dai4} 1 ${afx},${afy}Z`);
+        masked.appendChild(oug);
+      } else {
+        const oug1 = document.getElementById(`${area_num}path${idx}`);
+        oug1.setAttribute("d",`M50,50 L${prex},${prey} A40,40 0 ${dai4} 1 ${afx},${afy}Z`);
+      }
+
+      // 角度の累積を更新
+      sumdegree += degree;
+      // 扇形の円周部の座標を更新
+      prex = afx;
+      prey = afy;    
+    });
+    if(!initArea) return;
+
+    // ドーナツ属性があれば, ドーナツ用の mask を作成
+    let graph_mask = document.createElementNS(SVG_NS, "mask");
+    graph_mask.setAttribute("id", `mask${area_num}`)
+    // 内部の白長方形
+    let sirorect = document.createElementNS(SVG_NS, "rect");
+    sirorect.setAttribute("width","100%");
+    sirorect.setAttribute("height","100%");
+    sirorect.setAttribute("fill","#fff");
+    graph_mask.appendChild(sirorect);
+
+    // くり抜く黒丸
+    let kuromaru = document.createElementNS(SVG_NS, "circle");
+    
+    // donuts の指定は100未満にする。
+    if(donuts >= 100) {
+      alert(`${area_num + 1}つ目のグラフ、ドーナツの指定は100未満で行ってください。`)
+    }
+    
+    kuromaru.setAttribute("cx", "50");
+    kuromaru.setAttribute("cy", "50");
+    kuromaru.setAttribute("r", `${donuts * 0.4}`);
+    graph_mask.appendChild(kuromaru);
+
+    svg_area.appendChild(graph_mask);
+
+    // マスクをかける
+    document.getElementById(`masked${area_num}`).style.mask = `url(#mask${area_num})`
+  });
+}
+
+function CheckTimer(now) {
+  const inputEl = document.getElementById("appointmentIn");
+  const tim = inputEl.value.split(":");
+  if(tim[0] === '') return;
+
+  const hour = now.getHours() % 12;
+  const minute = now.getMinutes();
+  const nowP = getTimePercent(hour, minute);
+  const h = tim[0];
+  const m = tim[1];
+  const nowT = getTimePercent(h, m) - nowP;
+
+  const param = {
+    donuts: 80,
+    area: [
+      {rate: nowP, color: "#000"},
+      {rate: nowT, color: "yellowgreen"},
+      {rate: (100 - nowP - nowT), color:"#000"},
+    ],
+  }
+
+  createSector2(param);
 }
 
 /**
@@ -517,6 +672,7 @@ function UpdateClock(obj) {
   }
   config.lastSeconds = nowDay[5];
   UpdateClockAll( now );
+  CheckTimer(now);
   // カレンダーの更新確認は1秒に1回
   ShowCalendar( now );
 }
@@ -528,10 +684,11 @@ function RightContent(obj) {
 }
 
 if(config.iH === null){
-  mngDB();
+  initDB();
   DrawClockFace();
   config.iH = setInterval(UpdateClock, 200);
   //setInterval(reloadClock, 3500);
 
   document.getElementById('demo').addEventListener('click', RightContent);
+  //createSector2();
 }

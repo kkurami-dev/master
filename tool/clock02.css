@@ -6,7 +6,6 @@ body {
   --clocksize: 87vh;
   background: black;
   color: white;
-
   overflow-x: hidden;
 }
 
@@ -130,7 +129,6 @@ div#hour::before {
   background-color: black; /* くり抜く部分の色 */
   clip-path: circle(50px at 50% 50%); /* 中央をくり抜く */
 }
-
 /* 長針 */
 .minute {
   height: 1%;  /* 針の太さ */
@@ -147,6 +145,56 @@ div#hour::before {
   /* アニメーション(イージング)を指定 */
   transition-duration: 0.2s;
   transition-timing-function: linear;
+}
+
+/* タイマー表示用 */
+.appointment_svg {
+  /* width: 300; */
+  /* height: 300; */
+  /* top: 50%; */
+  /* left: 50%; */
+  /* transform: translateX(50%); */
+  /* transform: translateY(200%); */
+  /* transform-origin: center; */
+  /* position: absolute; */
+  /* position: relative; */
+  /* position: center; */
+  /* fill: skyblue; */
+  /* stroke-width: 300px; */
+  /* stroke-height: 300px; */
+  /* stroke-width: 100%; */
+  /* stroke-height: 100%; */
+  /* stroke-dashoffset: 24%; */
+  /* -webkit-animation: appointment1 4s infinite ease both; */
+  /* animation: appointment1 4s infinite ease both; */
+}
+.appointment {
+  /* transform: translateX(50%); */
+  /* position: absolute; */
+  position: center;
+  fill: none;
+  /* fill: skyblue; */
+  stroke-width: 300px;
+  stroke-dashoffset: 100%;
+  /* -webkit-animation: appointment1 4s infinite ease both; */
+  /* animation: appointment1 4s infinite ease both; */
+}
+#appointment1 {
+  /* stroke: #999; */
+  stroke: skyblue;
+  /* stroke-width: 300; */
+  /* stroke-width: 100%; */
+  /* stroke-dashoffset: 24%; */
+  /* -webkit-animation-name: appointment1; */
+  /* animation-name: appointment1; */
+}
+@keyframes appointment1 {
+  0% {
+    stroke-dasharray: 0,220;
+  }
+  100% {
+    stroke-dasharray: 132,88;
+  }
 }
 
 /* カレンダー全体 */
