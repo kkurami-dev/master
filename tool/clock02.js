@@ -1,6 +1,7 @@
 /**
  * 時計、カレンダーのスクリプト
  */
+const DB_VERSION = 2;
 const config = {
   // 稼働時間
   workStart : { hours: 8, minutes: 0.5 },// 作業開始時間 8.5 = 8:30
@@ -37,33 +38,82 @@ const config = {
 }
 const weeks = ['日', '月', '火', '水', '木', '金', '土'];
 
-const dbFuncs = {
-  open: (dbName) => {
-    const openReq  = indexedDB.open(dbName);
+function mngDB( param = {} ){
+  if(param.db) return;
+  
+  const {
+    dbName = 'sampleDB1',
+    dbStore = 'sampleStore1',
+    func,
+  } = param;
 
-    // DB名を指定して接続。DBがなければ新規作成される。
-    openReq.onupgradeneeded = function(event){
-      // onupgradeneededは、DBのバージョン更新(DBの新規作成も含む)時のみ実行
-      console.log('db upgrade');
-    }
-    // onupgradeneeded の後に実行。更新がない場合はこれだけ実行
-    openReq.onsuccess = function(event){
-      console.log('db open success');
-      var db = event.target.result;
-      // 接続を解除する
-      db.close();
-    }
-    openReq.onerror = function(event){
-      // 接続に失敗
-      console.log('db open error');
-    }
-  },
-  get: () => {
-  },
-  set: () => {
-  },
-};
+  // DB名を指定して接続。DBがなければ新規作成される。
+  let openReq  = indexedDB.open(dbName, DB_VERSION );
+  openReq.onupgradeneeded = function reqUpGrade(event){
+    // onupgradeneededは、DBのバージョン更新(DBの新規作成も含む)時のみ実行
+    console.log('db upgrade');
+    const db = event.target.result;
 
+    // オブジェクトストア作成
+    const store = db.createObjectStore(dbStore, {keyPath : 'id', autoIncrement: true});
+    store.createIndex('dataKey', 'dataKey', { unique: true });
+    store.createIndex('title', 'title', { unique: false });
+    store.createIndex('type', 'type', { unique: false });
+  }
+  openReq.onsuccess = function actMng(event){
+    // onupgradeneededの後に実行。更新がない場合はこれだけ実行
+    console.log('db open success');
+    const db = event.target.result;
+    
+    if(func){
+      func( { dbName, dbStore,  ...param, db, } );
+      return;
+    }
+
+    // 接続を解除する
+    db.close();
+  }
+  openReq.onerror = function(event){
+    // 接続に失敗
+    console.error('db open');
+  }
+}
+function mngDBsub( param ){
+  const typeMap = {
+    1:{ f: "readwrite", e: "add" },
+    2:{ f: "readwrite", e: "put" },
+    3:{ f: "readonly", e: "get" },
+  };
+  const tF = typeMap[ param.type ];
+  if(!param.db){
+    param.func = mngDBsub;
+    mngDB(param);
+    return;
+  }
+
+  const {data, db, storeName, successCB, compCB } = param;
+  const trans = db.transaction(storeName, tF.f );
+  const putReq = trans.objectStore(storeName).store[ tF.e ](data);
+  putReq.onsuccess = function(){
+    if(successCB) successCB( param );
+  }
+  trans.oncomplete = function(){
+    if(compCB) compCB( param );
+  }
+}
+// data = { id : 'A1', name : 'test'};
+function addDB( param = {} ){
+  param.type = 1;
+  mngDBsub( param );
+}
+function putDB( param = {} ){
+  param.type = 2;
+  mngDBsub( param );
+}
+function getDB( param = {} ){
+  param.type = 3;
+  mngDBsub( param );
+}
 
 // 文字盤作成
 function DrawClockFace() {
@@ -72,7 +122,7 @@ function DrawClockFace() {
 
   // 目盛り作成
   for(let n = 0; n <= 59; n++) {
-    if ( n % 5 == 0) {
+    if ( n % 5 === 0) {
       // 時刻の目盛り作成
       const mark_hour = document.createElement('div');
       mark_hour.className = 'mark_hour';
@@ -348,10 +398,6 @@ function createCalendar(year, month, now, obj) {
   return obj.calendarHtml
 }
 
-function DB({func, name, key}) {
-  
-}
-
 function ShowCalendar(now) {
 
   // 日付が変わってなければ更新しない
@@ -464,6 +510,7 @@ function RightContent(obj) {
 }
 
 if(config.iH === null){
+  mngDB();
   DrawClockFace();
   config.iH = setInterval(UpdateClock, 200);
   //setInterval(reloadClock, 3500);
