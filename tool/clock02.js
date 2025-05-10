@@ -1,12 +1,36 @@
+"use strict";
 /**
- * 時計、カレンダーのスクリプト
+ * JavaScript, Node.js, React, AWS Lambda を作成する参考のため、
+ * 自己啓蒙・研究・検証を行う 時計・カレンダーの JavaScript。
+ * こてこての Javascript で外部ライブラリは使わずに作成している。
+ *
+ * 概要
+ *   HTML は JQuery で部品配置のためのキー、処理はほとんどこのスクリプトで実施
+ *   装飾はなるべく CSS で行う(クラスやIDのみ設定)。
  *
  * 参考URL
- *    時計： https://techlife.asahi.com/n/n6e0eb40e78d5
- *    カレンダー： https://qiita.com/kan_dai/items/b1850750b883f83b9bee
+ *    時計：https://techlife.asahi.com/n/n6e0eb40e78d5
+ *    カレンダー：https://qiita.com/kan_dai/items/b1850750b883f83b9bee
+ *    日本の休日：https://holidays-jp.github.io/
  *    円グラフ：https://fuuno.net/ani/ani89/circle_graph.html
+ *      タイマーの残り時間表示に使用
+ *    IndexedDB：https://qiita.com/butakoma/items/2c1c956b63fcf956a137
+ *      各種データ保存
+ *    PageSpeed Insights
+ *      ホームページの速度などの評価をしてくれる
+ *
+ * JavaScript の圧縮、難読化
+ *   > npm install -g npm
+ *   > npm install terser -g
+ *   > terser clock02.js -m -c > temp.js
+ *   > javascript-obfuscator temp.js --output .clock02-pack.js --compact true --control-flow-flattening true
+ *
+ *   圧縮  :terser
+ *   難読化:javascript-obfuscator
+ *         https://qiita.com/u83unlimited/items/970f819d1fafa325bfbf
+ *
  */
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const SVG_NS = "http://www.w3.org/2000/svg";
 const config = {
   // 稼働時間
@@ -41,15 +65,48 @@ const config = {
   lastSeconds: -2,
   lastAngle: 0,
   iH: null,
+  timerParam: {},
 }
 const weeks = ['日', '月', '火', '水', '木', '金', '土'];
+const message = document.getElementsByClassName("message")[0];
+
+/*********************************************************************************
+ * ライブラリー関連
+ *********************************************************************************/
+function isSmartPhone() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  let result = false;
+  if (navigator.userAgent.match(/iPhone|Android.+Mobile/)) {
+    message.innerHTML += " phone";
+    result = true;
+
+    try {
+      const orientation = screen.orientation;
+      orientation.lock('landscape');
+    } catch (error) {
+      console.error('画面の向きを固定できませんでした: ', error);
+    }
+  } else {
+    message.innerHTML += " pc";
+  }
+  message.innerHTML += ` ${w}x${h}`;
+
+  const body_element = document.getElementsByTagName('body')[0];
+  if(w < h){
+    body_element.style.setProperty("--clocksize", w * 0.87 + "px");
+  } else {
+    body_element.style.setProperty("--clocksize", h * 0.87 + "px");
+  }
+  return result;
+}
 
 function initDB( param = {} ){
   if(param.db) return;
   
   const {
     dbName = 'sampleDB1',
-    dbStore = 'sampleStore1',
+    dbStore = 'sampleStore2',
     func,
   } = param;
 
@@ -57,18 +114,17 @@ function initDB( param = {} ){
   let openReq  = indexedDB.open(dbName, DB_VERSION );
   openReq.onupgradeneeded = function reqUpGrade(event){
     // onupgradeneededは、DBのバージョン更新(DBの新規作成も含む)時のみ実行
-    console.log('db upgrade');
     const db = event.target.result;
 
     // オブジェクトストア作成
-    const store = db.createObjectStore(dbStore, {keyPath : 'id', autoIncrement: true});
-    store.createIndex('dataKey', 'dataKey', { unique: true });
-    store.createIndex('title', 'title', { unique: false });
-    store.createIndex('type', 'type', { unique: false });
+    const store = db.createObjectStore(dbStore, {keyPath : 'id'});
+    //const store = db.createObjectStore(dbStore, {keyPath : 'id', autoIncrement: true});
+    // store.createIndex('dataKey', 'dataKey', { unique: true });
+    // store.createIndex('title', 'title', { unique: false });
+    // store.createIndex('type', 'type', { unique: false });
   }
   openReq.onsuccess = function actMng(event){
     // onupgradeneededの後に実行。更新がない場合はこれだけ実行
-    console.log('db open success');
     const db = event.target.result;
     
     if(func){
@@ -83,26 +139,34 @@ function initDB( param = {} ){
   }
 }
 function mngDB( param ){
+  let store = null;
   const typeMap = {
-    1:{ f: "readwrite", e: "add" },
-    2:{ f: "readwrite", e: "put" },
-    3:{ f: "readonly", e: "get" },
+    1:{ f: "readwrite", e: (p) => store.add(p) },
+    2:{ f: "readwrite", e: (p) => store.put(p) },
+    3:{ f: "readonly", e: (p) => store.get(p) },
+    4:{ f: "readonly", e: (p) => store.getAll(p) },
+    5:{ f: "readwrite", e: (p) => store.delete(p) },
   };
   const tF = typeMap[ param.type ];
   if(!param.db){
-    param.func = initDB;
-    mngDB(param);
+    param.func = mngDB;
+    initDB(param);
     return;
   }
 
-  const {data, db, storeName, successCB, compCB } = param;
-  const trans = db.transaction(storeName, tF.f );
-  const putReq = trans.objectStore(storeName).store[ tF.e ](data);
-  putReq.onsuccess = function(){
+  const {data, db, dbStore, successCB, compCB } = param;
+  const trans = db.transaction(dbStore, tF.f );
+  store = trans.objectStore(dbStore);
+  const mngReq = tF.e(data);
+  mngReq.onsuccess = function(event){
+    param.event = event;
+    param.result = event?.target?.result;
     if(successCB) successCB( param );
   }
-  trans.oncomplete = function(){
+  trans.oncomplete = function(cmp){
+    param.cmp = cmp;
     if(compCB) compCB( param );
+    else db.close();
   }
 }
 // data = { id : 'A1', name : 'test'};
@@ -118,51 +182,54 @@ function getDB( param = {} ){
   param.type = 3;
   mngDB( param );
 }
+function getAllDB( param = {} ){
+  param.type = 4;
+  mngDB( param );
+}
+function delDB( param = {} ){
+  param.type = 5;
+  mngDB( param );
+}
 
-// 文字盤作成
-function DrawClockFace() {
-  const clockFace = document.querySelector(".clockFace");
-  if(!clockFace) return;
-
-  // 目盛り作成
-  for(let n = 0; n <= 59; n++) {
-    if ( n % 5 === 0) {
-      // 時刻の目盛り作成
-      const mark_hour = document.createElement('div');
-      mark_hour.className = 'mark_hour';
-      mark_hour.textContent = '';
-      mark_hour.style.cssText = '--j:' + n + ';'; //cssの変数定義
-      // 親要素の末尾に追加する
-      clockFace.appendChild(mark_hour);
-    } else {
-      // 分の目盛り作成
-      const mark_minute = document.createElement('div');
-      mark_minute.className = 'mark_minute';
-      mark_minute.textContent = '';
-      mark_minute.style.cssText = '--j:' + n + ';'; //cssの変数定義
-      // 親要素の末尾に追加する
-      clockFace.appendChild(mark_minute);
-    }
+function SetEv(inObj) {
+  const { id, key, func, tHandle } = inObj;
+  if(tHandle){
+    clearTimeout( tHandle );
+    inObj.tHandle = undefined;
   }
-
-  // 数字作成
-  for(let m = 1; m <= 12; m++) {
-    // 数字設置領域作成
-    const number_area = document.createElement('div');
-    number_area.className = 'number_area';
-    number_area.style.cssText = '--i:' + m + ';'; //cssの変数定義
-    // 親要素の末尾に追加する
-    clockFace.appendChild(number_area);
-
-    // 数字設置
-    const number = document.createElement('div');
-    number.className = 'number';
-    number.textContent = m;
-    number.style.cssText = '--i:' + m + ';'; //cssの変数定義
-    // 数字設置領域に数字を置
-    number_area.appendChild(number);
+  
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener(key, func);
+  } else {
+    inObj.tHandle = setTimeout(SetEv, 20, inObj);
   }
 }
+
+function MakeTable(obj) {
+  const {body, data, cb} = obj;
+  // テーブルを作成
+  const table = document.createElement('table');
+  table.border = '1'; // 枠線をつける（オプション）
+
+  // 行とセルを作成
+  for (let i = 0; i < data.length; i++) {
+    const row = document.createElement('tr');
+
+    for (let j = 0; j < data[i].length; j++) {
+      const cell = document.createElement('td');
+      // cell.textContent = data[i][j]; // セルの中身を設定
+      if(cb) cb(i, j, cell, data[i][j]);
+      row.appendChild(cell); // 行にセルを追加
+    }
+
+    table.appendChild(row); // テーブルに行を追加
+  }
+
+  // テーブルを body に追加
+  body.appendChild(table);  
+}
+
 /*
 function reloadClock(){
   // JavaScript でページをリフレッシュする方法 – JS でページを再読み込みする方法
@@ -173,7 +240,7 @@ function reloadClock(){
   // location.href = location.href;
 }
 */
-function getNowDay(today) {
+function getNowDay(today = new Date(), outP = {}) {
   // 年・月・日・曜日を取得
   const year = today.getFullYear();
   const month = today.getMonth() + 1;
@@ -181,12 +248,33 @@ function getNowDay(today) {
   const day = today.getDay();
   const sec = today.getSeconds();
   const msec = today.getTime();
-  today = null;
+  const hour = today.getHours();
 
-  /*      0     1      2     3    4     5 */
-  return [year, month, date, day, msec, sec];
+  Object.assign(outP, {year, month, date, day, msec, sec, hour});
+  /*      0     1      2     3    4     5    6 */
+  return [year, month, date, day, msec, sec, hour];
 }
 
+function isNowWeerk(month, day, now){
+  const nowDay = getNowDay(now);
+  const wday = nowDay[2] - day;
+  if(month === nowDay[1] && nowDay[3] === wday){
+    return true;
+  }
+  return false;
+}
+
+function isNowDay(month, day, now){
+  const nowDay = getNowDay(now);
+  if(month === nowDay[1] && day === nowDay[2]){
+    return true;
+  }
+  return false;
+}
+
+/*********************************************************************************
+ * カレンダー関連
+ *********************************************************************************/
 function setWeek(month, day, now, obj) {
   const welStr = `mcw-${obj.weekNo}`;
   obj.weekNo += 1;
@@ -211,7 +299,6 @@ function setWeek(month, day, now, obj) {
   }
 }
 
-////////////////////////////////////////
 function setDay(obj, w, d) {
   let {
     year, month
@@ -271,23 +358,6 @@ function setDay(obj, w, d) {
   return {year, month, day: num, dayNo};
 }
 
-function isNowWeerk(month, day, now){
-  const nowDay = getNowDay(now);
-  const wday = nowDay[2] - day;
-  if(month === nowDay[1] && nowDay[3] === wday){
-    return true;
-  }
-  return false;
-}
-
-function isNowDay(month, day, now){
-  const nowDay = getNowDay(now);
-  if(month === nowDay[1] && day === nowDay[2]){
-    return true;
-  }
-  return false;
-}
-
 function setHoliday(obj) {
   const {dayNo} = obj;
   const element = document.getElementById(`mcdd-${dayNo}`);
@@ -295,36 +365,54 @@ function setHoliday(obj) {
     obj.tHandle = setTimeout(setJapanHoliday, 1000, obj);
     return;
   }
-  const date = element.dataset.date.split("-");// 非同期設定のため、dataプロパティから日付取得
-  const year = date[0];
-  const month = date[1];
-  const day = date[2];
 
-  const hString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  // 初期化
   element.title = "";
   Object.assign(element.style, {
     backgroundColor: "",
     position: "",
   });
+  const hdayTmp = element.getElementsByClassName("hday");
+  while(hdayTmp.length){
+    hdayTmp.item(0).remove();
+  }
+  
+  const date = element.dataset.date.split("-");// 非同期設定のため、dataプロパティから日付取得
+  const year = date[0];
+  const month = date[1];
+  const day = date[2];
+  const hString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   const hDay = config[year].json[hString];
+  const hDays = [];
+  // 日本の休日設定
   if(hDay){
     element.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
     element.title = hDay;
   }
+  // 固定イベント日設定
   if(config.ccHday[hString]){
-    const ccDay = config.ccHday[hString].title;
-    element.style.position = "relative";
-    // element.classList.add = "cc-holiday";
+    const item = config.ccHday[hString];
+    hDays.push('ccHday', "ccHType"+ item.type );
+    const ccDay = item.title;
     if(element.title.length) element.title += ("/" + ccDay);
     else element.title = ccDay;
   }
+  // 追加イベント日設定
   if(config.nesHday[hString]){
-    const nDay = config.nesHday[hString].title;
-    element.style.position = "relative";
-    // element.classList.add = "n-holiday";
+    const item = config.nesHday[hString];
+    hDays.push('nesHday', "nesHType"+ item.type );
+    const nDay = item.title;
     if(element.title.length) element.title += ("/" + nDay);
     else element.title = nDay;
   }
+  hDays.forEach(cl => {
+    const hdayDiv = document.createElement('div');
+    if(!hdayDiv.classList.contains('hday')){
+      hdayDiv.classList.add('hday');
+    }
+    hdayDiv.classList.add(cl);
+    element.appendChild(hdayDiv);
+  });
 }
 
 function setJapanHoliday(inObj) {
@@ -386,7 +474,7 @@ function createCalendar(year, month, now, obj) {
     dayCount: 1,
     calendarHtml: '',// HTMLを組み立てる変数
   });
-  const yStr = `${year}年 ${month}月(令和${year - 2019}年)`;
+  const yStr = `${year}年 ${month}月(令和${year - 2018}年)`;
   const hel = document.getElementById(`mcy:${obj.yearNo}`);
   if(hel){
     hel.textContent = yStr;
@@ -447,7 +535,278 @@ function ShowCalendar(now) {
   }
 }
 
-// 日時の更新
+/*********************************************************************************
+ * 予定関連
+ *********************************************************************************/
+function getTimePercent(inHour, minute) {
+  const hour = Number( inHour ) % 12;
+  const totalMinutes = hour * 60 + Number(minute);  // 経過分
+  const percent = (totalMinutes / (12 * 60));  // 12時間=720分
+  return Number(percent.toFixed(5));  // 小数4桁に丸める
+}
+function createSector2(param = {}) {
+  const {
+    area_num = 1,
+    donuts = 85,
+    oAfx = 50,
+    oAfh = 95 - donuts,
+    oAfy = oAfx - oAfh,
+    area = [
+      {rate: 0.35, color:"crimson"},
+      {rate: 0.45, color:"yellowgreen"},
+      {rate: 0.20, color:"#999"},
+    ],
+  } = param;
+  const value = document.getElementById("circle_graph_area");
+
+  // グラフエリアに対しての処理。
+  let masked = document.getElementById(`masked${area_num}`);
+  let svg_area = document.getElementById(`svg1`);
+  if(!svg_area){
+    // 縦横比をスタイリング
+    value.style.aspectRatio = "1/1";
+
+    // svg_area の生成
+    svg_area = document.createElementNS(SVG_NS, "svg");
+    svg_area.setAttribute("id", `svg1`);
+    svg_area.setAttribute("viewBox", "0 0 100 100");
+    value.appendChild(svg_area);
+  }
+  let initArea = true;
+  if(!masked){
+    // mask されるグループを生成
+    masked = document.createElementNS(SVG_NS, "g");
+    // id を付与。あとでこの id を取得して mask する。
+    masked.setAttribute("id", `masked${area_num}`);
+    svg_area.appendChild(masked);
+  } else {
+    initArea = false;
+  }
+
+  // 扇作成。中心の座標と初期角度0を設定。
+  let prex = oAfx;
+  let prey = oAfh;
+  let sumdegree = 0;
+
+  // 扇形を作成
+  area.forEach(({rate, color}, idx)=>{
+    // 入力された%値から角度を算出。
+    let degree = 360 * rate;
+    // 自動配色。
+    let wari = 360 / area.length;
+    let tasi = 360 - wari;
+    let def_hue = (wari + tasi * idx) % 360;
+    // 具体的な色指定がなければ自動配色を適用。
+    if(!color) {
+      let L = 50; // 100:白, 0:黒
+      const times = {};
+      getNowDay(undefined, times);
+      if((times.hour < 12 && area_num == 1) || (times.hour > 12 && area_num == 2)){
+        L = 25;
+      }
+      color = `hsl(${def_hue},50%,${L}%)`;
+    }
+    // degreeが180以上か否かで、第４引数の値を分岐。
+    let dai4;
+    if(degree <= 180) {
+      dai4 = 0;
+    } else {
+      dai4 = 1;
+    }
+    // 要素の合計が100%を越えたら、警告。
+    // if((degree + sumdegree) > 360) {
+    //   alert(`${area_num + 1}つ目のグラフ、内容の合計が100%を越えています。`)
+    // }
+    // 扇形外周部のxy座標
+    let afx = Math.sin((degree + sumdegree) * Math.PI / 180) * oAfy + oAfx;
+    let afy = oAfx - Math.cos((degree + sumdegree) * Math.PI / 180) * oAfy;
+    afx = Math.trunc(afx * 1000) / 1000;
+    afy = Math.trunc(afy * 1000) / 1000;
+
+    // 塗りとパスデータ
+    const oug1 = document.getElementById(`${area_num}path${idx}`);
+    if(oug1){
+      oug1.setAttribute("d",`M${oAfx},${oAfx} L${prex},${prey} A${oAfy},${oAfy} 0 ${dai4} 1 ${afx},${afy}Z`);
+    } else {
+      const oug = document.createElementNS(SVG_NS, "path");
+      oug.setAttribute("id", `${area_num}path${idx}`);
+      oug.setAttribute("fill", color);
+      oug.setAttribute("d",`M${oAfx},${oAfx} L${prex},${prey} A${oAfy},${oAfy} 0 ${dai4} 1 ${afx},${afy}Z`);
+      masked.appendChild(oug);
+    }
+
+    // 角度の累積を更新
+    sumdegree += degree;
+    // 扇形の円周部の座標を更新
+    prex = afx;
+    prey = afy;    
+  });
+  if(!initArea) return;
+
+  // ドーナツ用の mask を作成
+  let graph_mask = document.createElementNS(SVG_NS, "mask");
+  graph_mask.setAttribute("id", `mask${area_num}`)
+  // 内部の白長方形
+  let sirorect = document.createElementNS(SVG_NS, "rect");
+  sirorect.setAttribute("width","100%");
+  sirorect.setAttribute("height","100%");
+  sirorect.setAttribute("fill","#fff");
+  graph_mask.appendChild(sirorect);
+
+  // くり抜く黒丸
+  let kuromaru = document.createElementNS(SVG_NS, "circle");
+  
+  // donuts の指定は100未満にする。
+  if(donuts >= 100) {
+    alert(`${area_num + 1}つ目のグラフ、ドーナツの指定は100未満で行ってください。`)
+  }
+  
+  kuromaru.setAttribute("cx", "50");
+  kuromaru.setAttribute("cy", "50");
+  kuromaru.setAttribute("r", `${donuts * 0.4}`);
+  graph_mask.appendChild(kuromaru);
+
+  svg_area.appendChild(graph_mask);
+
+  // マスクをかける
+  document.getElementById(`masked${area_num}`).style.mask = `url(#mask${area_num})`
+}
+
+function makeTime(value){
+  const tim = value.split(":");
+  const h = tim[0];
+  const m = tim[1];
+  return getTimePercent(h, m);
+}
+
+let puts = false;
+function CheckTimer(obj = {}) {
+  if(obj.tHandle) {
+    clearTimeout(obj.tHandle);
+  }
+
+  if(!obj.redraw){
+    const targetEl = obj.target || this;
+    if(!targetEl) return;
+
+    // const inputEl = document.getElementById("appointmentIn");
+    const val = targetEl.getAttribute("id");
+    const row = targetEl.dataset.row;
+    const timeObj = {s: null, e: null};
+    const dbKey = `appoi${row}`;
+    if(val === `appoiS${row}`){
+      timeObj.s = targetEl.value;
+      timeObj.e = document.getElementById(`appoiE${row}`).value;
+    } else {
+      timeObj.s = document.getElementById(`appoiS${row}`).value;
+      timeObj.e = targetEl.value;
+    }
+    if( timeObj.s === '' || timeObj.e === ''){
+      return;
+    }
+    putDB({
+      data:{ id: dbKey , dataKey: dbKey, ...timeObj },
+    });
+
+    config.timerParam[dbKey] = {
+      pm: timeObj.s > "12:00",
+      nowP: makeTime(timeObj.s),
+      nowT: makeTime(timeObj.e)
+    };
+  }
+
+  const mekeOOG = (oogP) => {
+    let donuts = 79;
+    if(oogP === 2) donuts = 84;
+    const param = {
+      area_num: oogP,
+      donuts, // 内枠
+      area: [
+        // {rate: nowP, color: "#000"},// 開始まで黒
+        // {rate: nowT, color: null}, // 終了まで色
+        // {rate: (1 - nowP - nowT), color:"#000"},
+      ],
+    }
+    const arr = [];
+    Object.keys(config.timerParam).forEach((el) => {
+      if((oogP === 1) && config.timerParam[el].pm) return;
+      if((oogP === 2) && !config.timerParam[el].pm) return;
+      arr.push(config.timerParam[el].nowP,
+               config.timerParam[el].nowT)
+    });
+    let sT = 0;
+    let eT = 0;
+    arr.sort().forEach((rate, idx) => {
+      if ((idx % 2) === 0){
+        param.area.push({rate: rate - eT, color: "black"});
+        sT = rate;
+      } else {
+        if(rate - sT > 0){
+          param.area.push({rate: rate - sT, color: null});
+        } else {
+          param.area[ param.area.length - 1 ].color = null;
+        }
+        eT = rate;
+      }
+    });
+    param.area.push({rate: 1 - eT, color: "black"});
+
+    createSector2(param);
+  }
+  mekeOOG(1);
+  mekeOOG(2);
+  if(obj.cb) obj.cb(obj);
+}
+
+/*********************************************************************************
+ * 時計関連
+ *********************************************************************************/
+// 文字盤作成
+function DrawClockFace() {
+  const clockFace = document.querySelector(".clockFace");
+  if(!clockFace) return;
+
+  // 目盛り作成
+  for(let n = 0; n <= 59; n++) {
+    if ( n % 5 === 0) {
+      // 時刻の目盛り作成
+      const mark_hour = document.createElement('div');
+      mark_hour.className = 'mark_hour';
+      mark_hour.textContent = '';
+      mark_hour.style.cssText = '--j:' + n + ';'; //cssの変数定義
+      // 親要素の末尾に追加する
+      clockFace.appendChild(mark_hour);
+    } else {
+      // 分の目盛り作成
+      const mark_minute = document.createElement('div');
+      mark_minute.className = 'mark_minute';
+      mark_minute.textContent = '';
+      mark_minute.style.cssText = '--j:' + n + ';'; //cssの変数定義
+      // 親要素の末尾に追加する
+      clockFace.appendChild(mark_minute);
+    }
+  }
+
+  // 数字作成
+  for(let m = 1; m <= 12; m++) {
+    // 数字設置領域作成
+    const number_area = document.createElement('div');
+    number_area.className = 'number_area';
+    number_area.style.cssText = '--i:' + m + ';'; //cssの変数定義
+    // 親要素の末尾に追加する
+    clockFace.appendChild(number_area);
+
+    // 数字設置
+    const number = document.createElement('div');
+    number.className = 'number';
+    number.textContent = m;
+    number.style.cssText = '--i:' + m + ';'; //cssの変数定義
+    // 数字設置領域に数字を置
+    number_area.appendChild(number);
+  }
+}
+
+// 長針・短針・その他情報表示
 function UpdateClockAll(now) {
   const seconds = now.getSeconds();
   const minutes = now.getMinutes();
@@ -476,158 +835,6 @@ function UpdateClockAll(now) {
   const hourHand = document.querySelector('#hour');
   const hourDegree = ((hours / 12) * 360) + ((minutes/60)*30) + 90;
   hourHand.style.transform = `rotate(${hourDegree}deg)`;
-}
-
-/**
- * 予定関連
- */
-function getTimePercent(inHour, minute) {
-  const hour = Number( inHour ) % 12;
-  const totalMinutes = hour * 60 + Number(minute);  // 経過分
-  const percent = (totalMinutes / (12 * 60)) * 100;  // 12時間=720分
-  return Number(percent.toFixed(2));  // 小数2桁に丸める
-}
-function createSector2(param = {}) {
-  const {
-    donuts = 80,
-    area = [
-      {rate: 35, color:"crimson"},
-      {rate: 45, color:"yellowgreen"},
-      {rate: 20, color:"#999"},
-    ],
-  } = param;
-  const graph_areas = document.querySelectorAll(".circle_graph_area");
-
-  // 各グラフエリアに対しての処理。
-  graph_areas.forEach(function(value, area_num) {
-    let masked = document.getElementById(`masked${area_num}`);
-    let svg_area = document.getElementById(`svg${area_num}`);
-    let initArea = true;
-    if(!masked){
-      // 縦横比をスタイリング
-      value.style.aspectRatio = "1/1";
-
-      // svg_area の生成
-      svg_area = document.createElementNS(SVG_NS, "svg");
-      svg_area.setAttribute("id", `svg${area_num}`);
-      svg_area.setAttribute("viewBox", "0 0 100 100");
-      value.appendChild(svg_area);
-
-      // mask されるグループを生成
-      masked = document.createElementNS(SVG_NS, "g");
-      // id を付与。あとでこの id を取得して mask する。
-      masked.setAttribute("id", `masked${area_num}`);
-      svg_area.appendChild(masked);
-    } else {
-      initArea = false;
-    }
-
-    // 扇作成。中心の座標と初期角度0を設定。
-    let prex = 50;
-    let prey = 10;
-    let sumdegree = 0;
-
-    // 扇形を作成
-    area.forEach(({rate, color}, idx)=>{
-      // 入力された%値から角度を算出。
-      let degree = 360 * rate / 100;
-      // 自動配色。
-      let wari = 360 / area.length;
-      let tasi = 360 - wari;
-      let def_hue = (wari + tasi * idx) % 360;
-      // 具体的な色指定がなければ自動配色を適用。
-      if(!color) {
-        color = `hsl(${def_hue},50%,69%)`;
-      }
-      // degreeが180以上か否かで、第４引数の値を分岐。
-      let dai4;
-      if(degree <= 180) {
-        dai4 = 0;
-      } else {
-        dai4 = 1;
-      }
-      // 要素の合計が100%を越えたら、警告。
-      if((degree + sumdegree) > 360) {
-        alert(`${area_num + 1}つ目のグラフ、内容の合計が100%を越えています。`)
-      }
-      // 扇形外周部のxy座標
-      let afx = Math.sin((degree + sumdegree) * Math.PI / 180) * 40 + 50;
-      let afy = 50 - Math.cos((degree + sumdegree) * Math.PI / 180) * 40;
-      afx = Math.trunc(afx * 1000) / 1000;
-      afy = Math.trunc(afy * 1000) / 1000;
-
-      // 塗りとパスデータ
-      if(initArea){
-        const oug = document.createElementNS(SVG_NS, "path");
-        oug.setAttribute("id", `${area_num}path${idx}`);
-        oug.setAttribute("fill", color);
-        oug.setAttribute("d",`M50,50 L${prex},${prey} A40,40 0 ${dai4} 1 ${afx},${afy}Z`);
-        masked.appendChild(oug);
-      } else {
-        const oug1 = document.getElementById(`${area_num}path${idx}`);
-        oug1.setAttribute("d",`M50,50 L${prex},${prey} A40,40 0 ${dai4} 1 ${afx},${afy}Z`);
-      }
-
-      // 角度の累積を更新
-      sumdegree += degree;
-      // 扇形の円周部の座標を更新
-      prex = afx;
-      prey = afy;    
-    });
-    if(!initArea) return;
-
-    // ドーナツ属性があれば, ドーナツ用の mask を作成
-    let graph_mask = document.createElementNS(SVG_NS, "mask");
-    graph_mask.setAttribute("id", `mask${area_num}`)
-    // 内部の白長方形
-    let sirorect = document.createElementNS(SVG_NS, "rect");
-    sirorect.setAttribute("width","100%");
-    sirorect.setAttribute("height","100%");
-    sirorect.setAttribute("fill","#fff");
-    graph_mask.appendChild(sirorect);
-
-    // くり抜く黒丸
-    let kuromaru = document.createElementNS(SVG_NS, "circle");
-    
-    // donuts の指定は100未満にする。
-    if(donuts >= 100) {
-      alert(`${area_num + 1}つ目のグラフ、ドーナツの指定は100未満で行ってください。`)
-    }
-    
-    kuromaru.setAttribute("cx", "50");
-    kuromaru.setAttribute("cy", "50");
-    kuromaru.setAttribute("r", `${donuts * 0.4}`);
-    graph_mask.appendChild(kuromaru);
-
-    svg_area.appendChild(graph_mask);
-
-    // マスクをかける
-    document.getElementById(`masked${area_num}`).style.mask = `url(#mask${area_num})`
-  });
-}
-
-function CheckTimer(now) {
-  const inputEl = document.getElementById("appointmentIn");
-  const tim = inputEl.value.split(":");
-  if(tim[0] === '') return;
-
-  const hour = now.getHours() % 12;
-  const minute = now.getMinutes();
-  const nowP = getTimePercent(hour, minute);
-  const h = tim[0];
-  const m = tim[1];
-  const nowT = getTimePercent(h, m) - nowP;
-
-  const param = {
-    donuts: 80,
-    area: [
-      {rate: nowP, color: "#000"},
-      {rate: nowT, color: "yellowgreen"},
-      {rate: (100 - nowP - nowT), color:"#000"},
-    ],
-  }
-
-  createSector2(param);
 }
 
 /**
@@ -666,21 +873,133 @@ function UpdateClock(obj) {
   secondHand.style.transitionDuration = "0.2s";
   secondHand.style.transform = `rotate(${msAngle}deg)`;
 
-  // 全体は1秒に1回更新
-  if(config.lastSeconds === nowDay[5]) {
+  // 1秒に1回更新
+  if(config.lastSeconds !== nowDay[5]) {
+    UpdateClockAll( now );
+  }
+
+  // 1分に更新
+  if(0 === nowDay[5]) {
+    ShowCalendar( now );
+    //createSector2();
+  }
+
+  config.lastSeconds = nowDay[5];
+}
+
+/*********************************************************************************
+ * メニュー関連
+ *********************************************************************************/
+function InputAppoi(row, col, elm, val){
+  if(val === "＋" & col === 2){
+    const elId = `appoiAdd${row}`;
+    elm.innerHTML = `<button id="${elId}" data-row="${row}" >＋</button>`;
+    SetEv({id: elId, key:"click", func:AddAppoi });
     return;
   }
-  config.lastSeconds = nowDay[5];
-  UpdateClockAll( now );
-  CheckTimer(now);
-  // カレンダーの更新確認は1秒に1回
-  ShowCalendar( now );
+  if(col === 2){
+    const elId = `appoiDel${row}`;
+    elm.innerHTML = `<button id="${elId}" data-row="${row}" >✖</button>`;
+    SetEv({id:elId, key:"click", func:DelAppoi });
+    return;
+  }
+
+  let elId = null;
+  let label = null;
+  if(col === 0){
+    elId = `appoiS${row}`;
+    label = 'aria-labelledby="開始時間"';
+  } else {
+    elId = `appoiE${row}`;
+    label = 'aria-labelledby="終了時間"';
+  }
+  let input = `data-row="${row}" type="time" min="08:30" max="22:00" required`;
+  input += ` value="${val}"`;
+  elm.innerHTML += `<input id="${elId}" ${label} ${input}></input>`;
+  SetEv({id: elId, key:"input", func:CheckTimer });
+}
+
+function AddAppoi(inObj) {
+  if(inObj.tHandle){
+    clearTimeout(inObj.tHandle);
+
+    const {row2} = inObj;
+    InputAppoi( row2, 0, inObj.tr.childNodes[0], "");
+    InputAppoi( row2, 1, inObj.tr.childNodes[1], "");
+    InputAppoi( row2, 2, inObj.tr.childNodes[2], "＋");
+    return;
+  }
+
+  const row = this.dataset.row;
+  this.removeEventListener('click', AddAppoi);
+
+  // button -> td -> tr
+  const tr = this.parentElement.parentElement;
+  InputAppoi( row, 2, tr.childNodes[2], "");
+
+  inObj.tr = document.createElement('tr');
+  inObj.tr.innerHTML += `<td></td><td></td><td></td>`;
+  tr.parentElement.appendChild(inObj.tr);  
+  inObj.row2 = row + 1;
+  inObj.tHandle = setTimeout(AddAppoi, 20, inObj);
+}
+
+function DelAppoi(inObj) {
+  const elId = this.getAttribute("id");
+  const elrow = this.dataset.row;
+
+  this.removeEventListener('click', DelAppoi);
+  delDB({ data: `appoi${elrow}` });
+  delete config.timerParam[elId];
+
+  // input -> td -> tr
+  const tr = this.parentElement.parentElement;
+  tr.remove();
+  CheckTimer({ redraw: true });
 }
 
 function RightContent(obj) {
   const right_content = document.querySelector('.right-content');
   const cll = right_content.classList;
   cll.toggle('open');
+
+  // 日のタイマー設定領域の作成
+  const appoi = document.getElementById("appoiDiv");
+  const small = document.createElement('small');
+  small.innerHTML = "タイマ";
+  appoi.appendChild(small);  
+  const successCB = (p) => {
+    const data = [];
+    p.result.sort((a, b)=> a.s - b.s).forEach(({id, s, e}, idx) => {
+      if(!s || !e) return;
+      if(!config.timerParam[id]){
+        config.timerParam[id] = {
+          pm: s > "12:00",
+          nowP: makeTime(s),
+          nowT: makeTime(e),
+        };
+      } else {
+        config.timerParam[id].pm = s > "12:00";
+        config.timerParam[id].nowP = makeTime(s);
+        config.timerParam[id].nowT = makeTime(e);
+      }
+      data.push([ s, e, idx]);
+    });
+    data.push([ "", "", "＋"]);
+    MakeTable({ body:appoi, data, cb:InputAppoi});
+    CheckTimer({redraw: true});
+  };
+  if (cll.contains('open')) {
+    getAllDB({data: null, successCB});
+  } else {
+    const elements = appoi.querySelectorAll('[id^="appoi"]');
+    elements.forEach(el => {
+      el.removeEventListener('input', CheckTimer);
+      el.removeEventListener('click', AddAppoi);
+      el.removeEventListener('click', DelAppoi);
+    });
+    appoi.innerHTML = '';
+  }
 }
 
 if(config.iH === null){
@@ -690,5 +1009,12 @@ if(config.iH === null){
   //setInterval(reloadClock, 3500);
 
   document.getElementById('demo').addEventListener('click', RightContent);
+  RightContent();
+  //document.getElementById('appointmentIn').addEventListener('input', CheckTimer);
   //createSector2();
+  // CheckTimer();
+  ShowCalendar();
+
+  window.addEventListener("orientationchange resize", isSmartPhone);
+  isSmartPhone();
 }

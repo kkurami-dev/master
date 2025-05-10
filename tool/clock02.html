@@ -1,39 +1,46 @@
-<!DOCTYPE html>
-<html lang="ja">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja" />
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>時計</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta name="description" content="複数ディスプレイがあるうちの確認用の画面で常時表示しておき、現在の時間、日にち、曜日、予定までの残り時間、今日の予定の時間をアナログ時計、直近3か月のカレンダーをWebブラウザで確認を行う。" />
+    <meta name="keywords" content="Webアナログ時計 カレンダー 日本の休日 スケジュール確認 タイマー WEB暦" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>暦＋アナログ時計</title>
     <style>
       @import "./clock02.css";
     </style>
   </head>
   <body>
+    <div id="calendar"></div>
     <div class="clock" inert>
       <div class="clockFace"></div>
       <div class="dateArea"></div>
       <div class="hand hour" id="hour"></div>
       <div class="hand minute" id="minute"></div>
       <div class="hand second" id="second"></div>
-      <div class="circle_graph_area"></div>
+      <div id="circle_graph_area"></div>
     </div>
-    <div id="calendar"></div>
 
     <div class="right-content">
-      <button id="demo"></button>
-      <div class="">
-        <input
-          type="time"
-          id="appointmentIn"
-          name="appointment"
-          min="08:30"
-          max="22:00"
-          required />
-        <small>タイマー</small>
-      </div>
+      <button id="demo" aria-label="メニュー開閉"></button>
+      <div id="appoiDiv"></div>
       <a href=""><div class="" id="">予定</div></a>
+      <div>
+        参考サイト
+        <ul>
+          <li><a href="https://techlife.asahi.com/n/n6e0eb40e78d5">時計</a></li>
+          <li><a href="https://qiita.com/kan_dai/items/b1850750b883f83b9bee">暦</a></li>
+          <li><a href="https://holidays-jp.github.io">休日</a></li>
+          <li><a href="https://fuuno.net/ani/ani89/circle_graph.html">グラフ</a></li>
+          <li><a href="https://qiita.com/butakoma/items/2c1c956b63fcf956a137">DB</a></li>
+          <li><a href="https://pagespeed.web.dev/">PageSpeed Insights</a></li>
+        </ul>
+      </div>
     </div>
-
+    <div class="message">テスト</div>
     <script type="text/javascript" language="JavaScript" src="./clock02.js"></script>
   </body>
 </html>
