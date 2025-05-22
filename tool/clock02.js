@@ -601,8 +601,8 @@ function createSector2(param = {}) {
       let L = 50; // 100:白, 0:黒
       const times = {};
       getNowDay(undefined, times);
-      if((times.hour < 12 && area_num == 1) || (times.hour > 12 && area_num == 2)){
-        L = 25;
+      if((times.hour > 12 && area_num == 1) || (times.hour < 12 && area_num == 2)){
+        L = 20;
       }
       color = `hsl(${def_hue},50%,${L}%)`;
     }
@@ -881,7 +881,7 @@ function UpdateClock(obj) {
   // 1分に更新
   if(0 === nowDay[5]) {
     ShowCalendar( now );
-    //createSector2();
+    CheckTimer();
   }
 
   config.lastSeconds = nowDay[5];
@@ -1012,7 +1012,7 @@ if(config.iH === null){
   RightContent();
   //document.getElementById('appointmentIn').addEventListener('input', CheckTimer);
   //createSector2();
-  // CheckTimer();
+  CheckTimer();
   ShowCalendar();
 
   window.addEventListener("orientationchange resize", isSmartPhone);
