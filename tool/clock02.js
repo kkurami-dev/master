@@ -74,12 +74,19 @@ const message = document.getElementsByClassName("message")[0];
  * ライブラリー関連
  *********************************************************************************/
 function isSmartPhone() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  let result = false;
+  // ディスプレイのサイズ
+  // const w = window.innerWidth; 
+  // const h = window.innerHeight;
+  // ブラウザの表示範囲
+  const w = document.documentElement.clientWidth;
+  const h = document.documentElement.clientHeight;
+  config.w = w;
+  config.h = h;
+  
+  let phone = false;
   if (navigator.userAgent.match(/iPhone|Android.+Mobile/)) {
     message.innerHTML += " phone";
-    result = true;
+    phone = true;
 
     try {
       const orientation = screen.orientation;
@@ -92,13 +99,24 @@ function isSmartPhone() {
   }
   message.innerHTML += ` ${w}x${h}`;
 
-  const body_element = document.getElementsByTagName('body')[0];
+  let a = 0;
   if(w < h){
-    body_element.style.setProperty("--clocksize", w * 0.87 + "px");
+    a = w;
   } else {
-    body_element.style.setProperty("--clocksize", h * 0.87 + "px");
+    a = h;
   }
-  return result;
+  if(a < 500) config.show = 1;
+  else if(a < 800) config.show = 2;
+  else config.show = 3;
+
+  const body_element = document.getElementsByTagName('body')[0];
+  body_element.style.setProperty("--clocksize", a * 0.9 + "px");
+  if(phone)
+    body_element.style.setProperty("--fontsize", (a / config.show ) * 0.09 + "px");
+  else 
+    body_element.style.setProperty("--fontsize", (a / config.show ) * 0.14 + "px");
+  
+  return phone;
 }
 
 function initDB( param = {} ){
@@ -728,11 +746,11 @@ function CheckTimer(obj = {}) {
       ],
     }
     const arr = [];
-    Object.keys(config.timerParam).forEach((el) => {
-      if((oogP === 1) && config.timerParam[el].pm) return;
-      if((oogP === 2) && !config.timerParam[el].pm) return;
-      arr.push(config.timerParam[el].nowP,
-               config.timerParam[el].nowT)
+    const tm = config.timerParam;
+    Object.keys(tm).forEach((el) => {
+      if(oogP === 1 && tm[el].pm) return;
+      if(oogP === 2 && !tm[el].pm) return;
+      arr.push(tm[el].nowP, tm[el].nowT);
     });
     let sT = 0;
     let eT = 0;
@@ -893,13 +911,13 @@ function UpdateClock(obj) {
 function InputAppoi(row, col, elm, val){
   if(val === "＋" & col === 2){
     const elId = `appoiAdd${row}`;
-    elm.innerHTML = `<button id="${elId}" data-row="${row}" >＋</button>`;
+    elm.innerHTML = `<button id="${elId}" data-row="${row}" aria-label="タイマー追加" >＋</button>`;
     SetEv({id: elId, key:"click", func:AddAppoi });
     return;
   }
   if(col === 2){
     const elId = `appoiDel${row}`;
-    elm.innerHTML = `<button id="${elId}" data-row="${row}" >✖</button>`;
+    elm.innerHTML = `<button id="${elId}" data-row="${row}" aria-label="タイマー削除" >✖</button>`;
     SetEv({id:elId, key:"click", func:DelAppoi });
     return;
   }
@@ -958,12 +976,8 @@ function DelAppoi(inObj) {
   CheckTimer({ redraw: true });
 }
 
-function RightContent(obj) {
-  const right_content = document.querySelector('.right-content');
-  const cll = right_content.classList;
-  cll.toggle('open');
-
-  // 日のタイマー設定領域の作成
+// 日のタイマー設定領域の作成
+function TimerContent(cll) {
   const appoi = document.getElementById("appoiDiv");
   const small = document.createElement('small');
   small.innerHTML = "タイマ";
@@ -1002,19 +1016,77 @@ function RightContent(obj) {
   }
 }
 
+// 予定の設定領域を作成する
+function EventContent(cll) {
+  const ev = document.getElementById("eventDiv");
+  const small = document.createElement('small');
+  small.innerHTML = "予定";
+  ev.appendChild(small);
+
+  //要素を取得
+  const modal = document.querySelector('.js-modal'),
+        open = document.querySelector('.js-modal-open'),
+        close = document.querySelector('.js-modal-close');
+
+  const modalFuncs = {
+    "js-modal":null,
+    "js-modal-open":null,
+    "js-modal-close":null,
+  };
+  function removeEListener(){
+    const modal = document.getElementById("modal-top");
+    const elements = modal.querySelectorAll('[class^="modal"]');
+    elements.forEach(el => {
+      el.removeEventListener('click', DelAppoi);
+    });
+  }
+
+  //「開くボタン」をクリックしてモーダルを開く
+  function modalOpen() {
+    modal.classList.add('is-active');
+  }
+  open.addEventListener('click', modalOpen);
+
+  //「閉じるボタン」をクリックしてモーダルを閉じる
+  function modalClose() {
+    modal.classList.remove('is-active');
+    removeEListener();
+  }
+  close.addEventListener('click', modalClose);
+
+  //「モーダルの外側」をクリックしてモーダルを閉じる
+  function modalOut(e) {
+    if (e.target == modal) {
+      modal.classList.remove('is-active');
+      removeEListener();
+    }
+  }
+  document.addEventListener('click', modalOut);
+}
+
+function RightContent(obj) {
+  const right_content = document.querySelector('.right-content');
+  const cll = right_content.classList;
+  cll.toggle('open');
+  TimerContent(cll);
+
+  //EventContent(cll);
+}
+
+/*********************************************************************************
+ * 起動時の初期処理
+ *********************************************************************************/
 if(config.iH === null){
+  isSmartPhone();
+
   initDB();
   DrawClockFace();
   config.iH = setInterval(UpdateClock, 200);
   //setInterval(reloadClock, 3500);
 
   document.getElementById('demo').addEventListener('click', RightContent);
-  RightContent();
+  // RightContent();
   //document.getElementById('appointmentIn').addEventListener('input', CheckTimer);
   //createSector2();
-  CheckTimer();
   ShowCalendar();
-
-  window.addEventListener("orientationchange resize", isSmartPhone);
-  isSmartPhone();
 }

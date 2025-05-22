@@ -9,13 +9,15 @@ body {
 .clock {
   transform: translateX(50%);
   position: absolute;
-  top: 3%; /* これは画面上から下方向にずらす距離 */
+  top: calc(var(--fontsize)* 0.5); /* これは画面上から下方向にずらす距離 */
   border: 1px solid;
   /*正方形を指定*/
   width: var(--clocksize);
   height: var(--clocksize);
   /* 正方形を円に変換 */
   border-radius: 50%;  /* border-radius: 半径;  半径50%で円*/
+  /*  */
+  right: calc(var(--clocksize)* 0.57);
 }
 
 /* 文字盤 */
@@ -200,22 +202,22 @@ div#hour::before {
 /* カレンダー全体 */
 #calendar {
   flex-direction: column;
-  width: 280px;
+  width: calc(var(--fontsize)* 7);
 }
 #calendar section {
-  margin-top: 5px;
-  margin-left: 10px;
+  margin-top: calc(var(--fontsize)* 0.1);
+  margin-left: calc(var(--fontsize)* 0.5);
 }
 /* 年月 */
 h2[id^="mcy"]{
   margin: 0px;
-  font-size: 20px;
+  font-size: calc(var(--fontsize)* 0.6);
 }
 #calendar section table {
   border-spacing: 0;
   text-align: center;
-  font-size: 40px;
-  line-height: 28px;
+  font-size: var(--fontsize);
+  line-height: calc(var(--fontsize)* 0.75);
 }
 /* 今週行 */
 tr.now-week {
@@ -223,39 +225,39 @@ tr.now-week {
 }
 /* 曜日行 */
 td.week-day {
-  font-size: 13px;
-  line-height: 10px;
-  padding: 2px;
+  font-size: calc(var(--fontsize)* 0.4);
+  line-height: calc(var(--fontsize)* 0.2);
 }
 /* 日付 */
 td[id^="mcdd-"]{
   position: relative;
-  height: 100%;
-  width: 100%;
-  padding: 6px 3px 6px 3px;
+  /* height: 100%; */
+  /* width: 100%; */
+  /* padding: 6px 3px 6px 3px; */
+  padding: calc(var(--fontsize)* 0.1);
 }
-td:first-child {
+td[id^="mcdd-"]:first-child {
   color: red;
 }
-td:last-child {
+td[id^="mcdd-"]:last-child {
   color: rgb(100, 180, 255);
 }
-td.is-disabled {
+td[id^="mcdd-"].is-disabled {
   color: #5C5C5C;
 }
 /* 今日 */
 td.now-day {
-  border: 1px solid gray;
+  background: linear-gradient(to bottom, transparent 70%, #999439 30%);
 }
 /* 行事がある日 */
 div.ccHday {
   position: absolute;
   top: 0px;
-  left: 2px;
-  width: 40px;
+  left: calc(var(--fontsize)* 0.1);
+  width: var(--fontsize);
   height: 0px;
   z-index: 10;
-  border: 10px;
+  border: var(--fontsize);
   border-bottom: 12px solid rgba(0, 153, 255, 1);
   opacity: 0.6;/* 透過指定 */
 }
@@ -303,4 +305,90 @@ div.message {
 /* デバッグ */
 path {
   /* stroke: #05f; */
+}
+
+/* モーダルを開くボタン */
+.modal-open{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  width: 300px;
+  height: 60px;
+  color: #fff;
+  background: #000;
+  border: none;
+  cursor: pointer;
+  translate: -50% -50%;
+}
+
+/* モーダルと背景の指定 */
+.modal{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  background: rgba(0,0,0,50%);
+  padding: 40px 20px;
+  overflow: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: .3s;
+  box-sizing: border-box;
+}
+
+/* モーダルの擬似要素の指定 */
+.modal:before{
+  content: "";
+  display: inline-block;
+  vertical-align: middle;
+  height: 100%;
+  margin-left: -0.2em;
+}
+
+/* クラスが追加された時の指定 */
+.modal.is-active{
+  opacity: 1;
+  visibility: visible;
+}
+
+/* モーダル内側の指定 */
+.modal-container{
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 600px;
+  width: 90%;
+}
+
+/* モーダルを閉じるボタンの指定 */
+.modal-close{
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: -20px;
+  right: -20px;
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  background: #000;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* モーダルのコンテンツ部分の指定 */
+.modal-content{
+  background: #fff;
+  text-align: left;
+  line-height: 1.8;
+  padding: 20px;
+}
+
+/* モーダルのコンテンツ部分のテキストの指定 */
+.modal-content p{
+  margin: 1em 0;
 }
