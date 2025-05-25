@@ -4,7 +4,7 @@ import { PropTypes } from 'prop-types';
 
 import opponentSelect from '../utils/opponentSelect.mjs';
 import selectPosition from '../utils/selectPosition.mjs';
-import { OthelloBoard, ID } from '../utils/othello.mjs';
+import { OthelloBoard, ID } from '../utils/othello.js';
 
 // NPCの動作
 function npc(act, { lv, ss }) {

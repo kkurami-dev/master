@@ -4,9 +4,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Stack, Button } from '@mui/material';
 
-import { LEN, ID } from '../utils/othello.mjs';
-import Row from './Row.tsx';// assert { type: "RowType" };
-import { initSS, PlayerSelect } from './player.tsx';
+import { LEN, ID } from '../utils/othello.js';
+import Row from './Row.js';// assert { type: "RowType" };
+import { initSS, PlayerSelect } from './player.js';
 
 // import assert from 'assert';
 
@@ -40,7 +40,7 @@ for (let i = 0; i < LEN; i += 1) {
  * 1000ms待つ処理
  */
 function wait(t = 30) : any {
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     setTimeout(() => {
       resolve();
     }, t);
@@ -61,7 +61,7 @@ function Board() {
   /**
    * 次の操作が可能か
    */
-  function isNext({ v, obj }) {
+  function isNext({ obj : any }) {
     // 両プレイヤーで置ける位置があるか
     const is = {
       x: obj.isPutPosition('x'),

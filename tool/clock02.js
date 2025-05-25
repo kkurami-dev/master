@@ -934,7 +934,7 @@ function InputAppoi(row, col, elm, val){
   let input = `data-row="${row}" type="time" min="08:30" max="22:00" required`;
   input += ` value="${val}"`;
   elm.innerHTML += `<input id="${elId}" ${label} ${input}></input>`;
-  SetEv({id: elId, key:"input", func:CheckTimer });
+  SetEv({id: elId, key:"input", func: CheckTimer });
 }
 
 function AddAppoi(inObj) {
@@ -985,7 +985,7 @@ function TimerContent(cll) {
   const successCB = (p) => {
     const data = [];
     p.result.sort((a, b)=> a.s - b.s).forEach(({id, s, e}, idx) => {
-      if(!s || !e) return;
+      if(!s || !e || !id.startWith("appoi")) return;
       if(!config.timerParam[id]){
         config.timerParam[id] = {
           pm: s > "12:00",
@@ -1016,52 +1016,55 @@ function TimerContent(cll) {
   }
 }
 
-// 予定の設定領域を作成する
+// モーダル
+const modalFuncs = {
+  modalClose: null,
+  modalOut: null,
+  CloseCB: null,
+  Obj: null,
+};
+function removeEListener(obj){
+  const close = document.getElementById("modal-close");
+  close.removeEListener('click', modalFuncs.modalClose);
+  document.removeEListener('click', modalFuncs.modalOut);
+  modalFuncs.CloseCB( modalFuncs.obj );
+  for(const key in modalFuncs){
+    modalFuncs[key] = null;
+  }
+}
+//「閉じるボタン」をクリックしてモーダルを閉じる
+function modalClose(e) {
+  removeEListener();
+  const modal = document.getElementById("modal-top");
+  modal.classList.remove('is-active');
+}
+//「モーダルの外側」をクリックしてモーダルを閉じる
+function modalOut(e) {
+  if (e.target.id == "") {
+    removeEListener();
+    e.target.classList.remove('is-active');
+  }
+}
+//「開くボタン」をクリックしてモーダルを開く
+function modalOpen( obj ) {
+  const modal = document.getElementById("modal-top");
+  modal.classList.add('is-active');
+
+  const close = document.querySelector('.js-modal-close');
+  close.addEventListener('click', modalClose);
+  document.addEventListener('click', modalOut);
+  Object.assign(modalFuncs, { modalClose, modalOut, obj }, obj );
+}
+
 function EventContent(cll) {
   const ev = document.getElementById("eventDiv");
   const small = document.createElement('small');
   small.innerHTML = "予定";
   ev.appendChild(small);
 
-  //要素を取得
-  const modal = document.querySelector('.js-modal'),
-        open = document.querySelector('.js-modal-open'),
-        close = document.querySelector('.js-modal-close');
-
-  const modalFuncs = {
-    "js-modal":null,
-    "js-modal-open":null,
-    "js-modal-close":null,
-  };
-  function removeEListener(){
-    const modal = document.getElementById("modal-top");
-    const elements = modal.querySelectorAll('[class^="modal"]');
-    elements.forEach(el => {
-      el.removeEventListener('click', DelAppoi);
-    });
-  }
-
-  //「開くボタン」をクリックしてモーダルを開く
-  function modalOpen() {
-    modal.classList.add('is-active');
-  }
+  // 要素を取得
+  const open = document.querySelector('.js-modal-open');
   open.addEventListener('click', modalOpen);
-
-  //「閉じるボタン」をクリックしてモーダルを閉じる
-  function modalClose() {
-    modal.classList.remove('is-active');
-    removeEListener();
-  }
-  close.addEventListener('click', modalClose);
-
-  //「モーダルの外側」をクリックしてモーダルを閉じる
-  function modalOut(e) {
-    if (e.target == modal) {
-      modal.classList.remove('is-active');
-      removeEListener();
-    }
-  }
-  document.addEventListener('click', modalOut);
 }
 
 function RightContent(obj) {
