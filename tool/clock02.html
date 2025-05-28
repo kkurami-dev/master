@@ -11,7 +11,9 @@
     <title>暦＋アナログ時計</title>
     <style>
       @import "./clock02.css";
+      @import "./clock02.modal.css";
     </style>
+    <link rel="icon" href="data:,">
   </head>
   <body>
     <div id="calendar"></div>
@@ -28,6 +30,7 @@
       <button id="demo" aria-label="メニュー開閉"></button>
       <div id="appoiDiv"></div>
       <div id="eventDiv"></div>
+      <div id="audioDiv" class="button012"></div>
       <div>
         参考サイト
         <ul>
@@ -38,6 +41,8 @@
           <li><a href="https://qiita.com/butakoma/items/2c1c956b63fcf956a137">DB</a></li>
           <li><a href="https://pagespeed.web.dev/">PageSpeed Insights</a></li>
           <li><a href="https://recooord.org/modal-window-on-javascript/">シンプルなモーダル</a></li>
+          <li><a href="https://jp-seemore.com/web/3576/">音を鳴らす</a></li>
+          <li><a href="https://yukiyuriweb.com/2021/03/12/how-to-handle-notallowederror-in-safari/">音声権限</a></li>
         </ul>
       </div>
     </div>
@@ -50,6 +55,6 @@
     </div>
     
     <div class="message">テスト11</div>
-    <script type="text/javascript" language="JavaScript" src="./clock02.js"></script>
+    <script type="module" language="JavaScript" src="./clock02.js"></script>
   </body>
 </html>

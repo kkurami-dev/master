@@ -201,6 +201,7 @@ div#hour::before {
 
 /* カレンダー全体 */
 #calendar {
+  font-weight: 250;
   flex-direction: column;
   width: calc(var(--fontsize)* 7);
 }
@@ -294,6 +295,37 @@ div.ccHday {
   padding-left: 40px;
 }
 
+.button012 buton#playButton {
+	display: block;
+	text-align: center;
+	vertical-align: middle;
+	text-decoration: none;
+	width: 120px;
+	margin: auto;
+	padding: 0.2rem 4rem;
+	font-weight: bold;
+	background-image: linear-gradient(to top, #D8D9DB 0%, #fff 80%, #FDFDFD 100%);
+	border-radius: 100vh;
+	color: #333;
+	border: 1px solid #999;
+	text-shadow: 0 1px #fff;
+	box-shadow: 0 3px 2px 1px #fcfcfc, 0 4px 6px #cecfd1, 0 -2px 2px #cecfd1, 0 -4px 2px #eee, inset 0 0 2px 2px #cecfd1;
+  transition: 0.5s;
+}
+.button012 buton#playButton:hover {
+	color: #fff;
+	background: #27acd9;
+	border-bottom: 2px solid #fff;
+  transform: translateY(3px);
+}
+.button012 buton#playButton.play::after {
+  content: '鳴動ON';
+}
+.button012 buton#playButton.play.off::after {
+  content: '鳴動OFF';
+}
+
+
 div.message {
   position: absolute;
   top: 93%;
@@ -305,90 +337,4 @@ div.message {
 /* デバッグ */
 path {
   /* stroke: #05f; */
-}
-
-/* モーダルを開くボタン */
-.modal-open{
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  font-size: 16px;
-  font-weight: bold;
-  width: 300px;
-  height: 60px;
-  color: #fff;
-  background: #000;
-  border: none;
-  cursor: pointer;
-  translate: -50% -50%;
-}
-
-/* モーダルと背景の指定 */
-.modal{
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  background: rgba(0,0,0,50%);
-  padding: 40px 20px;
-  overflow: auto;
-  opacity: 0;
-  visibility: hidden;
-  transition: .3s;
-  box-sizing: border-box;
-}
-
-/* モーダルの擬似要素の指定 */
-.modal:before{
-  content: "";
-  display: inline-block;
-  vertical-align: middle;
-  height: 100%;
-  margin-left: -0.2em;
-}
-
-/* クラスが追加された時の指定 */
-.modal.is-active{
-  opacity: 1;
-  visibility: visible;
-}
-
-/* モーダル内側の指定 */
-.modal-container{
-  position: relative;
-  display: inline-block;
-  vertical-align: middle;
-  max-width: 600px;
-  width: 90%;
-}
-
-/* モーダルを閉じるボタンの指定 */
-.modal-close{
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  top: -20px;
-  right: -20px;
-  width: 40px;
-  height: 40px;
-  color: #fff;
-  background: #000;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-/* モーダルのコンテンツ部分の指定 */
-.modal-content{
-  background: #fff;
-  text-align: left;
-  line-height: 1.8;
-  padding: 20px;
-}
-
-/* モーダルのコンテンツ部分のテキストの指定 */
-.modal-content p{
-  margin: 1em 0;
 }

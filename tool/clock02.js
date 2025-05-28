@@ -1,12 +1,15 @@
-"use strict";
 /**
+ * 
  * JavaScript, Node.js, React, AWS Lambda を作成する参考のため、
  * 自己啓蒙・研究・検証を行う 時計・カレンダーの JavaScript。
  * こてこての Javascript で外部ライブラリは使わずに作成している。
  *
- * 概要
+ * 方針
  *   HTML は JQuery で部品配置のためのキー、処理はほとんどこのスクリプトで実施
  *   装飾はなるべく CSS で行う(クラスやIDのみ設定)。
+ *   勉強のため下記は使用しない。
+ *    ・async/await, new Promiseなど(非同期処理を同期で実行はしない)
+ *    ・外部の高機能なライブラリ
  *
  * 参考URL
  *    時計：https://techlife.asahi.com/n/n6e0eb40e78d5
@@ -19,6 +22,23 @@
  *    PageSpeed Insights
  *      ホームページの速度などの評価をしてくれる
  *
+ * 機能
+ *   - 
+ *   - 画面サイズにより時計、カレンダーの表示調整
+ *   - タイマー追加、削除し複数指定可能( タイマーは時計にドーナツ表示 )
+ *   x タイマーの曜日指定
+ *   x 音を鳴らすタイミングを指定
+ *   - Webから取得した休日を IndexDB に保持
+ *   x JSON でタイマー、予定を入力、出力する
+ *   x カレンダーの予定の繰り返し(毎週、毎月、毎年、指定年開始)
+ *   
+ *   - 
+ *
+ * JavaScript のデバッグ( script type="module" )
+ *   > npm -g i http-server
+ *   > cd "JavaScript があるディレクトリを指定"
+ *   > npx http-server -c-1
+ *
  * JavaScript の圧縮、難読化
  *   > npm install -g npm
  *   > npm install terser -g
@@ -30,49 +50,23 @@
  *         https://qiita.com/u83unlimited/items/970f819d1fafa325bfbf
  *
  */
+import {
+  config,
+  soundObj
+} from './clock02-data.js';
+
 const DB_VERSION = 3;
 const SVG_NS = "http://www.w3.org/2000/svg";
-const config = {
-  // 稼働時間
-  workStart : { hours: 8, minutes: 0.5 },// 作業開始時間 8.5 = 8:30
-  // 休日やイベント設定
-  ccHday:{
-    "2025-04-28": {title:"有休消化日",                     type:1},
-    "2025-04-30": {title:"有休奨励日(アニバーサリー休暇)", type:2},
-    "2025-05-01": {title:"有休奨励日(アニバーサリー休暇)", type:2},
-    "2025-05-02": {title:"有休奨励日(アニバーサリー休暇)", type:2},
-    "2025-08-12": {title:"夏季休日",                       type:3},
-    "2025-08-13": {title:"夏季休日",                       type:3},
-    "2025-08-14": {title:"夏季休日",                       type:3},
-    "2025-08-15": {title:"有休消化日",                     type:1},
-    "2025-09-22": {title:"有休奨励日(アニバーサリー休暇)", type:2},
-    "2025-12-29": {title:"有休消化日",                     type:1},
-    "2025-12-30": {title:"年末年始休",                     type:3},
-    "2025-12-31": {title:"年末年始休",                     type:3},
-    "2026-01-02": {title:"年末年始休",                     type:3},
-  },
-  nesHday:{
-  },
-  myHday:{
-  },
-
-  // その他設定
-  show: 3,
-
-  // 状態
-  nowWeekNum: 0,
-  lastUpdate: {},
-  lastSeconds: -2,
-  lastAngle: 0,
-  iH: null,
-  timerParam: {},
-}
 const weeks = ['日', '月', '火', '水', '木', '金', '土'];
 const message = document.getElementsByClassName("message")[0];
 
 /*********************************************************************************
  * ライブラリー関連
  *********************************************************************************/
+function IsString(value){
+  return typeof value === "string" || value instanceof String;
+}
+
 function isSmartPhone() {
   // ディスプレイのサイズ
   // const w = window.innerWidth; 
@@ -99,22 +93,20 @@ function isSmartPhone() {
   }
   message.innerHTML += ` ${w}x${h}`;
 
-  let a = 0;
-  if(w < h){
-    a = w;
-  } else {
-    a = h;
-  }
+  const a = w < h ? w : h;
   if(a < 500) config.show = 1;
   else if(a < 800) config.show = 2;
   else config.show = 3;
 
   const body_element = document.getElementsByTagName('body')[0];
   body_element.style.setProperty("--clocksize", a * 0.9 + "px");
-  if(phone)
-    body_element.style.setProperty("--fontsize", (a / config.show ) * 0.09 + "px");
-  else 
-    body_element.style.setProperty("--fontsize", (a / config.show ) * 0.14 + "px");
+  if(phone){
+    const fsi = Math.round((a / config.show) * 0.09 );
+    body_element.style.setProperty("--fontsize", fsi + "px");
+  } else {
+    const fsi = Math.round((a / config.show) * 0.14 );
+    body_element.style.setProperty("--fontsize", fsi + "px");
+  }
   
   return phone;
 }
@@ -210,18 +202,22 @@ function delDB( param = {} ){
 }
 
 function SetEv(inObj) {
-  const { id, key, func, tHandle } = inObj;
+  const { id, key, func, tHandle, before = false } = inObj;
   if(tHandle){
     clearTimeout( tHandle );
     inObj.tHandle = undefined;
+    delete inObj.tHandle;
+    if(before && func) func(inObj);
   }
   
   const el = document.getElementById(id);
   if(el){
     el.addEventListener(key, func);
+    return el;
   } else {
     inObj.tHandle = setTimeout(SetEv, 20, inObj);
   }
+  return false;
 }
 
 function MakeTable(obj) {
@@ -290,6 +286,74 @@ function isNowDay(month, day, now){
   return false;
 }
 
+// 音を鳴らす
+// 0   : 初期化、鳴動の off/off
+// 0 < : 鳴動ONなら、指定音を鳴らす
+// 0 > : 鳴動ONなら、ボタンのみ非表示、OFFなら全開放
+function Beep(param = {}){
+  const { evType = 0 } = param;
+
+  // ボタンの設定
+  const aDiv = document.getElementById("audioDiv");
+  let button = aDiv.querySelector("#playButton");
+  let off = false;
+  if( evType === 0){
+    if(button){
+      button.classList.toggle('off');
+    } else {
+      aDiv.innerHTML =
+        `<buton id="playButton" class="play off" aria-label="音のON/OFF" />`;
+      button = SetEv({id: "playButton", key:"click", func: Beep, before: true });
+      if(!button) return;
+    }
+  } else if( evType < 0 && button){
+    button.removeEventListener('click', Beep);
+    button.remove();
+  } else if(!button){
+    return;
+  }
+  if(button.classList.contains('off')) off = true;
+  if( evType >= 0 && off ) return;
+
+  // 音の設定
+  Object.keys(soundObj).forEach((media, idx) => {
+    const beep = soundObj[media];
+    const key = `player-${media}`;
+    const audio = aDiv.querySelector(`#${key}`);
+
+    if(0 < evType && (idx + 1) === evType){
+      // 指定パターン鳴動
+      if (!audio) return;
+      const ans = Math.abs( param.time - beep.last);
+      if( ans < beep.bt ) {
+        beep.last = param.time;
+        return;
+      }
+      beep.last = param.time;
+      audio.volume = beep.vol;
+      audio.play().catch((err) => alert(err));
+
+    } else if( evType === 0 ){
+      // 初期化
+      if (audio) {
+        return;
+      }
+      const Player = new Audio("data:audio/wav;base64," + beep.bd);
+      Player.play().then(()=>{
+        Player.pause();
+      });
+      Player.setAttribute("id", key);
+      Player.setAttribute("preload", "auto");
+      aDiv.appendChild( Player );
+
+    } else if( evType < 0 && off){
+      // 開放
+      if (!audio) return;
+      audio.remove();
+    }
+  });
+}
+
 /*********************************************************************************
  * カレンダー関連
  *********************************************************************************/
@@ -353,6 +417,7 @@ function setDay(obj, w, d) {
     config.nowWeekNum = w;
     cl = "now-day";
   }
+  const outObj = {year, month, day: num, dayNo};
 
   const ydm = `${year}-${month}-${num}`;
   const dd = `mcdd-${dayNo}`;
@@ -361,6 +426,7 @@ function setDay(obj, w, d) {
   } else {
     // 描画済み部品の更新
     const el = document.getElementById(`mcdd-${dayNo}`);
+    outObj.el = el;
     el.dataset.date = ydm;
     el.innerHTML = num;
     const cll = el.classList;
@@ -373,12 +439,12 @@ function setDay(obj, w, d) {
 
   obj.dayNo += 1;
   obj.dayCount += ret;
-  return {year, month, day: num, dayNo};
+  return outObj;
 }
 
 function setHoliday(obj) {
   const {dayNo} = obj;
-  const element = document.getElementById(`mcdd-${dayNo}`);
+  const element = obj.el || document.getElementById(`mcdd-${dayNo}`);
   if(!element){
     obj.tHandle = setTimeout(setJapanHoliday, 1000, obj);
     return;
@@ -439,9 +505,33 @@ function setJapanHoliday(inObj) {
   }
   const { year, dayNo } = inObj;
 
+  const setAll = () => {
+    const cdiv = document.querySelector('#calendar');
+    const els = cdiv.querySelectorAll('[id^="mcdd-"]');
+    els.forEach(( el )=>{
+      const dayNo = Number(el.id.replace("mcdd-", ""));
+      setHoliday({ dayNo, el });
+    });
+  }
+
   // 休日一覧を取得中ならリトライ、あれば休日設定
   if(config[year] && config[year].json){
     setHoliday(inObj);
+    return;
+  } else if( !inObj.getDB ){
+    // DB にあればその休日を利用
+    if( config[year] ) return;
+    config[year] = {};
+    getDB({
+      data: year,
+      successCB:({ data, result }) => {
+        inObj.getDB = true;
+        if(result?.json) {
+          config[data].json = result.json;
+        }
+        setAll()
+      },
+    });
     return;
   } else if( config[year] ){
     // ネットワーク不調対策
@@ -458,13 +548,11 @@ function setJapanHoliday(inObj) {
       config[year].retray[dayNo] = 0;
       return;
     }
-
-    inObj.tHandle = setTimeout(setJapanHoliday, 1000, inObj);
     return;
   }
   config[year] = {json: null};
 
-  // Web から休日一覧を取得
+  // 年更新、初回ページ表示時は  Web から休日一覧を取得
   // バケットストレージに保存する
   const req = `https://holidays-jp.github.io/api/v1/date.json?year=${year}`;
   try {
@@ -472,7 +560,8 @@ function setJapanHoliday(inObj) {
       .then((response)=> response.json())
       .then((json) => {
         config[year].json = json;
-        setHoliday(inObj);
+        setAll();
+        putDB({data:{ id: year , dataKey: year, json }});
       });
   } catch(err){
     // ネットワーク不調対策
@@ -881,7 +970,9 @@ function UpdateClock(obj) {
 
   // 逆回転防止のため、角度がへる場合は一旦アニメーションなしで
   // 0.1度傾かせ、次からアニメションの再開を行う
-  if(msAngle < 91.2){
+  let ans = Math.abs(config.lastSeconds - nowDay[5]);
+  if(msAngle < 91.2 || ans > 1){
+    config.lastSeconds = nowDay[5];
     secondHand.style.transitionDuration = "0.0s";
     secondHand.style.transform = `rotate(${msAngle - 1.1}deg)`;
     const obj = {};
@@ -890,6 +981,14 @@ function UpdateClock(obj) {
   }
   secondHand.style.transitionDuration = "0.2s";
   secondHand.style.transform = `rotate(${msAngle}deg)`;
+
+  // 1秒に1回更新
+  ans = (nowDay[5] % 10);
+  if ( ans === 0 ){
+    Beep({evType: 2, time: nowDay[4] });
+  } else {
+    //Beep({evType: 2, time: nowDay[4] });
+  }
 
   // 1秒に1回更新
   if(config.lastSeconds !== nowDay[5]) {
@@ -981,11 +1080,11 @@ function TimerContent(cll) {
   const appoi = document.getElementById("appoiDiv");
   const small = document.createElement('small');
   small.innerHTML = "タイマ";
-  appoi.appendChild(small);  
+  appoi.appendChild(small);
   const successCB = (p) => {
     const data = [];
     p.result.sort((a, b)=> a.s - b.s).forEach(({id, s, e}, idx) => {
-      if(!s || !e || !id.startWith("appoi")) return;
+      if(!s || !e || !id.startsWith("appoi")) return;
       if(!config.timerParam[id]){
         config.timerParam[id] = {
           pm: s > "12:00",
@@ -1000,7 +1099,7 @@ function TimerContent(cll) {
       data.push([ s, e, idx]);
     });
     data.push([ "", "", "＋"]);
-    MakeTable({ body:appoi, data, cb:InputAppoi});
+    MakeTable({ body:appoi, data, cb: InputAppoi});
     CheckTimer({redraw: true});
   };
   if (cll.contains('open')) {
@@ -1025,9 +1124,9 @@ const modalFuncs = {
 };
 function removeEListener(obj){
   const close = document.getElementById("modal-close");
-  close.removeEListener('click', modalFuncs.modalClose);
-  document.removeEListener('click', modalFuncs.modalOut);
-  modalFuncs.CloseCB( modalFuncs.obj );
+  close.removeEventListener('click', modalFuncs.modalClose);
+  document.removeEventListener('click', modalFuncs.modalOut);
+  if( modalFuncs.CloseCB ) modalFuncs.CloseCB( modalFuncs.obj );
   for(const key in modalFuncs){
     modalFuncs[key] = null;
   }
@@ -1049,22 +1148,75 @@ function modalOut(e) {
 function modalOpen( obj ) {
   const modal = document.getElementById("modal-top");
   modal.classList.add('is-active');
+  const content = modal.querySelector('.modal-content');
 
   const close = document.querySelector('.js-modal-close');
   close.addEventListener('click', modalClose);
   document.addEventListener('click', modalOut);
   Object.assign(modalFuncs, { modalClose, modalOut, obj }, obj );
+
+  return content;
+}
+
+function setEditEventButton(el) {
+  const id = el.id;
+  const row = el.dataset.row;
+
+  const content = modalOpen({});
+
+  content.innerHTML = ``;
+}
+
+function setEditEvent(row, col, elm, val) {
+  let elId = "event";
+  let label = 'aria-labelledby="イベント';
+  if(val === "＋" & col === 2){
+    elId += `E${row}`;
+    elm.innerHTML = `<button id="${elId}" data-row="${row}" aria-label="イベント編集" >●</button>`;
+    SetEv({id: elId, key:"click", func: setEditEventButton });
+    return;
+  } else if(col === 0){
+    elId += `D${row}`;
+    label += '日時"';
+  } else {
+    elId += `T${row}`;
+    label += 'タイトル"';
+  }
+  elm.innerHTML = val || "---";
+
+  // 要素を取得
+  //const open = document.querySelector('.js-modal-open');
+  //open.addEventListener('click', modalOpen);
 }
 
 function EventContent(cll) {
-  const ev = document.getElementById("eventDiv");
-  const small = document.createElement('small');
-  small.innerHTML = "予定";
-  ev.appendChild(small);
+  if(!cll) return;
+  const body = document.getElementById("eventDiv");
 
-  // 要素を取得
-  const open = document.querySelector('.js-modal-open');
-  open.addEventListener('click', modalOpen);
+  const successCB = (db) => {
+    const data = [];
+    db.result.forEach(({id, title, contents}, idx) => {
+      if(!IsString(id) || !id.startsWith("event")) return;
+
+    });
+    data.push(["", "", "＋"]);
+    MakeTable({ body, data, cb: setEditEvent});
+  }
+
+  if (cll.contains('open')) {
+    const small = document.createElement('small');
+    small.innerHTML = "予定";
+    body.appendChild(small);
+    getAllDB({data: null, successCB});
+    
+  } else {
+    if(!body) return;
+    body.querySelectorAll('[id^="event"]').forEach((ell)=>{
+      ell.removeEventListener('click', modalOpen);
+      ell.remove();
+    });
+    body.innerHTML = '';
+  }
 }
 
 function RightContent(obj) {
@@ -1072,14 +1224,18 @@ function RightContent(obj) {
   const cll = right_content.classList;
   cll.toggle('open');
   TimerContent(cll);
-
-  //EventContent(cll);
+  EventContent(cll);
+  if (cll.contains('open')) {
+    Beep();
+  } else {
+    Beep({ type: -1});
+  }
 }
 
 /*********************************************************************************
  * 起動時の初期処理
  *********************************************************************************/
-if(config.iH === null){
+if(config?.iH === null){
   isSmartPhone();
 
   initDB();
