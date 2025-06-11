@@ -49,6 +49,13 @@
  *   難読化:javascript-obfuscator
  *         https://qiita.com/u83unlimited/items/970f819d1fafa325bfbf
  *
+ * 外部公開
+ *  https://www.kkurami2.link
+ *    AWS のサーバーを使って公開
+ *        Rute53
+ *        CloudFront
+ *        S3
+ *
  */
 import {
   config,
