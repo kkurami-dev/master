@@ -9,7 +9,7 @@ body {
 .clock {
   transform: translateX(50%);
   position: absolute;
-  top: calc(var(--fontsize)* 0.5); /* これは画面上から下方向にずらす距離 */
+  top: calc(var(--clockheight)* 0.5); /* これは画面上から下方向にずらす距離 */
   border: 1px solid;
   /*正方形を指定*/
   width: var(--clocksize);

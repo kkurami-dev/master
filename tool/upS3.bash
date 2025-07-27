@@ -1,10 +1,9 @@
 #!/bin/bash
 
+BUCKET=www.kkurami2.link
 
-aws s3 cp ./clock02-data.js s3://www.kkurami2.link/clock02-data.js
+#aws s3 cp ./clock02-data.js s3://www.kkurami2.link/clock02-data.js
 # aws s3 cp ./clock02-data.js s3://www.kkurami2.link/clock02-data.js --acl public-read
-
-exit 0;
 
 items=(
     clock02.html
@@ -29,6 +28,6 @@ for item in "${items[@]}" ; do
         exit 1;
     esac
 
-    aws s3 cp ./$item s3://your-bucket-name/path/$item \
+    aws s3 cp ./$item s3://$BUCKET/$item \
         --content-type $type
 done

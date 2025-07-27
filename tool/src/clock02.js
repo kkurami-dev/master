@@ -90,12 +90,12 @@ function isSmartPhone() {
     message.innerHTML += " phone";
     phone = true;
 
-    try {
-      const orientation = screen.orientation;
-      orientation.lock('landscape');
-    } catch (error) {
-      console.error('画面の向きを固定できませんでした: ', error);
-    }
+    // try {
+    //   const orientation = screen.orientation;
+    //   orientation.lock('landscape');
+    // } catch (error) {
+    //   console.error('画面の向きを固定できませんでした: ', error);
+    // }
   } else {
     message.innerHTML += " pc";
   }
@@ -108,13 +108,17 @@ function isSmartPhone() {
 
   const body_element = document.getElementsByTagName('body')[0];
   body_element.style.setProperty("--clocksize", a * 0.9 + "px");
+  let fsi = 0;
+  let fsh = 0;
   if(phone){
-    const fsi = Math.round((a / config.show) * 0.09 );
-    body_element.style.setProperty("--fontsize", fsi + "px");
+    fsi = Math.round((a / config.show) * 0.09 );
+    fsh = Math.round((a / config.show) * 1.50 );
   } else {
-    const fsi = Math.round((a / config.show) * 0.14 );
-    body_element.style.setProperty("--fontsize", fsi + "px");
+    fsi = Math.round((a / config.show) * 0.14 );
+    fsh = Math.round((a / config.show) * 0.09 );
   }
+  body_element.style.setProperty("--fontsize", fsi + "px");
+  body_element.style.setProperty("--clockheight", fsh + "px");
   
   return phone;
 }
@@ -451,6 +455,7 @@ function setDay(obj, w, d) {
 }
 
 function setHoliday(obj) {
+  console.log('setHoliday s', obj);
   const {dayNo} = obj;
   const element = obj.el || document.getElementById(`mcdd-${dayNo}`);
   if(!element){
@@ -474,7 +479,7 @@ function setHoliday(obj) {
   const month = date[1];
   const day = date[2];
   const hString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  const hDay = config[year].json[hString];
+  const hDay = config[Number(year)]?.[hString];
   const hDays = [];
   // 日本の休日設定
   if(hDay){
@@ -513,7 +518,8 @@ function setJapanHoliday(inObj) {
   }
   const { year, dayNo } = inObj;
 
-  const setAll = () => {
+  const setAll = ( date, json ) => {
+    config[date] = json;
     const cdiv = document.querySelector('#calendar');
     const els = cdiv.querySelectorAll('[id^="mcdd-"]');
     els.forEach(( el )=>{
@@ -522,22 +528,26 @@ function setJapanHoliday(inObj) {
     });
   }
 
-  // 休日一覧を取得中ならリトライ、あれば休日設定
-  if(config[year] && config[year].json){
+  if(config.exec === 'setHoliday' && !inObj.getDB){
+    // 全体の休日を設定中なので何もしない( getDB を一行したスレッドのみ動く )
+    return;
+  } else if(config[year] && config[year].json){
+    // 休日一覧を取得中ならリトライ、あれば休日設定
     setHoliday(inObj);
     return;
   } else if( !inObj.getDB ){
     // DB にあればその休日を利用
     if( config[year] ) return;
-    config[year] = {};
+    inObj.getDB = true;// 2回目の取得は実行しない
+    config.exec = 'setHoliday';// 休日取得中を設定
     getDB({
       data: year,
       successCB:({ data, result }) => {
-        inObj.getDB = true;
         if(result?.json) {
-          config[data].json = result.json;
+          setAll(data, result.json);
+        } else {
+          inObj.tHandle = setTimeout(setJapanHoliday, 1000, inObj);
         }
-        setAll()
       },
     });
     return;
@@ -558,17 +568,16 @@ function setJapanHoliday(inObj) {
     }
     return;
   }
-  config[year] = {json: null};
 
   // 年更新、初回ページ表示時は  Web から休日一覧を取得
   // バケットストレージに保存する
+  console.log('get holidays');
   const req = `https://holidays-jp.github.io/api/v1/date.json?year=${year}`;
   try {
     window.fetch(req)
       .then((response)=> response.json())
       .then((json) => {
-        config[year].json = json;
-        setAll();
+        setAll(year, json);
         putDB({data:{ id: year , dataKey: year, json }});
       });
   } catch(err){
