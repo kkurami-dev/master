@@ -30,19 +30,19 @@
     "fixlen"
   ],
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.816.0",
+    "@aws-sdk/client-lambda": "^3.816.0",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^7.1.0",
     "@mui/system": "^7.1.0",
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.5",
     "prop-types": "^15.8.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-scripts": "^5.0.1",
-    "@aws-sdk/client-dynamodb": "^3.816.0",
-    "@aws-sdk/client-lambda": "^3.816.0",
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@types/node": "^22.15.21",
-    "@types/react": "^19.1.5",
     "web-vitals": "^5.0.1"
   },
   "scripts": {
@@ -66,13 +66,14 @@
     ]
   },
   "devDependencies": {
-    "@testing-library/user-event": "^14.6.1",
-    "eslint": "^8.57.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^29.5.14",
     "aws-sdk-client-mock": "^4.1.0",
     "aws-sdk-client-mock-jest": "^4.1.0",
+    "config": "^4.1.0",
+    "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.31.0",

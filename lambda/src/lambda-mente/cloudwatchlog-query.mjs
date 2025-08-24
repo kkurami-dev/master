@@ -36,7 +36,9 @@ import fs from 'fs';
 const logsClient = new CloudWatchLogsClient();
 const s3Client = new S3Client();
 
-const LOG_QUERY = process.env.LOG_QUERY || `
+const LOG_QUERY =
+  process.env.LOG_QUERY ||
+  `
 fields @timestamp, @message
 | filter @message like /ERROR/
 | sort @timestamp desc
@@ -58,9 +60,9 @@ async function uploadFile(type, ctx, mode) {
   const Key = type ? param.out : param.idx;
   const tmp = type ? param.tmp1 : param.tmp2;
 
-  let Body = "";
+  let Body = '';
   let ContentType = 'application/octet-stream';
-  if(mode){
+  if (mode) {
     Body = JSON.stringify(mode);
     ContentType = null;
   } else {
@@ -102,14 +104,13 @@ async function downloadFile(type, ctx) {
   終わった後に処理されます。
  */
 async function listLogGroup(queryLogObj, ctx) {
-
   const oldfuncs = await downloadFile(0, ctx);
   const newfuncs = {
-    funcs:{}
+    funcs: {},
   };
 
   // ロググループの選定
-  async function getFuncs(param){
+  async function getFuncs(param) {
     const { func, nextToken } = param;
 
     const command = new DescribeLogGroupsCommand({ nextToken });
@@ -123,20 +124,20 @@ async function listLogGroup(queryLogObj, ctx) {
     // ・前回とサイズが同じなら無視
     let logcount = 0;
     let logGroups = [];
-    response?.logGroups?.forEach(function ({ storedBytes, logGroupName }, idx){
+    response?.logGroups?.forEach(function ({ storedBytes, logGroupName }, idx) {
       newfuncs.funcs[logGroupName] = storedBytes;
       if (storedBytes === 0) return;
       if (oldfuncs.funcs[logGroupName] === storedBytes) return;
 
       logGroups.push(logGroupName);
       logcount += 1;
-      if(logGroups.length > 49){
-        const listEnd = (!param.nextToken && response.logGroups.length === (idx + 1));
+      if (logGroups.length > 49) {
+        const listEnd = !param.nextToken && response.logGroups.length === idx + 1;
         param.qcb({ ...queryLogObj, logGroups, listEnd });
         logGroups = [];
       }
     });
-    if(logGroups.length){
+    if (logGroups.length) {
       const listEnd = !param.nextToken;
       param.qcb({ ...queryLogObj, logGroups, listEnd });
     }
@@ -149,7 +150,7 @@ async function listLogGroup(queryLogObj, ctx) {
       await uploadFile(0, ctx, newfuncs);
       console.log('list END.');
     }
-  };
+  }
 
   // 選定の開始
   getFuncs({ ...queryLogObj, lfunc: getFuncs });
@@ -159,7 +160,7 @@ function queryLogExecute(queryLogObj) {
   console.log('queryLog start.');
 
   // クエリー開始
-  async function query(obj){
+  async function query(obj) {
     const { logGroup, queryString, startTime, endTime } = obj;
     const startQueryCommand = new StartQueryCommand({
       logGroupNames: logGroup, // クエリー対象のロググループ
@@ -171,10 +172,10 @@ function queryLogExecute(queryLogObj) {
 
     obj.queryId = queryId;
     obj.qth = setTimeout(obj.qfunc, 1000, obj);
-  };
+  }
 
   // クエリー結果待ち
-  async function waitLog(obj){
+  async function waitLog(obj) {
     const { queryId, qth } = obj;
     obj.qth = null;
     clearTimeout(qth);
@@ -192,7 +193,7 @@ function queryLogExecute(queryLogObj) {
         obj.resolve();
       }
     }
-  };
+  }
 
   // クエリーの実行
   query({ ...queryLogObj, qfunc: waitLog });
@@ -211,14 +212,16 @@ async function queryLambdaAllLog(ev, ctx) {
   startTime.setHours(startTime.getHours() - 24); // 24時間前
   const param = {
     // 対象時間範囲
-    startTime, endTime: new Date(),
+    startTime,
+    endTime: new Date(),
     // 対象のログ検索クエリ
     queryString: LOG_QUERY,
     // 対象の検索、実行結果の保存
-    qcb: queryLogExecute, wcb: writeLog,
+    qcb: queryLogExecute,
+    wcb: writeLog,
   };
 
-  await new Promise(function (ok, ng){
+  await new Promise(function (ok, ng) {
     param.resolve = ok;
     try {
       listLogGroup(param, ctx);
@@ -230,12 +233,36 @@ async function queryLambdaAllLog(ev, ctx) {
   return;
 }
 
-async function handler(event, context, callback){
+async function handler(event, context, callback) {
   return await queryLambdaAllLog(event, context, callback);
-};
+}
 
 // スクリプトを実行
-export {
-  handler,
-  queryLogs
-};
+export { handler, queryLogs };
+
+const aa = (
+  <button
+    class="yt-spec-button-shape-next yt-spec-button-shape-next--text yt-spec-button-shape-next--call-to-action yt-spec-button-shape-next--size-m yt-spec-button-shape-next--enable-backdrop-filter-experiment"
+    title=""
+    aria-label="はい"
+    aria-disabled="false"
+  >
+    <div class="yt-spec-button-shape-next__button-text-content">
+      <span
+        class="yt-core-attributed-string yt-core-attributed-string--white-space-no-wrap"
+        role="text"
+      >
+        はい
+      </span>
+    </div>
+    <yt-touch-feedback-shape style="border-radius: inherit;">
+      <div
+        aria-hidden="true"
+        class="yt-spec-touch-feedback-shape yt-spec-touch-feedback-shape--touch-response"
+      >
+        <div class="yt-spec-touch-feedback-shape__stroke"></div>
+        <div class="yt-spec-touch-feedback-shape__fill"></div>
+      </div>
+    </yt-touch-feedback-shape>
+  </button>
+);
