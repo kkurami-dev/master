@@ -28,6 +28,6 @@ for item in "${items[@]}" ; do
         exit 1;
     esac
 
-    aws s3 cp ./$item s3://$BUCKET/$item \
+    aws s3 cp ./src/$item s3://$BUCKET/$item \
         --content-type $type
 done
