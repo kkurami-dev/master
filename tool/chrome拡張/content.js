@@ -3,119 +3,115 @@
  *   https://qiita.com/MeowMauPaws/items/e2310de1f122ac6430b0
  *   https://www.youtube.com/watch?v=N4BxnNLwZ5Q&list=RDN4BxnNLwZ5Q&start_radio=1
  *
-
- ゆうつべの広告スキップボタン部品
- aria-label="スポンサー" があると宣伝中
+ * ゆうつべの広告スキップボタン部品
+ * aria-label="スポンサー" があると宣伝中と判断しミュート、スキップ押下
+ *
+ * 富士通, ASUS, NETGEAR, Mikrotik, Starlink
+ *
  */
-const hostName = location.hostname;
-const subDomain = hostName.split('.')[0];
-const SKIPTAG = "ytp-skip-ad-button";
-
-const tmpStoped = '動画が一時停止されました。続きを視聴しますか？';
+const SKIPTAG1 = ".ytp-skip-ad";
+const SKIPTAG2 = ".ytp-skip-ad-button";
+const tmpStoped = "動画が一時停止されました。続きを視聴しますか？";
 
 // 動画か音楽かで探すIDを変更
-const returnPlayerId = (v) => {
-  switch (v) {
-  case 'music':
-    return 'player';
-    break;
-  case 'www':
-  default:
-    return 'ytd-player';
-    break;
+const returnPlayerId = () => {
+  const hostName = location.hostname;
+  const subDomain = hostName.split(".")[0];
+  switch (subDomain) {
+    case "music":
+      return "player";
+      break;
+    case "www":
+    default:
+      return "ytd-player";
+      break;
   }
 };
 
-const clickSkipButton = (root) => {
-  const sponsor = document.querySelector('[aria-label="スポンサー"]');
-  const skip = root.getElementsByClassName(SKIPTAG);
-  if(skip === null || sponsor === null){
-    clickMuteButton(0, 1);
+const isMusicSponsor = (root) => {
+  const sponsor = document.querySelector('.badge-style-type-ad-stark');
+  if(!sponsor) return false;
+  const flg = sponsor.hasAttribute("hidden");
+  return !flg;
+}
+const isVidoSponsor = (root) => {
+  const sponsor = root.querySelector('[aria-label="スポンサー"]');
+  if(!sponsor) return false;
+
+  const sponsorHtm = sponsor.innerHTML === "スポンサー";
+  const sponsorTxt = sponsor.innerText === "スポンサー";
+  return sponsorHtm && sponsorTxt;
+}
+const isSponsor = (root) => {
+  if (returnPlayerId() === "player") {
+    return isMusicSponsor(root);
+  }
+  return isVidoSponsor(root);
+}
+
+const getMuteButton = (root) => {
+  // Youtube Music
+  const muteButton3 = document.getElementById("expand-volume");
+  if (muteButton3) {
+    const muteButton4 = muteButton3.querySelector("button");
+    return muteButton4;
+  }
+  
+  const muteButton1 = root.querySelector(".ytp-mute-button.ytp-button");
+  if (muteButton1) return muteButton1;
+
+  const div = root.querySelector(".ytp-mute-button");
+  if (!div) return null;
+  const muteButton2 = div.querySelector("button");
+  return muteButton2;
+};
+
+const isMute = (root) => {
+  const volume1 = document.getElementById("expand-volume-slider");
+  if (volume1){
+    return volume1.ariaValueNow === "0";
+  }
+
+  const volume2 = root?.dataset?.tooltipTitle?.startsWith("ミュート解除")
+  return volume2 !== null;
+}
+
+const clickMuteButton = (action, idx, root) => {
+  const muteButton = getMuteButton(root);
+  if (isMute()) {
+    if (action === 0) {
+      muteButton?.click();
+    }
+  } else if (muteButton) {
+    if (action === 1) {
+      muteButton?.click();
+    }
+  }
+};
+
+const playerId = returnPlayerId();
+const intervalFunc = () => {
+  const root = document.getElementById(playerId);
+  if (root === null) {
     return;
   }
-  //console.log('tvc sk', skip, 'sp', sponsor);
-  if (skip[0] || sponsor[0]) {
-    clickMuteButton(1, 2);
+
+  const sponsor = isSponsor(root);
+  if (!sponsor) {
+    clickMuteButton(0, 1, root);
+    return;
+  }
+  if (sponsor) {
+    clickMuteButton(1, 2, root);
   } else {
-    clickMuteButton(0, 3);
+    clickMuteButton(0, 3, root);
   }
 };
-
-const clickMuteButton = (action, idx) => {
-  const muteButton = document.querySelector(".ytp-mute-button.ytp-button");
-  //console.log('tvc mute', action, muteButton.dataset.tooltipTitle);
-  if(muteButton?.dataset?.tooltipTitle?.startsWith('ミュート解除')){
-    if(action === 0){
-      const res = muteButton.click();
-      console.log('tvc mute off click',  res, idx );
-    }
-  } else if(muteButton){
-    if(action === 1){
-      const res = muteButton.click();
-      console.log('tvc mute on click',  res, idx );
-    }
-  }
-};
-
-const isMute = () => {
-  const muteButton = document.querySelector(".ytp-mute-button.ytp-button");
-  if (muteButton) {
-    const titleText = muteButton.getAttribute('title');
-    const ariaLabel = muteButton.getAttribute('aria-label');
-    // マウスホバーの状態によってtitleText/ariaLabelどちらが存在するか変わる。存在する方を使う
-    const labelText = titleText || ariaLabel;
-    if (labelText) {
-      return labelText.includes('解除');
-    } else {
-      console.error('Both title and aria-label attributes are not present');
-    }
-  } else {
-    console.error('muteButton element is not found');
-  }
-  return false;
-};
-
-const obConfig = {
-  childList: true,
-  subtree: true
-};
-const observer = new MutationObserver((mutations) => {
-  //console.log('tvc m1', mutations);
-  mutations.forEach((mutation) => {
-    if (mutation.addedNodes.length && mutation.addedNodes[0].className === 'ytp-ad-player-overlay') {
-      console.log('add player-overlay');
-      if (isMute()) {
-        return;
-      }
-
-      clickMuteButton(1, 4);
-    };
-    // 特定のノード(広告)が削除された場合の処理
-    if (mutation.removedNodes.length && mutation.removedNodes[0].className === 'ytp-ad-player-overlay') {
-      console.log('remove player-overlay');
-      if (!isMute()) {
-        return;
-      }
-
-      clickMuteButton(0, 5);
-    }
-  });
-});
-
-const playerId = returnPlayerId(subDomain);
-const intervalFunc = () => {
-  if (document.getElementById(playerId) != null) {
-    const obTarget = document.getElementById(playerId);
-    observer.observe(obTarget, obConfig);
-    clickSkipButton(obTarget);
-    //clearInterval(initInterval);
-  }
-}
 
 const initInterval = setInterval(() => {
   try {
     intervalFunc();
-  } catch(err){
-    console.error('tvc', err);
+  } catch (err) {
+    console.error("tvc", err);
   }
 }, 1000);
