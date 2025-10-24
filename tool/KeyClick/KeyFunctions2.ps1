@@ -1,53 +1,93 @@
 #
 # 共通関数を使った操作関連
 #
-function Global:TAB1ON {
+function Global:TAB1-ON {
     Param([int]$max)
     $count = 1
 
-    $ontab = checkClip -key "TAB1"
+    $ontab = check-Clip -key "TAB1"
     while($ontab -eq 1 -and $count -lt $max) {
         Start-Sleep -Milliseconds 100
-        $ontab = checkClip -key "TAB1"
+        $ontab = check-Clip -key "TAB1"
         $count += 100
     }
 
     return $ontab
 }
 
-function Global:StartCheck {
-    sendTimePrint -Arg1 360 -Arg2 "n"
-    if ((checkClip -key "ACTOK") -ne 1) {
-        Start-Sleep -Milliseconds 200
-    } elseif ((checkClip -key "TAB0") -ne 1) {
-        sendKeyCode -name "TAB" -wait 200
-        Start-Sleep -Milliseconds 100
-    } elseif ((checkClip -key "TAB1") -ne 1) {
-        if ((checkClip -key "SUBHPok") -ne 1) {
-            return
-        }
-        sendMouseLeft -posname "tab-update"
-        Start-Sleep -Milliseconds 100
-        sendMouseLeft -posname "tab-1"
-        Start-Sleep -Milliseconds 50
-        if ((checkClip -key "HPOK") -eq 1) {
-            # 戦闘開始
-            sendMouseLeft -posname "tab-1"
-            return
-        } elseif ((checkClip -key "HPNG") -eq 1) {
-            # 戦闘保留
-            sendMouseRight
-            Start-Sleep -Milliseconds 5000
-        } else {
-            # 敵選択できなかった
-            sendKeyCode -name "UP" -wait 400
-            sendKeyCode -name "DOWN" -wait 400
-            Start-Sleep -Milliseconds 500
-        }
-    } else {
-        # 戦闘中
-        return
+function Global:Start-Check([int]$fast) {
+    $stopLine = Get-Content "data\stop.txt" -Tail 1
+    if ($stopLine -eq 1 -or (check-Clip -key "ACTOK") -ne 1) {
+        # 操作できない状態
+        Start-Sleep -Milliseconds 3000
+        $ErrorActionPreference = "SilentlyContinue"
+        return -1
     }
-    $ErrorActionPreference = "SilentlyContinue"
-    throw "終了"
+    if ((check-Clip -key "TAB0") -ne 1) {
+        # TAB表示していない
+        send-KeyStr -Arg1 "f"
+        send-MouseRight
+        send-KeyCode -name "TAB" -wait 300
+        return -2
+    }
+
+    if ((check-Clip -key "TAB1") -eq 1) {
+        # 戦闘中
+        send-MouseLeft -posname "tab-1"
+        return 1
+    }
+
+    send-MouseLeft -posname "tab-update"
+    Start-Sleep -Milliseconds 30
+
+    $res = 0
+    if ((check-Clip -key "MOB01") -ne 1) {
+        # 先頭がモブではない
+        send-KeyCode -name "DOWN" -wait 200
+        $res = -3
+    } elseif ((check-Clip -key "TAB1") -eq 1) {
+        # 攻撃を受けている
+        send-MouseLeft -posname "tab-1"
+        send-KeyStr -Arg1 "f"
+        return 2
+    } elseif ((check-Clip -key "SUBHPok") -ne 1) {
+        # 仲間のHP低下で戦闘保留
+        $res = -4
+    } elseif ((check-Clip -key "HPOK") -eq 1) {
+        # 戦闘開始
+        send-MouseRight
+        Start-Sleep -Milliseconds 20
+        send-MouseLeft -posname "tab-1"
+        if ($fast -is [int]) {
+            send-KeyStr -Arg1 "f"
+        } else {
+            Start-Sleep -Milliseconds 100
+            send-KeyStr -Arg1 "f"
+            Start-Sleep -Milliseconds 100
+        }
+        return 3
+    } elseif ((check-Clip -key "HPNG") -eq 1) {
+        # HP低下で戦闘保留
+        $lastLine = Get-Content "data\log.txt" -Tail 1
+        if ( $lastLine -ne -5 ) {
+            Start-Sleep -Milliseconds 500
+            send-KeyStr -Arg1 "x"
+        }
+        Start-Sleep -Milliseconds 1000
+        return -5
+    } else {
+        # 敵選択できなかった
+        # send-MouseLeft -posname "tab-1"
+        # send-KeyCode -name "UP" -wait 400
+        # send-KeyCode -name "DOWN" -wait 400
+        send-MouseRight
+        Start-Sleep -Milliseconds 100
+        send-KeyStr -Arg1 "f"
+        Start-Sleep -Milliseconds 100
+        return -6
+    }
+
+    Start-Sleep -Milliseconds 500
+    send-MouseRight
+    return $res
 }

@@ -55,8 +55,9 @@ public class FastBWCapture
 }
 "@ -ReferencedAssemblies "System.Drawing.dll","System.Windows.Forms.dll","System.Threading.Tasks.dll"
 
+[System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
 
-Function getScreenClip2{
+Function Global:Get-ScreenClip{
     Param ([int]$x, [int]$y, [int]$width, [int]$height, $name, $posname)
     if ($posname -is [string]) {
         if ($posname -eq "tab-1") {
@@ -66,7 +67,6 @@ Function getScreenClip2{
             $height = 10
         }
     }
-    [System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
     $file = "{0}_{1}x{2}x{3}x{4}.png" -f $name, $x, $y, $width, $height
     $output = "$currentPath\data\$file"
 

@@ -69,7 +69,7 @@ Add-Type -AssemblyName System.Drawing.Common
 $KEYEVENTF_KEYUP = 0x2
 [System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
 
-Function Global:sendKeyStr {
+Function Global:send-KeyStr {
     Param($Arg1, $nowait)
     [Windows.Forms.SendKeys]::SendWait($Arg1)
     if ($nowait -is [int]) {
@@ -86,7 +86,7 @@ $KEY_CODE = @{
     "RIGHT" = 0x27
     "DOWN" = 0x28
 }
-Function Global:sendKeyCode {
+Function Global:send-KeyCode {
     Param($vk_key, $wait, $name)
 
     if ($name -is [string]) {
@@ -98,7 +98,7 @@ Function Global:sendKeyCode {
     [Keyboard]::keybd_event($vk_key, 0, $KEYEVENTF_KEYUP, 0)
 }
 
-Function Global:sendMouseLeft {
+Function Global:send-MouseLeft {
     Param($posx, $posy, $posname)
 
     if ($posname -is [string]) {
@@ -115,14 +115,14 @@ Function Global:sendMouseLeft {
     Start-Sleep -Milliseconds 50
 }
 
-Function Global:sendMouseRight {
+Function Global:send-MouseRight {
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTDOWN, 0, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 100
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTUP, 0, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 50
 }
 
-Function Global:sendTimeKeys {
+Function Global:send-TimeKeys {
     Param($time, $key)
     $mit = (Get-Date).Minute
     $s = (Get-Date).Second
@@ -138,7 +138,7 @@ Function Global:sendTimeKeys {
     return 1
 }
 
-Function Global:sendTimePrint {
+Function Global:send-TimePrint {
     Param($Arg1, $Arg2)
     $mit = (Get-Date).Minute
     $s = (Get-Date).Second
@@ -166,7 +166,7 @@ $contrastTable = @(
         [byte]([Math]::Max(0, [Math]::Min(255, $v)))
     }
 )
-Function Global:getScreenClip{
+Function Global:get-ScreenClip{
     Param ([int]$x, [int]$y, [int]$width, [int]$height, $name, $posname)
     if ($posname -is [string]) {
         if ($posname -eq "tab-1") {
@@ -214,8 +214,7 @@ function Get-FileMD5($file) {
     return ([BitConverter]::ToString($hashBytes) -replace "-", "")
 }
 
-
-Function Global:checkClip{
+Function Global:check-Clip{
     Param ([string]$key, $okAct, $ngAct, [int]$time, [int]$wait, [int]$tmpDel)
 
     $fileName = ""
@@ -229,7 +228,7 @@ Function Global:checkClip{
         return 0
     }
     $fileName -match "_(\d+)x(\d+)x(\d+)x(\d+)\." | Out-Null
-    $Tmpfile = (getScreenClip -x $matches[1] -y $matches[2] -width $matches[3] -height $matches[4] -name "TMP-$key")
+    $Tmpfile = (get-ScreenClip -x $matches[1] -y $matches[2] -width $matches[3] -height $matches[4] -name "TMP-$key")
 
     # ハッシュ値の取得
     $hash1 = Get-FileMD5 $Tmpfile
@@ -237,16 +236,16 @@ Function Global:checkClip{
     $ret = 0
     if ($hash1 -eq $hash2) {
         if ($okAct -is [int]) {
-            sendKeyCode -vk_key $okAct -wait $wait
+            send-KeyCode -vk_key $okAct -wait $wait
         } elseif ($okAct -is [string]) {
-            sendTimeKeys -key $okAct -time $time
+            send-TimeKeys -key $okAct -time $time
         }
         $ret = 1
     } else {
         if ($ngAct -is [int]) {
-            sendKeyCode -vk_key $ngAct -wait $wait
+            send-KeyCode -vk_key $ngAct -wait $wait
         } elseif ($ngAct -is [string]) {
-            sendTimeKeys -key $ngAct -time $time
+            send-TimeKeys -key $ngAct -time $time
         }
         $ret = 2
     }
@@ -256,3 +255,31 @@ Function Global:checkClip{
     }
     return $ret
 }
+
+Function Global:write-Log {
+    param ($msg, [int]$init, $Lf)
+    $setting = "data\stop.txt"
+    $logpath = "data\log.txt"
+
+    $stopLine = Get-Content $setting -Tail 1
+    if ($stopLine -is [int] -and $stopLine -eq 2){
+        if ($PSBoundParameters.ContainsKey("Lf")){
+            Write-Host $msg
+        } else {
+            Write-Host $msg -NoNewline
+        }
+    }
+
+    if ($init -is [int] -and $init -eq 1){
+        $msg | Out-File -FilePath $logpath
+        $exists = Test-Path $setting
+        if ($exists) {
+        } else {
+            0 | Out-File -FilePath $setting
+        }
+    } else {
+        $msg | Out-File -FilePath $logpath -Append
+    }
+}
+
+write-Log "s" -init 1

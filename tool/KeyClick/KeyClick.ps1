@@ -1,75 +1,57 @@
-$rand = Get-Random -Minimum 1 -Maximum 20
+# ACTOK or "data/stop.txt" に 1 が書かれていると何もしない
 
-# $sw = [System.Diagnostics.Stopwatch]::StartNew()
-# $let = getScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL$rand"
-# $sw.Stop()
-# Write-Host ("{0}" -f $sw.ElapsedMilliseconds)
-
-# WAIT
-# sendKeyStr -Arg1 "f"
-# Start-Sleep -Milliseconds 80
-# sendKeyStr -Arg1 "f" -nowait 1
-# Start-Sleep -Milliseconds 200
-# return
-
-# $key = "HPNG"
-# if ((checkClip -key $key) -ne 1) {
-#     $ret = checkClip -key $key -tmpDel 1
-# }
-
-# $sw.Stop()
-# Write-Host ("{0}" -f $sw.ElapsedMilliseconds)
-
-#return
-
-# Write-Host "." -NoNewline
-
-# Start-Sleep -Milliseconds 500
-# return
-
-###
-# sendKeyStr -Arg1 "f"
-# sendKeyStr -Arg1 "f" -nowait 1
+# Write-Host "x" -NoNewline
 # $rand = Get-Random -Minimum 1 -Maximum 20
-# if ($rand -ge 15) {
-#     sendKeyCode -name "VK_A" -wait 400
-# } else {
-#     Start-Sleep -Milliseconds 200
+
+# Start-Sleep -Milliseconds 3000
+# return
+
+# $capkey = "HPNG-${rand}"
+#$capkey = "HPNG"
+#Remove-Item "data\HPNG-*.png"
+# Remove-Item "data\${capkey}*.png"
+# $let = get-ScreenClip -x 1520 -y 1380 -width 10 -height 20 -name $capkey
+# if ((check-Clip -key $capkey) -ne 1) {
+#    $ret = check-Clip -key $capkey -tmpDel 1
 # }
 # return
 
-# Full
-# $rand = Get-Random -Minimum 1 -Maximum 20
-# getScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL$rand"
-# getScreenClip -x 1312 -y 1440 -width 10 -height 15 -name "TMP-SUB$rand"
-# if ((checkClip -key "MP5") -eq 1){
-#     sendKeyCode -name "TAB" -wait 300
-# }
-#Remove-Item data\FULL*1824.png
-# Remove-Item data\SUB{*.png
-# Remove-Item data\TMP_*.png
+$ss = Start-Check
+if ($ss -lt 0){
+    write-Log "$ss"
+    return
+}
 
-StartCheck
+if ($ss -eq 3) {
+    $ss = $ss + 0.1
+    send-KeyStr -Arg1 "f"
+}
 
-#Start-Sleep -Milliseconds 300
-#return
-
-sendKeyStr -Arg1 "f"
-Start-Sleep -Milliseconds 50
-sendKeyStr -Arg1 "f" -nowait 1
-Start-Sleep -Milliseconds 50
+if ((check-Clip -key "MP2") -eq 1) {
+    $ss = $ss + 0.01
+    send-KeyStr -Arg1 "1"
+}
+write-Log "$ss"
 return
 
-$ontab = TAB1ON( 200 )
-
+$ontab = TAB1-ON( 200 )
 if ($ontab -ne 1) {
     return
-} elseif ((checkClip -key "MP5") -eq 1) {
-    sendKeyStr -Arg1 "1"
+} elseif ((check-Clip -key "MP5") -eq 1) {
+    send-KeyStr -Arg1 "1"
     $ontab = TAB1ON( 2000 )
 } else {
-    # MP回復
-    sendKeyStr -Arg1 "e"
+    send-KeyStr -Arg1 "e"
     Start-Sleep -Milliseconds 2200
-    sendMouseLeft -posname "tab-1"
+    send-MouseLeft -posname "tab-1"
 }
+return
+
+# $rand = Get-Random -Minimum 1 -Maximum 20
+# $sw = [System.Diagnostics.Stopwatch]::StartNew()
+# $let = get-ScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL$rand"
+# $sw.Stop()
+# write-Log ("{0}" -f $sw.ElapsedMilliseconds)
+
+# write-Log "."
+# Remove-Item data\FULL*1824.png
