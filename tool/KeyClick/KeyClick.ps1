@@ -1,5 +1,7 @@
 # ACTOK or "data/stop.txt" に 1 が書かれていると何もしない
 
+#send-KeyCode -name "TAB" -wait 300
+
 # Write-Host "x" -NoNewline
 # $rand = Get-Random -Minimum 1 -Maximum 20
 
@@ -22,14 +24,18 @@ if ($ss -lt 0){
     return
 }
 
-if ($ss -eq 3) {
-    $ss = $ss + 0.1
+if ($ss -eq 3 -or $ss -eq 4) {
+    $ss = $ss + 0.001
+    #send-MouseLeft -posname "tab-1"
     send-KeyStr -Arg1 "f"
 }
 
 if ((check-Clip -key "MP2") -eq 1) {
-    $ss = $ss + 0.01
+    $ss = $ss + 0.0001
     send-KeyStr -Arg1 "1"
+    Start-Sleep -Milliseconds 50
+    send-KeyStr -Arg1 "f"
+    #send-MouseLeft -posname "tab-1"
 }
 write-Log "$ss"
 return

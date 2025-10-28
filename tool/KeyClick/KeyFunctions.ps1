@@ -261,6 +261,7 @@ Function Global:write-Log {
     $setting = "data\stop.txt"
     $logpath = "data\log.txt"
 
+    # コンソールへの出力状態判定
     $stopLine = Get-Content $setting -Tail 1
     if ($stopLine -is [int] -and $stopLine -eq 2){
         if ($PSBoundParameters.ContainsKey("Lf")){
@@ -271,7 +272,14 @@ Function Global:write-Log {
     }
 
     if ($init -is [int] -and $init -eq 1){
-        $msg | Out-File -FilePath $logpath
+        $exists = Test-Path $logpath
+        if ($exists) {
+            $tail = Get-Content $logpath -Tail 1
+            $tail | Out-File -FilePath $logpath
+        } else {
+            $msg | Out-File -FilePath $logpath
+        }
+
         $exists = Test-Path $setting
         if ($exists) {
         } else {

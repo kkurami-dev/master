@@ -17,6 +17,8 @@ function Global:TAB1-ON {
 
 function Global:Start-Check([int]$fast) {
     $stopLine = Get-Content "data\stop.txt" -Tail 1
+    $lastLine = Get-Content "data\log.txt" -Tail 1
+    $sstr = $lastLine.Substring(0,1)
     if ($stopLine -eq 1 -or (check-Clip -key "ACTOK") -ne 1) {
         # 操作できない状態
         Start-Sleep -Milliseconds 3000
@@ -33,12 +35,16 @@ function Global:Start-Check([int]$fast) {
 
     if ((check-Clip -key "TAB1") -eq 1) {
         # 戦闘中
-        send-MouseLeft -posname "tab-1"
+        if ($sstr -ne 1 -and $sstr -ne 3) {
+            send-MouseLeft -posname "tab-1"
+        }
         return 1
     }
 
-    send-MouseLeft -posname "tab-update"
-    Start-Sleep -Milliseconds 30
+    if ($sstr -ne 3 -and $sstr -ne 4){
+        send-MouseLeft -posname "tab-update"
+        Start-Sleep -Milliseconds 30
+    }
 
     $res = 0
     if ((check-Clip -key "MOB01") -ne 1) {
@@ -54,22 +60,36 @@ function Global:Start-Check([int]$fast) {
         # 仲間のHP低下で戦闘保留
         $res = -4
     } elseif ((check-Clip -key "HPOK") -eq 1) {
-        # 戦闘開始
-        send-MouseRight
-        Start-Sleep -Milliseconds 20
-        send-MouseLeft -posname "tab-1"
-        if ($fast -is [int]) {
-            send-KeyStr -Arg1 "f"
-        } else {
-            Start-Sleep -Milliseconds 100
-            send-KeyStr -Arg1 "f"
-            Start-Sleep -Milliseconds 100
+        [int]$istr = $lastLine.Substring(2,2)
+        if ($istr -gt 20) {
+            send-MouseRight
+            send-KeyCode -name "UP" -wait 500
+            send-KeyCode -name "DOWN" -wait 500
+            send-MouseLeft -posname "tab-1"
+            $sstr = 3
         }
+        if ($sstr -eq 3) {
+            send-KeyStr -Arg1 "f"
+            return 4.01
+        }
+        if ($sstr -eq 4) {
+            # 戦闘開始後の移動中など
+            [double]$astr = $lastLine.Substring(0,4)
+            $lstr = $astr + 0.01
+            send-KeyStr -Arg1 "f"
+            return $lstr
+        }
+
+        # 戦闘開始
+        #send-MouseRight
+        send-MouseLeft -posname "tab-1"
+        send-KeyStr -Arg1 "f"
+        Start-Sleep -Milliseconds 30
+        send-KeyStr -Arg1 "f"
         return 3
     } elseif ((check-Clip -key "HPNG") -eq 1) {
-        # HP低下で戦闘保留
-        $lastLine = Get-Content "data\log.txt" -Tail 1
-        if ( $lastLine -ne -5 ) {
+        # HP 低下で戦闘保留
+        if ($lastLine -ne -5) {
             Start-Sleep -Milliseconds 500
             send-KeyStr -Arg1 "x"
         }
@@ -80,7 +100,7 @@ function Global:Start-Check([int]$fast) {
         # send-MouseLeft -posname "tab-1"
         # send-KeyCode -name "UP" -wait 400
         # send-KeyCode -name "DOWN" -wait 400
-        send-MouseRight
+        #send-MouseRight
         Start-Sleep -Milliseconds 100
         send-KeyStr -Arg1 "f"
         Start-Sleep -Milliseconds 100
@@ -88,6 +108,6 @@ function Global:Start-Check([int]$fast) {
     }
 
     Start-Sleep -Milliseconds 500
-    send-MouseRight
+    #send-MouseRight
     return $res
 }

@@ -12,6 +12,6 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File %~dp0\KeyClickStart.ps1
 ::winget install --id Microsoft.PowerShell -e
 
 ::echo .
-SET /P ="." < NUL
+::SET /P ="." < NUL
 
 GOTO :LOOP
