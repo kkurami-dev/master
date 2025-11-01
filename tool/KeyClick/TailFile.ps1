@@ -12,7 +12,7 @@ Write-Host "ŠÄŽ‹ŠJŽn: $file (Ctrl+C‚Å’âŽ~) $lastSize, $lastTime"
 
 while ($true) {
     #Start-Sleep -Seconds 2
-    Start-Sleep -Milliseconds 200
+    Start-Sleep -Milliseconds 100
     try {
         $item = Get-Item $file
         $currentTime = $item.LastWriteTime

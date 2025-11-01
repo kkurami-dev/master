@@ -17,6 +17,8 @@ public class MouseSimulator {
     [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
     public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
 
+    public const int LEFTDOWN  = 0x0002;
+    public const int LEFTUP    = 0x0004;
     public const int RIGHTDOWN = 0x0008;
     public const int RIGHTUP   = 0x0010;
 }
@@ -65,9 +67,13 @@ public class MouseInput {
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Drawing.Common
+Add-Type -AssemblyName System.Runtime
 
 $KEYEVENTF_KEYUP = 0x2
 [System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
+
+$setting = "data\stop.txt"
+$logpath = "data\log.txt"
 
 Function Global:send-KeyStr {
     Param($Arg1, $nowait)
@@ -104,18 +110,27 @@ Function Global:send-MouseLeft {
     if ($posname -is [string]) {
         if ($posname -eq "tab-update") {
             $posx = 1740
-            $posy = 790
-        }elseif ($posname -eq "tab-1") {
+            $posy = 800
+        } elseif ($posname -eq "tab-1") {
             $posx = 1740
-            $posy = 225
+            $posy = 240
+        } elseif ($posname -eq "tab-update") {
+            $posx = 1740
+            $posy = 700
+        } elseif ($posname -eq "tab-1") {
+            $posx = 1740
+            $posy = 145
         }
     }
-    
+
+    # [MouseSimulator]::mouse_event([MouseSimulator]::LEFTDOWN, 0, 0, 0, [UIntPtr]::Zero)
+    # Start-Sleep -Milliseconds 60
+    # [MouseSimulator]::mouse_event([MouseSimulator]::LEFTUP, 0, 0, 0, [UIntPtr]::Zero)
     [MouseInput]::ClickAt($posx, $posy)
     Start-Sleep -Milliseconds 50
 }
 
-Function Global:send-MouseRight {
+Function Global:Send-MouseRight {
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTDOWN, 0, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 100
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTUP, 0, 0, 0, [UIntPtr]::Zero)
@@ -151,22 +166,82 @@ Function Global:send-TimePrint {
     }
 }
 
-# 事前計算テーブル作成
-$contrast = 1.8 # 1.0 = 通常, >1.0 = コントラスト強調, <1.0 = 低下
+if (-not $Global:rTable) {
+    # 事前計算テーブル作成
+    $Global:contrast = 1.85 # 1.0 = 通常, >1.0 = コントラスト強調, <1.0 = 低下
 
-# R,G,Bそれぞれのグレースケール係数テーブル
-$rTable = @(0..255 | ForEach-Object { [byte]($_ * 0.3) })
-$gTable = @(0..255 | ForEach-Object { [byte]($_ * 0.59) })
-$bTable = @(0..255 | ForEach-Object { [byte]($_ * 0.11) })
+    # R,G,Bそれぞれのグレースケール係数テーブル
+    $Global:rTable = @(0..255 | ForEach-Object { [byte]($_ * 0.3) })
+    $Global:gTable = @(0..255 | ForEach-Object { [byte]($_ * 0.59) })
+    $Global:bTable = @(0..255 | ForEach-Object { [byte]($_ * 0.11) })
 
-# コントラスト補正テーブル
-$contrastTable = @(
-    0..255 | ForEach-Object {
-        $v = ((($_ / 255.0) - 0.5) * $contrast + 0.5) * 255.0
-        [byte]([Math]::Max(0, [Math]::Min(255, $v)))
-    }
-)
+    # コントラスト補正テーブル
+    $Global:contrastTable = @(
+        0..255 | ForEach-Object {
+            $v = ((($_ / 255.0) - 0.5) * $contrast + 0.5) * 255.0
+            [byte]([Math]::Max(0, [Math]::Min(255, $v)))
+        }
+    )
+    $Global:shpool = [System.Buffers.ArrayPool[byte]]::Shared
+    $Global:pixelFormat = [System.Drawing.Imaging.PixelFormat]::Format24bppRgb
+    $Global:imgRWf = [System.Drawing.Imaging.ImageLockMode]::ReadWrite
+    $Global:imageFormat = [System.Drawing.Imaging.ImageFormat]::Png
+    #$Global:MarshalCopy = [System.Runtime.InteropServices.Marshal]::GetMethod('Copy', [type[]]@([byte[]], [int], [intptr], [int]))
+}
+
 Function Global:get-ScreenClip{
+    Param ([int]$x, [int]$y, [int]$width, [int]$height, $name, $posname)
+    if ($posname -is [string]) {
+        if ($posname -eq "tab-1") {
+            $x = 2587
+            $y = 355
+            $width = 5
+            $height = 10
+        }
+    }
+    $file = "{0}_{1}x{2}x{3}x{4}.png" -f $name, $x, $y, $width, $height
+    $output = "$currentPath\data\$file"
+
+    # 画面キャプチャ
+    $Local:bitmap = New-Object System.Drawing.Bitmap $width, $height
+    $Private:graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $graphics.CopyFromScreen($x, $y, 0, 0, $bitmap.Size)
+
+    # グレースケール変換（ピクセルごと処理）
+    $Private:rect = [System.Drawing.Rectangle]::FromLTRB(0, 0, $width, $height)
+    $Local:bmpData = $bitmap.LockBits($rect, $imgRWf, $pixelFormat)
+    $Local:ptr = $bmpData.Scan0
+    $Local:bytes = [Math]::Abs($bmpData.Stride) * $Height
+    $Local:rgbValues = $Global:shpool.Rent($bytes)
+    try {
+        [System.Runtime.InteropServices.Marshal]::Copy($ptr, $rgbValues, 0, $bytes)
+        for ($Local:idx = 0; $idx -lt $bytes; $idx += 3) {
+            $Private:rgb_b = $rgbValues[$idx]
+            $Private:rgb_g = $rgbValues[$idx + 1]
+            $Private:rgb_r = $rgbValues[$idx + 2]
+            $Private:rgb_gray = $rTable[$rgb_r] + $gTable[$rgb_g] + $bTable[$rgb_b]
+
+            $Private:rgb_c = $contrastTable[$rgb_gray]
+            $rgbValues[$idx] = $rgb_c
+            $rgbValues[$idx + 1] = $rgb_c
+            $rgbValues[$idx + 2] = $rgb_c
+        }
+        [System.Runtime.InteropServices.Marshal]::Copy($rgbValues, 0, $ptr, $bytes)
+    }
+    finally {
+        $Global:shpool.Return($rgbValues)
+        $bitmap.UnlockBits($bmpData)
+    }
+
+    # 保存
+    $bitmap.Save($output, $imageFormat)
+
+    $graphics.Dispose()
+    $bitmap.Dispose()
+    return $file
+}
+
+Function Global:get-ScreenClip1{
     Param ([int]$x, [int]$y, [int]$width, [int]$height, $name, $posname)
     if ($posname -is [string]) {
         if ($posname -eq "tab-1") {
@@ -205,6 +280,10 @@ Function Global:get-ScreenClip{
 # MD5ハッシュを計算する関数
 function Get-FileMD5($file) {
     $path = "$currentPath\data\$file"
+    if (Test-Path $path){
+    } else {
+        return 0
+    }
 
     $md5 = [System.Security.Cryptography.MD5]::Create()
     $stream = [System.IO.File]::OpenRead($path)
@@ -219,7 +298,7 @@ Function Global:check-Clip{
 
     $fileName = ""
     Get-ChildItem -Path "$currentPath\data" -File | ForEach-Object {
-        if ($_.Name.StartsWith($key)) {
+        if ($_.Name.StartsWith("${key}_")) {
             $fileName = $_.Name
             return
         }
@@ -227,50 +306,49 @@ Function Global:check-Clip{
     if ($fileName -eq "") {
         return 0
     }
+    $hash1 = Get-FileMD5 $fileName
+
     $fileName -match "_(\d+)x(\d+)x(\d+)x(\d+)\." | Out-Null
     $Tmpfile = (get-ScreenClip -x $matches[1] -y $matches[2] -width $matches[3] -height $matches[4] -name "TMP-$key")
-
-    # ハッシュ値の取得
-    $hash1 = Get-FileMD5 $Tmpfile
-    $hash2 = Get-FileMD5 $fileName
-    $ret = 0
-    if ($hash1 -eq $hash2) {
-        if ($okAct -is [int]) {
-            send-KeyCode -vk_key $okAct -wait $wait
-        } elseif ($okAct -is [string]) {
-            send-TimeKeys -key $okAct -time $time
-        }
-        $ret = 1
-    } else {
-        if ($ngAct -is [int]) {
-            send-KeyCode -vk_key $ngAct -wait $wait
-        } elseif ($ngAct -is [string]) {
-            send-TimeKeys -key $ngAct -time $time
-        }
-        $ret = 2
-    }
-
+    $hash2 = Get-FileMD5 $Tmpfile
     if($tmpDel -ne 1) {
         Remove-Item "$currentPath\data\$Tmpfile"
     }
-    return $ret
+
+    $Local:ret = 0
+    1..4 | ForEach-Object {
+        if ($ret -ne 0) {
+            return
+        }
+        
+        if ($hash1 -eq $hash2) {
+            if ($okAct -is [int]) {
+                send-KeyCode -vk_key $okAct -wait $wait
+            } elseif ($okAct -is [string]) {
+                send-TimeKeys -key $okAct -time $time
+            }
+            $ret = 1
+        }
+
+        $sub_file = $fileName.Replace("${key}", "${key}s$_" )
+        $hash1 = Get-FileMD5 $sub_file
+    }
+    if ($ret -ne 0) {
+        return $ret
+    }
+
+    if ($ngAct -is [int]) {
+        send-KeyCode -vk_key $ngAct -wait $wait
+    } elseif ($ngAct -is [string]) {
+        send-TimeKeys -key $ngAct -time $time
+    }
+    return 2
 }
 
 Function Global:write-Log {
     param ($msg, [int]$init, $Lf)
-    $setting = "data\stop.txt"
-    $logpath = "data\log.txt"
 
-    # コンソールへの出力状態判定
-    $stopLine = Get-Content $setting -Tail 1
-    if ($stopLine -is [int] -and $stopLine -eq 2){
-        if ($PSBoundParameters.ContainsKey("Lf")){
-            Write-Host $msg
-        } else {
-            Write-Host $msg -NoNewline
-        }
-    }
-
+    # 初期設定確認
     if ($init -is [int] -and $init -eq 1){
         $exists = Test-Path $logpath
         if ($exists) {
@@ -285,9 +363,46 @@ Function Global:write-Log {
         } else {
             0 | Out-File -FilePath $setting
         }
-    } else {
-        $msg | Out-File -FilePath $logpath -Append
+        return
     }
+
+    # コンソールへの出力状態判定
+    $stopLine = Get-Content $setting -Tail 1
+    if ($stopLine -is [int] -and $stopLine -eq 2){
+        if ($PSBoundParameters.ContainsKey("Lf")){
+            Write-Host $msg
+        } else {
+            Write-Host $msg -NoNewline
+        }
+    }
+    $msg | Out-File -FilePath $logpath -Append
+}
+
+Function Global:Get-LogWithNumber {
+    $lastLine = Get-Content $logpath -Tail 1
+    if (($lastLine -as [int]) -eq $null){
+        return @(-1, -1, -1)
+    }
+
+    $minus = 0
+    $dub = 0
+    $len = $lastLine.length
+    $lstr = 0
+    if ($lastLine -like "*-*") {
+        $minus = 1
+    }
+    if ($lastLine -like "*.*") {
+        $dub = 1
+    }
+    if ($dub -eq 1 -and $len -gt 3) {
+        if ($minus -eq 1) {
+            $lstr = $lastLine.Substring(3,2)
+        } else {
+            $lstr = $lastLine.Substring(2,2)
+        }
+    }
+
+    return @([double]$lastLine, [int]$lastLine, [int]$lstr)
 }
 
 write-Log "s" -init 1

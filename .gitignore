@@ -28,3 +28,5 @@ yarn-error.log*
 */node_modules
 
 */package-lock.json
+/tool/KeyClick/Test.ps1
+/tool/KeyClick/data
