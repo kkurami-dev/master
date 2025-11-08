@@ -30,3 +30,5 @@ yarn-error.log*
 */package-lock.json
 /tool/KeyClick/Test.ps1
 /tool/KeyClick/data
+Thumbs.db
+/tool/KeyClick/data*

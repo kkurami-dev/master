@@ -1,7 +1,7 @@
 #
-# ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã€ãƒã‚¦ã‚¹æ“ä½œã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒª
+# ƒL[ƒ{[ƒhAƒ}ƒEƒX‘€ì‚Ìƒ‰ƒCƒuƒ‰ƒŠ
 #
-Add-Type @"
+Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
 
@@ -44,7 +44,7 @@ public class MouseInput {
     static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
     [DllImport("user32.dll")]
-    static extern bool SetCursorPos(int X, int Y);
+    public static extern bool SetCursorPos(int X, int Y);
 
     const int INPUT_MOUSE = 0;
     const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
@@ -63,11 +63,38 @@ public class MouseInput {
         SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
     }
 }
-"@
+"@  -Language CSharp
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Drawing.Common
 Add-Type -AssemblyName System.Runtime
+
+# C# À‘•iParallel.For ‚ğg‚Á‚Äs‚²‚Æ‚Éˆ—j
+Add-Type -TypeDefinition @"
+using System;
+using System.Threading.Tasks;
+
+public static class ImgParallel {
+    // buf: BGR BGR ... (stride-aligned)
+    public static void GrayContrastParallel(byte[] buf, int stride, int width, int height,
+                                            byte[] rTable, byte[] gTable, byte[] bTable, byte[] contrastTable) {
+        Parallel.For(0, height, y => {
+            int rowStart = y * stride;
+            int end = rowStart + width * 3;
+            for (int i = rowStart; i < end; i += 3) {
+                byte b = buf[i];
+                byte g = buf[i + 1];
+                byte r = buf[i + 2];
+                int gray = rTable[r] + gTable[g] + bTable[b];
+                byte c = contrastTable[gray];
+                buf[i] = c;
+                buf[i + 1] = c;
+                buf[i + 2] = c;
+            }
+        });
+    }
+}
+"@ -Language CSharp
 
 $KEYEVENTF_KEYUP = 0x2
 [System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
@@ -75,7 +102,7 @@ $KEYEVENTF_KEYUP = 0x2
 $setting = "data\stop.txt"
 $logpath = "data\log.txt"
 
-Function Global:send-KeyStr {
+Function send-KeyStr {
     Param($Arg1, $nowait)
     [Windows.Forms.SendKeys]::SendWait($Arg1)
     if ($nowait -is [int]) {
@@ -92,7 +119,7 @@ $KEY_CODE = @{
     "RIGHT" = 0x27
     "DOWN" = 0x28
 }
-Function Global:send-KeyCode {
+Function send-KeyCode {
     Param($vk_key, $wait, $name)
 
     if ($name -is [string]) {
@@ -104,7 +131,7 @@ Function Global:send-KeyCode {
     [Keyboard]::keybd_event($vk_key, 0, $KEYEVENTF_KEYUP, 0)
 }
 
-Function Global:send-MouseLeft {
+Function send-MouseLeft {
     Param($posx, $posy, $posname)
 
     if ($posname -is [string]) {
@@ -130,14 +157,19 @@ Function Global:send-MouseLeft {
     Start-Sleep -Milliseconds 50
 }
 
-Function Global:Send-MouseRight {
+Function Set-MousePos {
+    Param($posx, $posy, $posname)
+    [MouseInput]::SetCursorPos($posx, $posy)
+}
+
+Function Send-MouseRight {
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTDOWN, 0, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 100
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTUP, 0, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 50
 }
 
-Function Global:send-TimeKeys {
+Function send-TimeKeys {
     Param($time, $key)
     $mit = (Get-Date).Minute
     $s = (Get-Date).Second
@@ -153,7 +185,7 @@ Function Global:send-TimeKeys {
     return 1
 }
 
-Function Global:send-TimePrint {
+Function send-TimePrint {
     Param($Arg1, $Arg2)
     $mit = (Get-Date).Minute
     $s = (Get-Date).Second
@@ -166,31 +198,43 @@ Function Global:send-TimePrint {
     }
 }
 
-if (-not $Global:rTable) {
-    # äº‹å‰è¨ˆç®—ãƒ†ãƒ¼ãƒ–ãƒ«ä½œæˆ
-    $Global:contrast = 1.85 # 1.0 = é€šå¸¸, >1.0 = ã‚³ãƒ³ãƒˆãƒ©ã‚¹ãƒˆå¼·èª¿, <1.0 = ä½ä¸‹
+if (-not $rTable) {
+    # –‘OŒvZƒe[ƒuƒ‹ì¬
+    $Global:contrast = 1.85 # 1.0 = ’Êí, >1.0 = ƒRƒ“ƒgƒ‰ƒXƒg‹­’², <1.0 = ’á‰º
 
-    # R,G,Bãã‚Œãã‚Œã®ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ä¿‚æ•°ãƒ†ãƒ¼ãƒ–ãƒ«
+    # R,G,B‚»‚ê‚¼‚ê‚ÌƒOƒŒ[ƒXƒP[ƒ‹ŒW”ƒe[ƒuƒ‹
     $Global:rTable = @(0..255 | ForEach-Object { [byte]($_ * 0.3) })
     $Global:gTable = @(0..255 | ForEach-Object { [byte]($_ * 0.59) })
     $Global:bTable = @(0..255 | ForEach-Object { [byte]($_ * 0.11) })
 
-    # ã‚³ãƒ³ãƒˆãƒ©ã‚¹ãƒˆè£œæ­£ãƒ†ãƒ¼ãƒ–ãƒ«
+    # ƒRƒ“ƒgƒ‰ƒXƒg•â³ƒe[ƒuƒ‹
     $Global:contrastTable = @(
         0..255 | ForEach-Object {
             $v = ((($_ / 255.0) - 0.5) * $contrast + 0.5) * 255.0
             [byte]([Math]::Max(0, [Math]::Min(255, $v)))
         }
     )
+    $threshold = 128
+    $Global:contrastTableB = @(
+        0..255 | ForEach-Object {
+            if ($_ -ge $threshold) {
+                [byte]255
+            } else {
+                [byte]0
+            }
+        }
+    )
+
     $Global:shpool = [System.Buffers.ArrayPool[byte]]::Shared
     $Global:pixelFormat = [System.Drawing.Imaging.PixelFormat]::Format24bppRgb
+    $Global:pixelFormat8 = [System.Drawing.Imaging.PixelFormat]::Format8bppIndexed
     $Global:imgRWf = [System.Drawing.Imaging.ImageLockMode]::ReadWrite
     $Global:imageFormat = [System.Drawing.Imaging.ImageFormat]::Png
     #$Global:MarshalCopy = [System.Runtime.InteropServices.Marshal]::GetMethod('Copy', [type[]]@([byte[]], [int], [intptr], [int]))
 }
 
-Function Global:get-ScreenClip{
-    Param ([int]$x, [int]$y, [int]$width, [int]$height, $name, $posname)
+Function get-ScreenClip{
+    Param ([int]$x, [int]$y, [int]$width, [int]$height, [string]$name, [string]$posname, [int]$mode)
     if ($posname -is [string]) {
         if ($posname -eq "tab-1") {
             $x = 2587
@@ -199,85 +243,67 @@ Function Global:get-ScreenClip{
             $height = 10
         }
     }
-    $file = "{0}_{1}x{2}x{3}x{4}.png" -f $name, $x, $y, $width, $height
+    $Local:ToContrastTable = $contrastTable
+    $Local:file = "{0}_{1}x{2}x{3}x{4}.png" -f $name, $x, $y, $width, $height
+    if ($mode -eq 2){
+        $ToContrastTable = $contrastTableB
+        $file = "{0}_{1}x{2}x{3}x{4}x{5}.png" -f $name, $x, $y, $width, $height, $mode
+    }
     $output = "$currentPath\data\$file"
 
-    # ç”»é¢ã‚­ãƒ£ãƒ—ãƒãƒ£
-    $Local:bitmap = New-Object System.Drawing.Bitmap $width, $height
-    $Private:graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    $graphics.CopyFromScreen($x, $y, 0, 0, $bitmap.Size)
+    # Œ»İˆÊ’u‚Éƒ}ƒEƒXƒJ[ƒ\ƒ‹‚ª‚ ‚ê‚Î‚¸‚ç‚·
+    $NowPos = [System.Windows.Forms.Cursor]::Position
+    $NowX = $NowPos.X / 0.66
+    $NowY = $NowPos.Y / 0.66
+    if (($x -lt $NowX -and $NowX -lt ($x + $width)) -or
+        ($y -lt $NowY -and $NowY -lt ($y + $height)))
+    {
+        $m_x = $NowPos.X + $width
+        $m_y = $NowPos.Y + $height
+        Set-MousePos -posx $m_x -posy $m_y
+        #write-Log "$file -> $NowPos -> $m_x x $m_y "
+        Start-Sleep -Milliseconds 60
+    }
+    #Start-Sleep -Milliseconds 100
 
-    # ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«å¤‰æ›ï¼ˆãƒ”ã‚¯ã‚»ãƒ«ã”ã¨å‡¦ç†ï¼‰
-    $Private:rect = [System.Drawing.Rectangle]::FromLTRB(0, 0, $width, $height)
-    $Local:bmpData = $bitmap.LockBits($rect, $imgRWf, $pixelFormat)
-    $Local:ptr = $bmpData.Scan0
-    $Local:bytes = [Math]::Abs($bmpData.Stride) * $Height
-    $Local:rgbValues = $Global:shpool.Rent($bytes)
+    # ‰æ–ÊƒLƒƒƒvƒ`ƒƒ
+    $Local:bmp = New-Object System.Drawing.Bitmap $width, $height
+    $Private:graphics = [System.Drawing.Graphics]::FromImage($bmp)
+    $graphics.CopyFromScreen($x, $y, 0, 0, $bmp.Size)
+    $graphics.Dispose()
+
+    # Œ´F‚Å•Û‘¶
+    if ($mode -eq 3){
+        $bmp.Save($output, $imageFormat)
+        $bmp.Dispose()
+        return $file
+    }
+
+    # ƒRƒ“ƒgƒ‰ƒXƒg•ÏŠ·
+    $Private:rect = New-Object System.Drawing.Rectangle 0,0,$width,$height
+    $bmpData = $bmp.LockBits($rect, $imgRWf, $pixelFormat)
     try {
-        [System.Runtime.InteropServices.Marshal]::Copy($ptr, $rgbValues, 0, $bytes)
-        for ($Local:idx = 0; $idx -lt $bytes; $idx += 3) {
-            $Private:rgb_b = $rgbValues[$idx]
-            $Private:rgb_g = $rgbValues[$idx + 1]
-            $Private:rgb_r = $rgbValues[$idx + 2]
-            $Private:rgb_gray = $rTable[$rgb_r] + $gTable[$rgb_g] + $bTable[$rgb_b]
+        $stride = $bmpData.Stride
+        $len = [Math]::Abs($stride) * $height
+        $buf = New-Object byte[] $len
+        [System.Runtime.InteropServices.Marshal]::Copy($bmpData.Scan0, $buf, 0, $len)
 
-            $Private:rgb_c = $contrastTable[$rgb_gray]
-            $rgbValues[$idx] = $rgb_c
-            $rgbValues[$idx + 1] = $rgb_c
-            $rgbValues[$idx + 2] = $rgb_c
-        }
-        [System.Runtime.InteropServices.Marshal]::Copy($rgbValues, 0, $ptr, $bytes)
+        [ImgParallel]::GrayContrastParallel(
+            $buf, $stride, $width, $height,
+            ($rTable), ($gTable), ($bTable), ($ToContrastTable))
+
+        [System.Runtime.InteropServices.Marshal]::Copy($buf, 0, $bmpData.Scan0, $len)
+    } finally {
+        $bmp.UnlockBits($bmpData)
     }
-    finally {
-        $Global:shpool.Return($rgbValues)
-        $bitmap.UnlockBits($bmpData)
-    }
+    $bmp.Save($output, $imageFormat)
+    $bmp.Dispose()
 
-    # ä¿å­˜
-    $bitmap.Save($output, $imageFormat)
-
-    $graphics.Dispose()
-    $bitmap.Dispose()
+    #write-Log "get-ScreenClip $file"
     return $file
 }
 
-Function Global:get-ScreenClip1{
-    Param ([int]$x, [int]$y, [int]$width, [int]$height, $name, $posname)
-    if ($posname -is [string]) {
-        if ($posname -eq "tab-1") {
-            $x = 2587
-            $y = 355
-            $width = 5
-            $height = 10
-        }
-    }
-    $file = "{0}_{1}x{2}x{3}x{4}.png" -f $name, $x, $y, $width, $height
-    $output = "$currentPath\data\$file"
-
-    # ç”»é¢ã‚­ãƒ£ãƒ—ãƒãƒ£
-    $bitmap = New-Object System.Drawing.Bitmap $width, $height
-    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    $graphics.CopyFromScreen($x, $y, 0, 0, $bitmap.Size)
-    $graphics.Dispose()
-
-    # ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«å¤‰æ›ï¼ˆãƒ”ã‚¯ã‚»ãƒ«ã”ã¨å‡¦ç†ï¼‰
-    for ($yy = 0; $yy -lt $height; $yy++) {
-        for ($xx = 0; $xx -lt $width; $xx++) {
-            $c = $bitmap.GetPixel($xx, $yy)
-            $gray = $rTable[$c.R] + $gTable[$c.G] + $bTable[$c.B]
-            $grayByte = $contrastTable[$gray]
-            $grayColor = [System.Drawing.Color]::FromArgb($grayByte, $grayByte, $grayByte)
-            $bitmap.SetPixel($xx, $yy, $grayColor)
-        }
-    }
-
-    # ä¿å­˜
-    $bitmap.Save($output, [System.Drawing.Imaging.ImageFormat]::Png)
-    $bitmap.Dispose()
-    return $file
-}
-
-# MD5ãƒãƒƒã‚·ãƒ¥ã‚’è¨ˆç®—ã™ã‚‹é–¢æ•°
+# MD5ƒnƒbƒVƒ…‚ğŒvZ‚·‚éŠÖ”
 function Get-FileMD5($file) {
     $path = "$currentPath\data\$file"
     if (Test-Path $path){
@@ -289,18 +315,18 @@ function Get-FileMD5($file) {
     $stream = [System.IO.File]::OpenRead($path)
     $hashBytes = $md5.ComputeHash($stream)
     $stream.Close()
-    # ãƒã‚¤ãƒˆé…åˆ—ã‚’16é€²æ•°æ–‡å­—åˆ—ã«å¤‰æ›
+    # ƒoƒCƒg”z—ñ‚ğ16i”•¶š—ñ‚É•ÏŠ·
     return ([BitConverter]::ToString($hashBytes) -replace "-", "")
 }
 
-Function Global:check-Clip{
+Function check-Clip{
     Param ([string]$key, $okAct, $ngAct, [int]$time, [int]$wait, [int]$tmpDel)
 
     $fileName = ""
     Get-ChildItem -Path "$currentPath\data" -File | ForEach-Object {
         if ($_.Name.StartsWith("${key}_")) {
             $fileName = $_.Name
-            return
+            return 0
         }
     }
     if ($fileName -eq "") {
@@ -308,33 +334,34 @@ Function Global:check-Clip{
     }
     $hash1 = Get-FileMD5 $fileName
 
-    $fileName -match "_(\d+)x(\d+)x(\d+)x(\d+)\." | Out-Null
-    $Tmpfile = (get-ScreenClip -x $matches[1] -y $matches[2] -width $matches[3] -height $matches[4] -name "TMP-$key")
+    if ($fileName -cmatch "_(\d+)x(\d+)x(\d+)x(\d+)x(\d+)\."){
+    } elseif ($fileName -cmatch "_(\d+)x(\d+)x(\d+)x(\d+)\."){
+        $matches[5] = 1
+    } else {
+        write-Log "no match $fileName"
+        return 0
+    }
+    $Tmpfile = (get-ScreenClip -x $matches[1] -y $matches[2] -width $matches[3] -height $matches[4] -name "TMP-$key" -posname "nop" -mode $matches[5])
     $hash2 = Get-FileMD5 $Tmpfile
     if($tmpDel -ne 1) {
-        Remove-Item "$currentPath\data\$Tmpfile"
+        Remove-Item "data\TMP-$key_*.png"
     }
 
-    $Local:ret = 0
-    1..4 | ForEach-Object {
-        if ($ret -ne 0) {
-            return
-        }
-        
+    for ($i = 1; $i -le 4; $i++) {
         if ($hash1 -eq $hash2) {
             if ($okAct -is [int]) {
                 send-KeyCode -vk_key $okAct -wait $wait
             } elseif ($okAct -is [string]) {
                 send-TimeKeys -key $okAct -time $time
             }
-            $ret = 1
+            return 1
         }
 
-        $sub_file = $fileName.Replace("${key}", "${key}s$_" )
+        $sub_file = $fileName.Replace("${key}", "${key}s$i" )
         $hash1 = Get-FileMD5 $sub_file
-    }
-    if ($ret -ne 0) {
-        return $ret
+        if ($hash1 -eq 0){
+            return 2
+        }
     }
 
     if ($ngAct -is [int]) {
@@ -342,13 +369,13 @@ Function Global:check-Clip{
     } elseif ($ngAct -is [string]) {
         send-TimeKeys -key $ngAct -time $time
     }
-    return 2
+    return 0
 }
 
-Function Global:write-Log {
+Function write-Log {
     param ($msg, [int]$init, $Lf)
 
-    # åˆæœŸè¨­å®šç¢ºèª
+    # ‰Šúİ’èŠm”F
     if ($init -is [int] -and $init -eq 1){
         $exists = Test-Path $logpath
         if ($exists) {
@@ -366,7 +393,7 @@ Function Global:write-Log {
         return
     }
 
-    # ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã¸ã®å‡ºåŠ›çŠ¶æ…‹åˆ¤å®š
+    # ƒRƒ“ƒ\[ƒ‹‚Ö‚Ìo—Íó‘Ô”»’è
     $stopLine = Get-Content $setting -Tail 1
     if ($stopLine -is [int] -and $stopLine -eq 2){
         if ($PSBoundParameters.ContainsKey("Lf")){
@@ -378,7 +405,7 @@ Function Global:write-Log {
     $msg | Out-File -FilePath $logpath -Append
 }
 
-Function Global:Get-LogWithNumber {
+Function Get-LogWithNumber {
     $lastLine = Get-Content $logpath -Tail 1
     if (($lastLine -as [int]) -eq $null){
         return @(-1, -1, -1)

@@ -2,11 +2,9 @@
 . "$($currentPath)\KeyFunctions.ps1"
 . "$($currentPath)\KeyFunctions2.ps1"
 
-#$Global:SpeedAVG = 0
-
 $count = 0
 while ($count -lt 200) {
-    .\KeyClick.ps1
+    .\KeyClick.ps1 $count
     $count++
 }
 

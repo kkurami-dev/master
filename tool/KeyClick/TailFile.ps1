@@ -1,6 +1,8 @@
 # 監視対象ファイルを指定
 [System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
-$file = "$currentPath\data\log.txt"
+$folder = "$currentPath\data"
+$fileName = "log.txt"
+$file = "$folder\$fileName"
 Write-Host $file
 
 # 初期状態を取得
@@ -12,7 +14,7 @@ Write-Host "監視開始: $file (Ctrl+Cで停止) $lastSize, $lastTime"
 
 while ($true) {
     #Start-Sleep -Seconds 2
-    Start-Sleep -Milliseconds 100
+    Start-Sleep -Milliseconds 80
     try {
         $item = Get-Item $file
         $currentTime = $item.LastWriteTime
@@ -28,10 +30,11 @@ while ($true) {
             $lastSize = $currentSize
 
             $lastLine = Get-Content $file -Tail 1
-            Write-Host ("[{0}] {1}" -f (Get-Date -Format "HH:mm:ss"), $lastLine)
+            Write-Host ("[{0}] {1}" -f (Get-Date -Format "HH:mm:ss.fff"), $lastLine)
         }
     }
     catch {
         Write-Warning "ファイルにアクセスできません: $_"
+        return
     }
 }
