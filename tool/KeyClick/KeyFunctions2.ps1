@@ -2,14 +2,28 @@
 # 共通関数を使った操作関連
 #
 function TAB1-ON {
-    Param([int]$max)
+    Param([int]$max = 3)
     $count = 1
 
-    $ontab = check-Clip -key "TAB1"
+    $ontab = check-Clip "TAB1"
+    while($ontab -ne 1 -and $count -lt $max) {
+        St-Sleep 30
+        $ontab = check-Clip "TAB1"
+        $count += 1
+    }
+
+    return $ontab
+}
+function TAB1-OFF {
+    Param([int]$max = 3, $msg)
+    $count = 1
+
+    $ontab = check-Clip "TAB1"
     while($ontab -eq 1 -and $count -lt $max) {
-        Start-Sleep -Milliseconds 100
-        $ontab = check-Clip -key "TAB1"
-        $count += 100
+        St-Sleep 30 $msg
+        $ontab = check-Clip "TAB1"
+        $count += 1
+        $msg = ""
     }
 
     return $ontab
@@ -29,33 +43,47 @@ function TAB1-ON {
 # x0x:
 #
 function War-StartConfirmation( $id ) {
-    $stopLine = Get-Content "data\stop.txt" -Tail 1
-    if ($stopLine -eq 0 -or (check-Clip -key "ACTOK") -ne 1) {
+    $stopLine = (Get-Content "data\stop.txt" -Tail 1)
+    $wsret = (check-Clip "ACTOK")
+    if ($stopLine -eq 0 -or $wsret -ne 1) {
         # 操作できない状態
         write-Log -1
-        Start-Sleep -Milliseconds 1000
+        St-Sleep 1000 "act, ${stopLine}, ${wsret}"
         return 1
     }
-    if ((check-Clip -key "TAB0") -ne 1) {
+    if ((check-Clip "TAB0") -ne 1) {
         # TAB表示していない
         Send-MouseRight
         send-KeyCode -name "TAB" -wait 300
-        if ((check-Clip -key "TAB1") -ne 1) {
+        if ((check-Clip "TAB1") -ne 1) {
             write-Log -2
             return 1
         }
     }
 
-    if ((check-Clip -key "MOB01") -ne 1) {
+    if ((check-Clip "MOB01") -ne 1) {
         # 直近が艇ではない
         send-MouseLeft -posname "tab-update"
-        if ((check-Clip -key "TAB1") -ne 1) {
+        if ((check-Clip "TAB1") -ne 1) {
             write-Log "-3.$id"
             return 1
         }
     }
-
     0
+}
+
+function Confirm-HpLow {
+    if ((check-Clip "HPOK") -ne 1) {
+        return 1
+    }
+    if ((check-Clip "SUB1HPok") -ne 1){
+        return 2
+    }
+    if ((check-Clip "SUB2HPok") -ne 1) {
+        return 3
+    }
+
+    return 0
 }
 
 function Confirm-Vitality {
@@ -64,12 +92,10 @@ function Confirm-Vitality {
         if ((War-StartConfirmation 2) -eq 1) {
             return 1
         }
-        if ((check-Clip -key "TAB1") -eq 1 -or
-            ((check-Clip -key "HPOK") -eq 1 -and (check-Clip -key "SUBHPok") -eq 1))
-        {
+        if ((check-Clip "TAB1") -eq 1 -or (Confirm-HpLow) -eq 0) {
             return 0
         }
-        if ((check-Clip -key "HPON") -ne 1) {
+        if ((check-Clip "HPON") -ne 1) {
             Send-MouseRight
             send-MouseLeft -posname "tab-1"
             write-Log 4
@@ -83,7 +109,7 @@ function Confirm-Vitality {
         }
         $down++
         send-MouseLeft -posname "tab-update"
-        Start-Sleep -Milliseconds 200
+        St-Sleep 200 "Confirm-Vitality ${i}"
     }
 
     1
@@ -91,44 +117,53 @@ function Confirm-Vitality {
 
 function War-ActSelection([int]$mode) {
     send-MouseLeft -posname "tab-1"
-    if ((check-Clip -key "HPOK") -ne 1 -or (check-Clip -key "SUBHPok") -ne 1) {
+    if ((Confirm-HpLow) -ne 0) {
         $mode = 2
     }
 
-    # メインの攻撃(範囲)
     if ($mode -eq 1) {
-        if ((check-Clip -key "MP2") -eq 1) {
+        # メインの攻撃(範囲)
+        if ((check-Clip "MP2") -eq 1) {
             send-KeyStr -Arg1 "1"
-            Start-Sleep -Milliseconds 100
+            St-Sleep 100
             send-MouseLeft -posname "tab-1"
             write-Log ($mode * 100 + 1)
         } else {
             send-KeyStr -Arg1 "e"
             write-Log ($mode * 100 + 2)
         }
-        Start-Sleep -Milliseconds 500
+        St-Sleep 500
         send-MouseLeft -posname "tab-1"
-        Start-Sleep -Milliseconds 1000
-        return
-    }
+        TAB1-OFF 20 "attac before.(1)"
 
-    # 堅実な攻撃(単体)
-    if ($mode -eq 2){
-        if ((check-Clip -key "MP2") -eq 1) {
+    } elseif ($mode -eq 2) {
+        # 堅実な攻撃(単体)
+        if ((check-Clip "MP2") -eq 1) {
             send-KeyStr -Arg1 "2"
             write-Log ($mode * 100 + 1)
         } else {
             send-KeyStr -Arg1 "e"
             write-Log ($mode * 100 + 2)
         }
-        Start-Sleep -Milliseconds 1000
-        return
-    }
+        TAB1-OFF 20 "attac before.(2)"
 
-    send-MouseLeft -posname "tab-1"
-    write-Log 2
-    Start-Sleep -Milliseconds 500
-    return
+    } else {
+        send-MouseLeft -posname "tab-1"
+        write-Log 2
+        TAB1-OFF 10 "attac before.(3)"
+    }
+}
+
+function Get-EnemyDistance() {
+    $ret = Get-OCRText "MOBDIS"
+    if (-not ($ret -is [string])) {
+        return 0
+    }
+    if ($ret -cmatch "^(\d+)m$") {
+        return [int]$matches[1]
+    } else {
+        return 0
+    }
 }
 
 function Start-Battle01([int]$mode) {
@@ -137,40 +172,41 @@ function Start-Battle01([int]$mode) {
         return 0
     }
 
-    if ((check-Clip -key "TAB1") -ne 1) {
-        send-MouseLeft -posname "tab-update"
-        Start-Sleep -Milliseconds 100
+    if ((TAB1-ON) -ne 1) {
+        #send-MouseLeft -posname "tab-update"
+        St-Sleep 100 "No battle."
     } else {
         War-ActSelection($mode)
         return 0
     }
-    if ((check-Clip -key "MOB01") -ne 1) {
+    if ((check-Clip "MOB01") -ne 1) {
         write-Log 6
-        Start-Sleep -Milliseconds 1000
+        St-Sleep 1000 "No MOB01"
         return 0
     }
 
-    if ((check-Clip -key "TAB1") -eq 1) {
+    if ((check-Clip "TAB1") -eq 1) {
         War-ActSelection($mode)
         return
     }
-
     if ((Confirm-Vitality 1) -eq 1) {
         write-Log 7
         return 0
     }
+    if (12 -lt (Get-EnemyDistance)) {
+        St-Sleep 500 "The enemy is far away."
+        return 0
+    }
 
     # 戦闘開始
-    Send-MouseRight
     send-MouseLeft -posname "tab-1"
     send-MouseLeft -posname "tab-1"
-    Start-Sleep -Milliseconds 100
-    if ((check-Clip -key "TAB1") -eq 1){
-        write-Log 1.0
-    } elseif ($sstr -eq 0) {
-        send-KeyStr -Arg1 "f"
-        write-Log 1.1
-    } else {
+    for ($i = 0; $i -le 20; $i++) {
+        St-Sleep 30 "Battle wait."
+        if ((check-Clip "TAB1") -eq 1){
+            write-Log 1
+            break
+        }
         write-Log 0
     }
 
@@ -178,88 +214,54 @@ function Start-Battle01([int]$mode) {
 }
 
 
-function Start-Fall([int]$fast) {
-    1..2 | ForEach-Object {
-        send-KeyStr -Arg1 "f"
-        send-KeyStr -Arg1 "f"
-        Start-Sleep -Milliseconds 1000
-    }
-}
-
-function Start-Tab1All([int]$fast) {
-    Send-MouseRight
-    if ((check-Clip -key "TAB1") -ne 1) {
-        send-MouseLeft -posname "tab-update"
-    }
-    send-MouseLeft -posname "tab-1"
-    send-MouseLeft -posname "tab-1"
-    #$job = get-ScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL-${rand}"
-    #Start-Sleep -Milliseconds 1000
-    return
-}
-
-# $sw = [System.Diagnostics.Stopwatch]::StartNew()
-# $sw.Stop()
-# write-Log ("{0}" -f $sw.ElapsedMilliseconds)
-
-
 $LOGPIXELSX = 0.66
+
 Function Check-CAP {
-    Param( $c_x, $c_y, $c_w, $c_h, $capkey, $mode, $act)
-    if ($capkey -is [string]) {
-    } else {
-        write-Log "no capkey"
-        Start-Sleep -Milliseconds 3000
-        return
-    }
+    Param( [string]$file, [int]$act = 0 )
+    $pos = Get-FileToPos $file
+    $capkey = $pos.key
     if($act -eq 1){
         send-MouseLeft -posname "tab-update"
-        Start-Sleep -Milliseconds 80
+        St-Sleep 80 "Check-Cap tab 1"
         send-MouseLeft -posname "tab-1"
-        send-KeyStr -Arg1 "f"
-        Start-Sleep -Milliseconds 80
+        send-MouseLeft -posname "tab-1"
+        St-Sleep 80 "Check-Cap tab 2"
     }
 
     $rand = Get-Random -Minimum 1 -Maximum 90
     $capkey1 = "TMP#${capkey}-${rand}"
-    $job = get-ScreenClip -x $c_x -y $c_y -width $c_w -height $c_h -name $capkey1 -mode $mode
+    $job = get-ScreenClip -x $pos.x -y $pos.y -width $pos.w -height $pos.h -name $capkey1 -mode $pos.mode
 
-    $ret = check-Clip -key $capkey
+    $ret = check-Clip $capkey
+    $msg = ""
     if ($ret -eq 1) {
         Remove-Item "data\TMP#${capkey}-${rand}_*.png"
-        write-Log "no diff"
+        $msg = "no diff"
     } else {
-        write-Log "write $capkey1 $ret"
+        $msg = "write $capkey $capkey1 $ret"
     }
+    St-Sleep 100 $msg
 
-    $m_x = [int](([int]$c_x + [int]$c_w) * $LOGPIXELSX)
-    $m_y = [int](([int]$c_y + [int]$c_h) * $LOGPIXELSX)
+    $m_x = [int](([int]$pos.x + [int]$pos.w) * $LOGPIXELSX)
+    $m_y = [int](([int]$pos.y + [int]$pos.h) * $LOGPIXELSX)
     Set-MousePos -posx ($m_x + 20) -posy $m_y
-    Start-Sleep -Milliseconds 3000
-
-    return
 }
+
 Function Get-CAP {
-    Param( $c_x, $c_y, $c_w, $c_h, $capkey, $mode, $mous)
-    if ($capkey -is [string]) {
-    } else {
-        write-Log "no capkey"
-        Start-Sleep -Milliseconds 3000
-        return
-    }
+    Param( [string]$file, $mous )
+    $pos = Get-FileToPos $file
+    $capkey = $pos.filename
+
     if ($mous -is [double]) {
         $LOGPIXELSX = $mous
     }
     Remove-Item "data\TMP#${capkey}-*.png"
     Remove-Item "data\${capkey}_*.png"
-    get-ScreenClip -x $c_x -y $c_y -width $c_w -height $c_h -name $capkey -mode $mode
+    $file = get-ScreenClip -x $c_x -y $c_y -width $c_w -height $c_h -name $capkey -mode $mode
     $m_x = [int](([int]$c_x + [int]$c_w) * $LOGPIXELSX)
     $m_y = [int](([int]$c_y + [int]$c_h) * $LOGPIXELSX)
-    # $m_x = (($c_x + $c_w) * $LOGPIXELSX)
-    # $m_y = (($c_y + $c_h) * $LOGPIXELSX)
-    write-Log ("update {0} - pos: {1} {2}" -f $job, $m_x, $m_y)
     Set-MousePos -posx $m_x -posy $m_y
-    Start-Sleep -Milliseconds 3000
+    write-Log ("update {0} - pos: {1} {2} {3}" -f $job, $m_x, $m_y, $file)
 }
 
 # offset=92

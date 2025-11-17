@@ -66,7 +66,6 @@ public class MouseInput {
 "@  -Language CSharp
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Drawing.Common
 Add-Type -AssemblyName System.Runtime
 
 # C# 実装（Parallel.For を使って行ごとに処理）
@@ -102,15 +101,50 @@ $KEYEVENTF_KEYUP = 0x2
 $setting = "data\stop.txt"
 $logpath = "data\log.txt"
 
+Function Get-FileToPos {
+    Param( [string]$fileName )
+    if ($file -cmatch "(.+?)_(\d+)x(\d+)x(\d+)x(\d+)x(\d+)") {
+        $mode = $matches[6]
+    } elseif ($file -cmatch "(.+?)_(\d+)x(\d+)x(\d+)x(\d+)") {
+        $mode = 0
+    }
+    return @{
+        key = $matches[1]
+        filename = $matches[1]
+        x = $matches[2]
+        y = $matches[3]
+        w = $matches[4]
+        h = $matches[5]
+        mode = $mode
+    }
+}
+
+$JsonSetting = $null;
+Function Read-Setting($param) {
+    $settingFile = "data\setting.json"
+    if (Test-Path $settingFile) {
+    } else {
+        '{"action":1}' | Out-File -FilePath $settingFile
+    }
+    if ($param.init) {
+        $json = Get-Content $settingFile -Raw
+        $utf8 = [System.Text.Encoding]::UTF8.GetBytes($json)
+        $JsonSetting = [System.Text.Json.JsonDocument]::Parse($utf8)
+    }
+}
+
+# 単純なキーを送信する
 Function send-KeyStr {
     Param($Arg1, $nowait)
     [Windows.Forms.SendKeys]::SendWait($Arg1)
     if ($nowait -is [int]) {
         return
     }
-    Start-Sleep -Milliseconds 50
+    Start-Sleep -Milliseconds 10
 }
 
+# 指定のキーを押して、離す操作を行う
+# カーソルキー、TABなどの特殊キーに対応
 $KEY_CODE = @{
     "VK_A" = 0xBC
     "TAB" = 0x09
@@ -131,11 +165,13 @@ Function send-KeyCode {
     [Keyboard]::keybd_event($vk_key, 0, $KEYEVENTF_KEYUP, 0)
 }
 
+# 指定位置をマウスの左クリックを行う
 Function send-MouseLeft {
     Param($posx, $posy, $posname)
 
     if ($posname -is [string]) {
         if ($posname -eq "tab-update") {
+            St-Sleep 80 "#  TAB Update."
             $posx = 1740
             $posy = 800
         } elseif ($posname -eq "tab-1") {
@@ -154,19 +190,21 @@ Function send-MouseLeft {
     # Start-Sleep -Milliseconds 60
     # [MouseSimulator]::mouse_event([MouseSimulator]::LEFTUP, 0, 0, 0, [UIntPtr]::Zero)
     [MouseInput]::ClickAt($posx, $posy)
-    Start-Sleep -Milliseconds 50
+    Start-Sleep -Milliseconds 10
 }
 
+# 指定位置にマウスカーソルを移動させる
 Function Set-MousePos {
     Param($posx, $posy, $posname)
     [MouseInput]::SetCursorPos($posx, $posy)
 }
 
+# x:0, y:0 の位置工程で右クリックを実施
 Function Send-MouseRight {
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTDOWN, 0, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 100
     [MouseSimulator]::mouse_event([MouseSimulator]::RIGHTUP, 0, 0, 0, [UIntPtr]::Zero)
-    Start-Sleep -Milliseconds 50
+    Start-Sleep -Milliseconds 10
 }
 
 Function send-TimeKeys {
@@ -198,6 +236,15 @@ Function send-TimePrint {
     }
 }
 
+Function B-B($bit) {
+    if ($bit -ge 180) {
+        [byte]255
+    } else {
+        [byte]0
+    }
+}
+
+# 画像処理関連の変更がないデータをグローバルに作成
 if (-not $rTable) {
     # 事前計算テーブル作成
     $Global:contrast = 1.85 # 1.0 = 通常, >1.0 = コントラスト強調, <1.0 = 低下
@@ -214,15 +261,17 @@ if (-not $rTable) {
             [byte]([Math]::Max(0, [Math]::Min(255, $v)))
         }
     )
-    $threshold = 128
     $Global:contrastTableB = @(
         0..255 | ForEach-Object {
-            if ($_ -ge $threshold) {
+            if ($_ -ge 128) {
                 [byte]255
             } else {
                 [byte]0
             }
         }
+    )
+    $Global:contrastTableBB = @(
+        0..255 | ForEach-Object { B-B $_ }
     )
 
     $Global:shpool = [System.Buffers.ArrayPool[byte]]::Shared
@@ -233,6 +282,12 @@ if (-not $rTable) {
     #$Global:MarshalCopy = [System.Runtime.InteropServices.Marshal]::GetMethod('Copy', [type[]]@([byte[]], [int], [intptr], [int]))
 }
 
+# 指定位置の画面キャプチャを行う
+#  画像ファイルは下記の形式で作成される
+#    ・ファイルの形式： <ファイル名>_<x座標>x<y座標>x<幅>x<高さ>x<白黒 or グレー>.png
+#    ・最後の白黒orグレーしてはない場合はグレースケール
+#    ・<ファイル名>_ と <ファイル名>s1_ <ファイル名>s2_ <ファイル名>s3_があれば、
+#      同一画像として比較対象にできる。
 Function get-ScreenClip{
     Param ([int]$x, [int]$y, [int]$width, [int]$height, [string]$name, [string]$posname, [int]$mode)
     if ($posname -is [string]) {
@@ -245,9 +300,14 @@ Function get-ScreenClip{
     }
     $Local:ToContrastTable = $contrastTable
     $Local:file = "{0}_{1}x{2}x{3}x{4}.png" -f $name, $x, $y, $width, $height
+    if ($mode -gt 1) {
+        $file = "{0}_{1}x{2}x{3}x{4}x{5}.png" -f $name, $x, $y, $width, $height, $mode
+    }
     if ($mode -eq 2){
         $ToContrastTable = $contrastTableB
-        $file = "{0}_{1}x{2}x{3}x{4}x{5}.png" -f $name, $x, $y, $width, $height, $mode
+    }
+    if ($mode -eq 4){
+        $ToContrastTable = $contrastTableBB
     }
     $output = "$currentPath\data\$file"
 
@@ -261,10 +321,8 @@ Function get-ScreenClip{
         $m_x = $NowPos.X + $width
         $m_y = $NowPos.Y + $height
         Set-MousePos -posx $m_x -posy $m_y
-        #write-Log "$file -> $NowPos -> $m_x x $m_y "
-        Start-Sleep -Milliseconds 60
+        Start-Sleep -Milliseconds 20
     }
-    #Start-Sleep -Milliseconds 100
 
     # 画面キャプチャ
     $Local:bmp = New-Object System.Drawing.Bitmap $width, $height
@@ -274,6 +332,8 @@ Function get-ScreenClip{
 
     # 原色で保存
     if ($mode -eq 3){
+    # DPIを設定（縦横）
+        $bmp.SetResolution(300, 300)
         $bmp.Save($output, $imageFormat)
         $bmp.Dispose()
         return $file
@@ -288,9 +348,7 @@ Function get-ScreenClip{
         $buf = New-Object byte[] $len
         [System.Runtime.InteropServices.Marshal]::Copy($bmpData.Scan0, $buf, 0, $len)
 
-        [ImgParallel]::GrayContrastParallel(
-            $buf, $stride, $width, $height,
-            ($rTable), ($gTable), ($bTable), ($ToContrastTable))
+        [ImgParallel]::GrayContrastParallel($buf, $stride, $width, $height, ($rTable), ($gTable), ($bTable), ($ToContrastTable))
 
         [System.Runtime.InteropServices.Marshal]::Copy($buf, 0, $bmpData.Scan0, $len)
     } finally {
@@ -319,40 +377,77 @@ function Get-FileMD5($file) {
     return ([BitConverter]::ToString($hashBytes) -replace "-", "")
 }
 
-Function check-Clip{
-    Param ([string]$key, $okAct, $ngAct, [int]$time, [int]$wait, [int]$tmpDel)
-
-    $fileName = ""
-    Get-ChildItem -Path "$currentPath\data" -File | ForEach-Object {
-        if ($_.Name.StartsWith("${key}_")) {
-            $fileName = $_.Name
-            return 0
-        }
+Function Get-TmpClip([string]$FileName) {
+    $Local:key = $fileName.Split("_")
+    $key = $fileName.Split("_")[0]
+    if ($key -eq $null -or $key.length -lt 1 ){
+        Write-Host "tmp2 $key"
+        return "0"
     }
-    if ($fileName -eq "") {
-        return 0
-    }
-    $hash1 = Get-FileMD5 $fileName
 
     if ($fileName -cmatch "_(\d+)x(\d+)x(\d+)x(\d+)x(\d+)\."){
     } elseif ($fileName -cmatch "_(\d+)x(\d+)x(\d+)x(\d+)\."){
         $matches[5] = 1
     } else {
         write-Log "no match $fileName"
-        return 0
+        return "0"
     }
-    $Tmpfile = (get-ScreenClip -x $matches[1] -y $matches[2] -width $matches[3] -height $matches[4] -name "TMP-$key" -posname "nop" -mode $matches[5])
+
+    $capfile = get-ScreenClip -x $matches[1] -y $matches[2] -width $matches[3] -height $matches[4] -name "TMP-${key}" -posname "nop" -mode $matches[5]
+    for ($i = 0; $i -lt 3; $i++) {
+        if (Test-Path "data\$capfile"){
+            return $capfile
+        }
+        Start-Sleep -Milliseconds 10
+    }
+    return $capfile
+}
+
+Function Get-KeyToFilename {
+    Param([string]$key)
+
+    $fileName = "0"
+    Get-ChildItem -Path "$currentPath\data" -File | ForEach-Object {
+        if ($_.Name.StartsWith("${key}_")) {
+            $fileName = $_.Name
+            return
+        }
+    }
+
+    $fileName
+}
+
+
+# 指定ファイルの画像と現在の画面表示の内容が同一か比較する
+Function check-Clip {
+    Param($cParam)
+    $key = $cParam
+    if ($cParam -is [string]){
+        $key = $cParam
+        $cParam = @{ key = $key }
+    } else {
+        $key = $cParam.key
+    }
+
+    $fileName = Get-KeyToFilename $key
+    $hash1 = Get-FileMD5 $fileName
+    $Tmpfile = Get-TmpClip $fileName
     $hash2 = Get-FileMD5 $Tmpfile
-    if($tmpDel -ne 1) {
-        Remove-Item "data\TMP-$key_*.png"
+    #St-Sleep 100 "co1 $Tmpfile $hash2"
+    if($cParam.tmpDel -ne 1) {
+        $DelTmpfile = "data\$Tmpfile"
+        if ($DelTmpfile -cmatch " (TMP.*)") {
+            $DelTmpfile = "data\" + $matches[1]
+        }
+        Remove-Item $DelTmpfile
     }
 
     for ($i = 1; $i -le 4; $i++) {
         if ($hash1 -eq $hash2) {
-            if ($okAct -is [int]) {
-                send-KeyCode -vk_key $okAct -wait $wait
-            } elseif ($okAct -is [string]) {
-                send-TimeKeys -key $okAct -time $time
+            if ($cParam.okAct -is [int]) {
+                send-KeyCode -vk_key $cParam.okAct -wait $cParam.wait
+            } elseif ($cParam.okAct -is [string]) {
+                send-TimeKeys -key $cParam.okAct -time $cParam.time
             }
             return 1
         }
@@ -364,14 +459,29 @@ Function check-Clip{
         }
     }
 
-    if ($ngAct -is [int]) {
-        send-KeyCode -vk_key $ngAct -wait $wait
-    } elseif ($ngAct -is [string]) {
-        send-TimeKeys -key $ngAct -time $time
+    if ($cParam.ngAct -is [int]) {
+        send-KeyCode -vk_key $cParam.ngAct -wait $cParam.wait
+    } elseif ($cParam.ngAct -is [string]) {
+        send-TimeKeys -key $cParam.ngAct -time $cParam.time
     }
-    return 0
+
+    0
 }
 
+function Get-OCRText {
+    param([string]$key)
+    $FileName = Get-KeyToFilename $key
+    $ImagePath = Get-TmpClip $FileName
+    $text = (tesseract ".\data\$ImagePath" stdout)
+    Remove-Item "data\$ImagePath"
+
+    if ($text -eq $null) {
+        return 0
+    }
+    return $text
+}
+
+# ログの書き込み、初期設定ファイルの作成を行う
 Function write-Log {
     param ($msg, [int]$init, $Lf)
 
@@ -405,31 +515,31 @@ Function write-Log {
     $msg | Out-File -FilePath $logpath -Append
 }
 
+Function St-Sleep {
+    Param ([int]$time, [string]$msg)
+
+    if ($null -ne $msg -and $msg.Length -gt 1) {
+        $str = "{0} $msg" -f ($time / 1000)
+        write-Log $str
+    }
+    Start-Sleep -Milliseconds $time
+}
+
+
+# ログ最終行を読み込み不動小数点と整数で読み取り結果を返す
 Function Get-LogWithNumber {
     $lastLine = Get-Content $logpath -Tail 1
-    if (($lastLine -as [int]) -eq $null){
+    $li = 0
+    $ld = 0
+    if ($lastLine -match "(-?[0-9\.]+)") {
+        $number = $matches[1]
+        $li = [int]$number
+        $ld = [double]$number
+    } else {
         return @(-1, -1, -1)
     }
 
-    $minus = 0
-    $dub = 0
-    $len = $lastLine.length
-    $lstr = 0
-    if ($lastLine -like "*-*") {
-        $minus = 1
-    }
-    if ($lastLine -like "*.*") {
-        $dub = 1
-    }
-    if ($dub -eq 1 -and $len -gt 3) {
-        if ($minus -eq 1) {
-            $lstr = $lastLine.Substring(3,2)
-        } else {
-            $lstr = $lastLine.Substring(2,2)
-        }
-    }
-
-    return @([double]$lastLine, [int]$lastLine, [int]$lstr)
+    return @($ld, $li, $lastLine)
 }
 
 write-Log "s" -init 1
