@@ -10,7 +10,8 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Toggle Video Controls"
+    "default_title": "Toggle Video Controls",
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
@@ -21,7 +22,8 @@
         "https://*.youtube.com/*"
       ],
       "js": [
-        "content.js"
+        "content.js",
+        "background.js"
       ],
       "run_at": "document_end"
     }

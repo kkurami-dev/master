@@ -102,8 +102,34 @@ const clickMuteButton = (action, idx, root) => {
   }
 };
 
+const KEY1 = 'ymp_side_panel';
+const KEY2 = 'sponsor_mute';
+const musicPlayListToggle = async () => {
+  const SidePanel = (result0) => {
+    let param = ``;
+    if (!result0[KEY1]) {
+      param = `display:none;`
+    }
+    ["content",
+      "nav-bar-background", "nav-bar-divider",
+      "guide", "mini-guide-background", "side-panel", "mini-guide"
+    ].forEach(key => {
+      const el = document.getElementById(key);
+      el.setAttribute("style", param);
+    });
+    // ["ytmusic-nav-bar"].forEach(key => {
+    //   const sh = document.getElementsByClassName(key);
+    //   console.log(sh);
+    // });
+  }
+
+  chrome.storage.local.get([KEY1]).then(SidePanel);
+}
+
 const playerId = returnPlayerId();
 const intervalFunc = () => {
+  musicPlayListToggle();
+  
   const root = document.getElementById(playerId);
   MuteS.root = root;
   if (root === null) {
