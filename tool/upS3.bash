@@ -11,7 +11,10 @@ items=(
     clock02.modal.css
     clock02-data.js
     clock02.js
+    sitemap.xml
+    robots.txt
 )
+perl -i -pe 's/Ver\.(\d+)/"Ver.".($1+1)/ge' src/clock02.html
 for item in "${items[@]}" ; do
     echo "[ ${item} ]"
 
@@ -24,8 +27,12 @@ for item in "${items[@]}" ; do
             type="text/css";;
         "html")
             type="text/html";;
+        "xml")
+            type="text/xml";;
+        "txt")
+            type="text";;
         *)
-        exit 1;
+            exit 1;
     esac
 
     aws s3 cp ./src/$item s3://$BUCKET/$item \

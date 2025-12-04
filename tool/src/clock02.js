@@ -57,6 +57,8 @@
  *        CloudFront
  *        S3
  *
+ *   SEO
+ *      登録：https://search.google.com/search-console/
  */
 import {
   config,
@@ -455,7 +457,7 @@ function setDay(obj, w, d) {
 }
 
 function setHoliday(obj) {
-  console.log('setHoliday s', obj);
+  //console.log('setHoliday s', obj);
   const {dayNo} = obj;
   const element = obj.el || document.getElementById(`mcdd-${dayNo}`);
   if(!element){
@@ -479,7 +481,7 @@ function setHoliday(obj) {
   const month = date[1];
   const day = date[2];
   const hString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  const hDay = config[Number(year)]?.[hString];
+  const hDay = config[obj.year]?.[hString];
   const hDays = [];
   // 日本の休日設定
   if(hDay){
@@ -524,16 +526,14 @@ function setJapanHoliday(inObj) {
     const els = cdiv.querySelectorAll('[id^="mcdd-"]');
     els.forEach(( el )=>{
       const dayNo = Number(el.id.replace("mcdd-", ""));
-      setHoliday({ dayNo, el });
+      setHoliday({ dayNo, el, year: date });
     });
+    config.exec = 'end';
   }
 
-  if(config.exec === 'setHoliday' && !inObj.getDB){
-    // 全体の休日を設定中なので何もしない( getDB を一行したスレッドのみ動く )
-    return;
-  } else if(config[year] && config[year].json){
+  if(config[year]){
     // 休日一覧を取得中ならリトライ、あれば休日設定
-    setHoliday(inObj);
+    setAll(year, config[year]);
     return;
   } else if( !inObj.getDB ){
     // DB にあればその休日を利用
@@ -571,7 +571,7 @@ function setJapanHoliday(inObj) {
 
   // 年更新、初回ページ表示時は  Web から休日一覧を取得
   // バケットストレージに保存する
-  console.log('get holidays');
+  //console.log('get holidays');
   const req = `https://holidays-jp.github.io/api/v1/date.json?year=${year}`;
   try {
     window.fetch(req)
@@ -617,7 +617,6 @@ function createCalendar(year, month, now, obj) {
     setWeek(month, obj.dayCount, now, obj);
     for (let d = 0; d < 7; d++) {
       const newObj = setDay(obj, w, d);
-      setJapanHoliday(newObj);
     }
     if (obj.calendarHtml) obj.calendarHtml += '</tr>';
   }
@@ -657,6 +656,10 @@ function ShowCalendar(now) {
     }
     obj.yearNo += 1;
   }
+
+  // 休日設定
+  const newObj = {year:nowDay[0] , dayNo:1};
+  setJapanHoliday(newObj);
 }
 
 /*********************************************************************************
@@ -1002,7 +1005,8 @@ function UpdateClock(obj) {
   // 1秒に1回更新
   ans = (nowDay[5] % 10);
   if ( ans === 0 ){
-    Beep({evType: 2, time: nowDay[4] });
+    ShowCalendar( now );
+    //Beep({evType: 2, time: nowDay[4] });
   } else {
     //Beep({evType: 2, time: nowDay[4] });
   }
