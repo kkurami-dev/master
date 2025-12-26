@@ -4,12 +4,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /*
 ② Entity を作成
 */
 
-@Entity
+@Entity(name = "user_entity")
+@Table(name = "\"user\"")
 public class User {
 
     @Id
