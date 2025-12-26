@@ -2,8 +2,8 @@ package com.example.demo.service;
 
 import org.springframework.stereotype.Service;
 
-import com.example.demo.User;
-import com.example.demo.UserRepository;
+import com.example.demo.dao.User;
+import com.example.demo.dao.UserRepository;
 
 import java.util.List;
 
