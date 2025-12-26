@@ -24,12 +24,24 @@ public class UserController {
         this.service = service;
     }
 
+    /**
+     * GET /users を処理するハンドラ
+     *
+     * 処理の流れ:
+     * - `service.findAll()` で DB からユーザー一覧を取得する
+     * - 取得したリストを Model に `users` という属性名で格納する
+     * - return "users" は ViewResolver により templates/users.html を指すビュー名になる
+     *
+     * テンプレート側 (users.html) では `th:each="user : ${users}"` のように
+     * Model の `users` を参照して各ユーザーを表示します。
+     */
     @GetMapping
     public String getUsers(Model model) {
         model.addAttribute("users", service.findAll());
         return "users";
     }
 
+    /* html の　post に反応する関数の設定 */
     @PostMapping
     public String addUser(@RequestParam String name) {
         service.save(new User(name));
