@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello</title>
+</head>
+<body>
+    <h1>Hello Page</h1>
+
+    <p th:text="${message}"></p>
+
+    <form th:action="@{/users}" method="get">
+        <button type="submit">Users ページへ</button>
+    </form>
+</body>
+</html>
