@@ -1,15 +1,12 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-    <table th:fragment="userTable" class="user-table">
-        <thead>
+<table th:fragment="userTable" class="user-table">
+    <thead>
         <tr>
             <th>ID</th>
             <th>Name</th>
             <th>Tickets</th>
         </tr>
-        </thead>
-        <tbody>
+    </thead>
+    <tbody>
         <tr th:each="user : ${users}">
             <td th:text="${user.id}"></td>
             <td th:text="${user.name}"></td>
@@ -17,12 +14,10 @@
                 <span th:if="${#lists.isEmpty(user.tickets)}">No tickets</span>
                 <ul th:unless="${#lists.isEmpty(user.tickets)}">
                     <li th:each="ticket : ${user.tickets}">
-                        <span th:text="${ticket.name}"></span> - $<span th:text="${ticket.price}"></span>
+                        <span th:text="${ticket.name}"></span> - <span th:text="${ticket.price}"></span>
                     </li>
                 </ul>
             </td>
         </tr>
-        </tbody>
-    </table>
-</body>
-</html>
+    </tbody>
+</table>

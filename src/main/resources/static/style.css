@@ -66,68 +66,73 @@ form button:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-table {
+.user-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
-table thead {
+.user-table thead {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
 }
 
-table th {
+.user-table th {
     padding: 16px;
     text-align: left;
     font-weight: 600;
     letter-spacing: 0.5px;
+    border: none;
 }
 
-table td {
+.user-table td {
     padding: 14px 16px;
-    border-bottom: 1px solid #e0e0e0;
+    border: none;
+    border-bottom: 1px solid #ddd;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
-table tr:hover {
+.user-table tbody tr:hover {
     background-color: #f5f5f5;
     transition: background-color 0.2s;
 }
 
-table tr:last-child td {
+.user-table tbody tr:last-child td {
     border-bottom: none;
 }
 
 /* Ticket List Styles */
-table ul {
+.user-table ul {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-table li {
-    padding: 6px 0;
+.user-table li {
+    padding: 4px 0;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-table li::before {
+.user-table li::before {
     content: "🎫";
-    font-size: 16px;
+    font-size: 14px;
 }
 
-table span:nth-child(1) {
+.user-table li span:first-of-type {
     font-weight: 500;
     color: #333;
 }
 
-table span:nth-child(2) {
+.user-table li span:last-of-type {
     color: #667eea;
     font-weight: bold;
 }
 
 /* No Tickets Message */
-table td:last-child {
+.user-table td:last-child {
     color: #999;
     font-style: italic;
 }
