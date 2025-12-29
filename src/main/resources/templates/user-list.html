@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-    <table th:fragment="userTable">
+    <table th:fragment="userTable" class="user-table">
+        <thead>
         <tr>
             <th>ID</th>
             <th>Name</th>
             <th>Tickets</th>
         </tr>
+        </thead>
+        <tbody>
         <tr th:each="user : ${users}">
             <td th:text="${user.id}"></td>
             <td th:text="${user.name}"></td>
@@ -19,6 +22,7 @@
                 </ul>
             </td>
         </tr>
+        </tbody>
     </table>
 </body>
 </html>

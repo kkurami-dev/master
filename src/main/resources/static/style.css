@@ -1,0 +1,133 @@
+/* General Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Styles */
+form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 15px auto;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 10px;
+}
+
+form input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+form input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+form button {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Table Styles */
+.table-container {
+    max-width: 900px;
+    margin: 30px auto;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+table th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+table tr:hover {
+    background-color: #f5f5f5;
+    transition: background-color 0.2s;
+}
+
+table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Ticket List Styles */
+table ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+table li {
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+table li::before {
+    content: "🎫";
+    font-size: 16px;
+}
+
+table span:nth-child(1) {
+    font-weight: 500;
+    color: #333;
+}
+
+table span:nth-child(2) {
+    color: #667eea;
+    font-weight: bold;
+}
+
+/* No Tickets Message */
+table td:last-child {
+    color: #999;
+    font-style: italic;
+}
