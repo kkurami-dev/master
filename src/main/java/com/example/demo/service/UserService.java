@@ -9,7 +9,7 @@ import java.util.List;
 
 /*
 ⑤ データを取得する
-Service（任意だが実務では推奨）
+サービス層（任意だが実務では推奨）
 */
 
 @Service

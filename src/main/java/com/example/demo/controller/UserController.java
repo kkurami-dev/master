@@ -11,7 +11,7 @@ import com.example.demo.dao.User;
 import com.example.demo.service.UserService;
 
 /*
-Controller で取得し、HTML表示
+コントローラー：DB から取得して HTML に表示
 */
 
 @Controller
@@ -41,7 +41,7 @@ public class UserController {
         return "users";
     }
 
-    /* html の　post に反応する関数の設定 */
+    /* POST リクエストを処理するハンドラ */
     @PostMapping
     public String addUser(@RequestParam String name) {
         service.save(new User(name));

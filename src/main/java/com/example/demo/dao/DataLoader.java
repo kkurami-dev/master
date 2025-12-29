@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /*
-④ データを保存する（起動時）
-CommandLineRunner を使う方法
+④ 起動時にデータを保存
+CommandLineRunner を使用
 */
 
 @Configuration

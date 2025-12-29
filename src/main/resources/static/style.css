@@ -1,4 +1,4 @@
-/* General Styles */
+/* 全体スタイル */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -14,7 +14,7 @@ h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Form Styles */
+/* フォームスタイル */
 form {
     background: white;
     padding: 20px;
@@ -56,7 +56,7 @@ form button:hover {
     box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* Table form override for max-width */
+/* テーブル用フォームの幅上限を900pxに設定 */
 form[action="/api/hello"] {
     max-width: none;
     display: block;
@@ -66,7 +66,7 @@ form[action="/api/hello"] {
     margin: 0;
 }
 
-/* Table Styles */
+/* テーブルスタイル */
 .table-container {
     width: 900px;
     margin: 30px auto;
@@ -74,7 +74,7 @@ form[action="/api/hello"] {
     border-radius: 8px;
     overflow: hidden;
     position: relative;
-    padding: 56px 16px 16px 16px; /* top space for button, horizontal padding */
+    padding: 56px 16px 16px 16px; /* ボタン用の上部余白、水平パディング */
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
 }
@@ -116,11 +116,11 @@ form[action="/api/hello"] {
     border-bottom: none;
 }
 
-/* Button positioned at table top-right */
+/* テーブル右上に配置されるボタン */
 .table-top-right {
     position: absolute;
     top: 12px;
-    right: 16px; /* align with container horizontal padding */
+    right: 16px; /* コンテナの水平パディングに合わせる */
     z-index: 10;
 }
 
@@ -136,7 +136,7 @@ form[action="/api/hello"] {
 
 .table-top-right button:hover { transform: translateY(-2px); }
 
-/* Ticket List Styles */
+/* チケットリストスタイル */
 .user-table ul {
     list-style: none;
     padding: 0;
@@ -165,7 +165,7 @@ form[action="/api/hello"] {
     font-weight: bold;
 }
 
-/* No Tickets Message */
+/* チケットなしのメッセージスタイル */
 .user-table td:last-child {
     color: #999;
     font-style: italic;

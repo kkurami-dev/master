@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 /*
-② Entity を作成
+② エンティティを作成
 */
 
 @Entity(name = "user_entity")
