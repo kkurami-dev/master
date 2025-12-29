@@ -13,10 +13,23 @@ CommandLineRunner を使う方法
 public class DataLoader {
 
     @Bean
-    CommandLineRunner init(UserRepository repository) {
+    CommandLineRunner init(UserRepository userRepository, TicketRepository ticketRepository) {
         return args -> {
-            repository.save(new User("Alice"));
-            repository.save(new User("Bob"));
+            Ticket ticketA = new Ticket("TicketA", 600);
+            Ticket ticketB = new Ticket("TicketB", 500);
+
+            ticketRepository.save(ticketA);
+            ticketRepository.save(ticketB);
+
+            User alice = new User("Alice");
+            alice.addTicket(ticketA);
+            alice.addTicket(ticketB);
+
+            User bob = new User("Bob");
+            bob.addTicket(ticketA);
+
+            userRepository.save(alice);
+            userRepository.save(bob);
         };
     }
 }
