@@ -8,15 +8,18 @@
 <body>
     <h1>Users</h1>
 
-    <form th:action="@{/api/hello}" method="get">
-        <button type="submit">Hello ページへ</button>
-    </form>
-
     <form th:action="@{/users}" method="post">
         <input type="text" name="name" placeholder="Name">
         <button type="submit">Register</button>
     </form>
 
-    <div class="table-container" th:insert="user-list :: userTable"></div>
+    <form th:action="@{/api/hello}" method="get">
+        <div class="table-container">
+            <div class="table-top-right">
+                <button type="submit">選択したユーザーを Hello ページへ</button>
+            </div>
+            <div th:insert="user-list :: userTable"></div>
+        </div>
+    </form>
 </body>
 </html>

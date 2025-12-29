@@ -1,13 +1,17 @@
 <table th:fragment="userTable" class="user-table">
     <thead>
         <tr>
+            <th></th>
             <th>ID</th>
             <th>Name</th>
             <th>Tickets</th>
         </tr>
     </thead>
     <tbody>
-        <tr th:each="user : ${users}">
+        <tr th:each="user,iter : ${users}" th:classappend="${iter.index % 2 == 0} ? 'even' : 'odd'">
+            <td>
+                <input type="radio" name="userId" th:value="${user.id}" />
+            </td>
             <td th:text="${user.id}"></td>
             <td th:text="${user.name}"></td>
             <td>

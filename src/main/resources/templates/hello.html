@@ -9,6 +9,18 @@
 
     <p th:text="${message}"></p>
 
+    <div th:if="${user != null}">
+        <h2>User Details</h2>
+        <p><strong>ID:</strong> <span th:text="${user.id}"></span></p>
+        <p><strong>Name:</strong> <span th:text="${user.name}"></span></p>
+        <h3>Tickets</h3>
+        <ul>
+            <li th:each="t : ${user.tickets}">
+                <span th:text="${t.name}"></span> - <span th:text="${t.price}"></span> 円
+            </li>
+        </ul>
+    </div>
+
     <form th:action="@{/users}" method="get">
         <button type="submit">Users ページへ</button>
     </form>

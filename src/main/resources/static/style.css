@@ -62,14 +62,20 @@ form button:hover {
     margin: 30px auto;
     background: white;
     border-radius: 8px;
-    overflow: hidden;
+    /* allow visible overflow so table won't be clipped; enable horizontal scroll if needed */
+    overflow-x: auto;
+    overflow-y: visible;
+    position: relative;
+    padding: 56px 16px 16px 16px; /* top space for button, horizontal padding to avoid clipping */
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
 }
 
 .user-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
+    box-sizing: border-box;
 }
 
 .user-table thead {
@@ -101,6 +107,26 @@ form button:hover {
 .user-table tbody tr:last-child td {
     border-bottom: none;
 }
+
+/* Button positioned at table top-right */
+.table-top-right {
+    position: absolute;
+    top: 12px;
+    right: 16px; /* align with container horizontal padding */
+    z-index: 10;
+}
+
+.table-top-right button {
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.table-top-right button:hover { transform: translateY(-2px); }
 
 /* Ticket List Styles */
 .user-table ul {
