@@ -56,17 +56,25 @@ form button:hover {
     box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
 }
 
+/* Table form override for max-width */
+form[action="/api/hello"] {
+    max-width: none;
+    display: block;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    margin: 0;
+}
+
 /* Table Styles */
 .table-container {
-    max-width: 900px;
+    width: 900px;
     margin: 30px auto;
     background: white;
     border-radius: 8px;
-    /* allow visible overflow so table won't be clipped; enable horizontal scroll if needed */
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: hidden;
     position: relative;
-    padding: 56px 16px 16px 16px; /* top space for button, horizontal padding to avoid clipping */
+    padding: 56px 16px 16px 16px; /* top space for button, horizontal padding */
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
 }
