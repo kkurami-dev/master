@@ -17,8 +17,6 @@
         <button type="submit">Register</button>
     </form>
 
-    <div class="table-container">
-        <div th:include="user-list :: userTable"></div>
-    </div>
+    <div class="table-container" th:insert="user-list :: userTable"></div>
 </body>
 </html>
