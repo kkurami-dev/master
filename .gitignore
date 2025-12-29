@@ -37,3 +37,12 @@ out/
 .vscode/
 
 /gradle
+
+### Spring / build artifacts ###
+# Gradle / Spring Boot が生成する一時・出力ファイル
+generated/
+tmp/
+*.class
+*.log
+build/libs/
+target/
