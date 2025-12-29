@@ -21,11 +21,11 @@ public class DataLoader {
             ticketRepository.save(ticketA);
             ticketRepository.save(ticketB);
 
-            User alice = new User("Alice");
+            User alice = new User("Alice", 28, "女性", "東京都渋谷区", "150-0001", "日本");
             alice.addTicket(ticketA);
             alice.addTicket(ticketB);
 
-            User bob = new User("Bob");
+            User bob = new User("Bob", 35, "男性", "大阪府大阪市", "530-0001", "アメリカ");
             bob.addTicket(ticketA);
 
             userRepository.save(alice);

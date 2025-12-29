@@ -8,9 +8,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Column;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import java.util.Set;
 import java.util.HashSet;
+import java.time.LocalDateTime;
 
 /*
 ② エンティティを作成
@@ -26,6 +30,23 @@ public class User {
 
     private String name;
 
+    private Integer age;
+
+    private String gender;
+
+    private String address;
+
+    @Column(name = "postal_code")
+    private String postalCode;
+
+    private String nationality;
+
+    @Column(name = "created_date")
+    private LocalDateTime createdDate;
+
+    @Column(name = "updated_date")
+    private LocalDateTime updatedDate;
+
     @ManyToMany
     @JoinTable(name = "user_ticket",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -37,6 +58,26 @@ public class User {
 
     public User(String name) {
         this.name = name;
+    }
+
+    public User(String name, Integer age, String gender, String address, String postalCode, String nationality) {
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.address = address;
+        this.postalCode = postalCode;
+        this.nationality = nationality;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdDate = LocalDateTime.now();
+        this.updatedDate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedDate = LocalDateTime.now();
     }
 
     public void setName(String name2) {
@@ -57,5 +98,53 @@ public class User {
 
     public void addTicket(Ticket ticket) {
         this.tickets.add(ticket);
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+
+    public String getNationality() {
+        return nationality;
+    }
+
+    public void setNationality(String nationality) {
+        this.nationality = nationality;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
     }
 }

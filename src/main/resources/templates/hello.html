@@ -3,16 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <title>Hello</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
 </head>
 <body>
     <h1>Hello Page</h1>
 
     <p th:text="${message}"></p>
 
-    <div th:if="${user != null}">
+    <div class="hello-container" th:if="${user != null}">
         <h2>ユーザー詳細情報</h2>
-        <p><strong>ID:</strong> <span th:text="${user.id}"></span></p>
-        <p><strong>名前:</strong> <span th:text="${user.name}"></span></p>
+        <table class="detail-table">
+            <tr>
+                <td>ID:</td>
+                <td th:text="${user.id}"></td>
+            </tr>
+            <tr>
+                <td>名前:</td>
+                <td th:text="${user.name}"></td>
+            </tr>
+            <tr>
+                <td>年齢:</td>
+                <td th:text="${user.age}"></td>
+            </tr>
+            <tr>
+                <td>性別:</td>
+                <td th:text="${user.gender}"></td>
+            </tr>
+            <tr>
+                <td>住所:</td>
+                <td th:text="${user.address}"></td>
+            </tr>
+            <tr>
+                <td>郵便番号:</td>
+                <td th:text="${user.postalCode}"></td>
+            </tr>
+            <tr>
+                <td>国籍:</td>
+                <td th:text="${user.nationality}"></td>
+            </tr>
+            <tr>
+                <td>登録日:</td>
+                <td th:text="${user.createdDate}"></td>
+            </tr>
+            <tr>
+                <td>更新日時:</td>
+                <td th:text="${user.updatedDate}"></td>
+            </tr>
+        </table>
         <h3>チケット</h3>
         <ul>
             <li th:each="t : ${user.tickets}">

@@ -170,3 +170,86 @@ form[action="/api/hello"] {
     color: #999;
     font-style: italic;
 }
+
+/* Hello ページコンテナ */
+.hello-container {
+    width: 900px;
+    margin: 30px auto;
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+}
+
+.hello-container h2 {
+    color: #667eea;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 12px;
+    margin-top: 0;
+}
+
+.hello-container h3 {
+    color: #764ba2;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+/* ユーザー詳細情報テーブル */
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.detail-table tr {
+    border-bottom: 1px solid #ddd;
+}
+
+.detail-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.detail-table td {
+    padding: 12px 16px;
+}
+
+.detail-table td:first-child {
+    font-weight: 600;
+    width: 30%;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+.detail-table td:last-child {
+    color: #555;
+}
+
+/* Hello ページチケットリスト */
+.hello-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.hello-container li {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hello-container li::before {
+    content: "🎫";
+    font-size: 16px;
+}
+
+.hello-container li span:first-of-type {
+    font-weight: 500;
+    color: #333;
+}
+
+.hello-container li span:last-of-type {
+    color: #667eea;
+    font-weight: bold;
+}
