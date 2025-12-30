@@ -16,10 +16,28 @@
     <form th:action="@{/api/hello}" method="get">
         <div class="table-container">
             <div class="table-top-right">
-                <button type="submit">選択したユーザーを Hello ページへ</button>
+                <button type="submit" id="submitBtn" disabled>選択したユーザーを Hello ページへ</button>
             </div>
             <div th:insert="user-list :: userTable"></div>
         </div>
     </form>
+
+    <script>
+        // ラジオボタンの選択整監視
+        const radios = document.querySelectorAll('input[name="userId"]');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function updateButtonState() {
+            const isChecked = Array.from(radios).some(radio => radio.checked);
+            submitBtn.disabled = !isChecked;
+        }
+
+        radios.forEach(radio => {
+            radio.addEventListener('change', updateButtonState);
+        });
+
+        // 初期状态をも設定
+        updateButtonState();
+    </script>
 </body>
 </html>

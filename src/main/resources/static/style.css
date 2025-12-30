@@ -134,7 +134,20 @@ form[action="/api/hello"] {
     box-shadow: 0 4px 8px rgba(0,0,0,0.12);
 }
 
-.table-top-right button:hover { transform: translateY(-2px); }
+.table-top-right button:hover {
+    transform: translateY(-2px);
+}
+
+.table-top-right button:disabled {
+    background: linear-gradient(135deg, #ccc 0%, #999 100%);
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-top-right button:disabled:hover {
+    transform: none;
+}
 
 /* チケットリストスタイル */
 .user-table ul {
