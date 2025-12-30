@@ -23,7 +23,7 @@
     </form>
 
     <script>
-        // ラジオボタンの選択整監視
+        // ラジオボタンの選択監視
         const radios = document.querySelectorAll('input[name="userId"]');
         const submitBtn = document.getElementById('submitBtn');
 
@@ -32,11 +32,29 @@
             submitBtn.disabled = !isChecked;
         }
 
+        // ラジオボタンの選択変更を侣听
         radios.forEach(radio => {
             radio.addEventListener('change', updateButtonState);
         });
 
-        // 初期状态をも設定
+        // 表の行をクリック可能にして、ラジオをトグル
+        const tableRows = document.querySelectorAll('.user-table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                // ラジオボタン直接をクリックした場合は二重子触発を防ぐ
+                if (e.target.tagName === 'INPUT' && e.target.type === 'radio') {
+                    e.target.checked = !e.target.checked;
+                } else {
+                    // 裡一をクリックした場合、該当行のラジオを選択し、他を解除
+                    const radio = row.querySelector('input[name="userId"]');
+                    radios.forEach(r => r.checked = false);
+                    radio.checked = true;
+                }
+                updateButtonState();
+            });
+        });
+
+        // 初期状态を設定
         updateButtonState();
     </script>
 </body>
