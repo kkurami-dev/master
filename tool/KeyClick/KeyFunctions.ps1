@@ -488,6 +488,7 @@ Function check-Clip {
 
 function Get-OCRText {
     param([string]$key)
+    write-Log "Get-OCRText $key"
     $FileName = Get-KeyToFilename $key
     $ImagePath = Get-TmpClip $FileName
     $text = (tesseract ".\data\$ImagePath" stdout -l jpn+eng --psm 4)

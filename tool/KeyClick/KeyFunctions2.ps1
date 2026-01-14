@@ -64,6 +64,11 @@ function War-StartConfirmation( $id ) {
         }
     }
 
+    if ((TAB1-ON) -eq 1) {
+        War-ActSelection
+        return 1
+    }
+    
     if ((check-Clip "MOB01") -ne 1) {
         # 直近が艇ではない
         send-MouseLeft -posname "tab-update" -msg "StartConfirmation"
@@ -92,10 +97,10 @@ function Confirm-HpLow {
 function Confirm-Vitality {
     $down = 0
     for ($i = 1; $i -le 20; $i++) {
-        if ((War-StartConfirmation 2) -eq 1) {
-            return 1
+        if ((TAB1-ON) -eq 1) {
+            return 2
         }
-        if ((check-Clip "TAB1") -eq 1 -or (Confirm-HpLow) -eq 0) {
+        if ((Confirm-HpLow) -eq 0) {
             return 0
         }
         if ((check-Clip "HPON") -ne 1) {
@@ -174,6 +179,11 @@ function War-ActSelection {
 function Get-EnemyDistance() {
     $Distance = 1
     for ($i = 0; $i -le 6; $i++) {
+        if ((TAB1-ON) -eq 1) {
+            War-ActSelection
+            return 1
+        }
+
         $Distance = 1
         $ret = Get-OCRText "MOBDIS"
         $ret = "${ret}"
@@ -214,53 +224,17 @@ function Check-MP() {
     0
 }
 
-$scriptPath = "$currentPath\KeyFunctions.ps1"
-$rTable = 0..255 | ForEach-Object { [byte]($_ * 0.3) }
-$gTable = 0..255 | ForEach-Object { [byte]($_ * 0.59) }
-$bTable = 0..255 | ForEach-Object { [byte]($_ * 0.11) }
-$iss = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
-$iss.InitializationScripts.Add(
-    [System.Management.Automation.Runspaces.SessionStateScriptEntry]::new(
-        [System.IO.File]::ReadAllText($scriptPath)
-    )
-)
-$iss.Commands.Add(
-    [System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new(
-        "Confirm-Vitality", ((Get-Command Confirm-Vitality).ScriptBlock.ToString())
-    )
-)
-$iss.Commands.Add(
-    [System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new(
-        "Get-EnemyDistance", ((Get-Command Get-EnemyDistance).ScriptBlock.ToString())
-    )
-)
-$iss.Commands.Add(
-    [System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new(
-        "Check-MP", ((Get-Command Check-MP).ScriptBlock.ToString())
-    )
-)
-$iss.Variables.Add(
-    [System.Management.Automation.Runspaces.SessionStateVariableEntry]::new(
-        "rTable", $rTable, "R LUT"
-    )
-)
-$iss.Variables.Add(
-    [System.Management.Automation.Runspaces.SessionStateVariableEntry]::new(
-        "gTable", $gTable, "G LUT"
-    )
-)
-$iss.Variables.Add(
-    [System.Management.Automation.Runspaces.SessionStateVariableEntry]::new(
-        "bTable", $bTable, "B LUT"
-    )
-)
+# $iss = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+# $iss.ImportPSModule(@("$currentPath\KeyFunctions.ps1"));
+# $iss.ImportPSModule(@("$currentPath\KeyFunctions2.ps1"));
 
 $pool = [RunspaceFactory]::CreateRunspacePool(1, [Environment]::ProcessorCount, $iss, $Host)
-$pool.Open()
-$psInit = [PowerShell]::Create()
-$psInit.RunspacePool = $pool
-$psInit.Dispose()
-
+$pool.ApartmentState = "MTA"   # GUIを触らない処理なら必須級
+$pool.ThreadOptions = "ReuseThread"
+# $pool.Open()
+# $psInit = [PowerShell]::Create()
+# $psInit.RunspacePool = $pool
+# $psInit.Dispose()
 function Start-BattleSub {
     $jobs = @()
     foreach ($i in 1..3) {
@@ -298,24 +272,19 @@ function Start-Battle01([int]$mode) {
         return 0
     }
 
-    # 戦闘中か確認
-    if ((TAB1-ON) -ne 1) {
-        #send-MouseLeft -posname "tab-update"
-        St-Sleep 50 "No battle."
-    } else {
-        War-ActSelection
-        return 0
-    }
-
     # 次の戦闘を開始できる状態か
-    if ((Confirm-Vitality 1) -eq 1) {
+    $cv = (Confirm-Vitality 1)
+    if ($cv -eq 1) {
         write-Log 7
+        return 0
+    } elseif ($cv -eq 2) {
+        War-ActSelection
         return 0
     }
 
     # 敵の状態を確認
     if (Get-EnemyDistance) {
-        St-Sleep 500 "The enemy is far away."
+        write-Log "The enemy is far away."
         return 0
     }
 
@@ -348,7 +317,7 @@ function Start-Battle02 {
     # 戦闘中か確認
     if ((TAB1-ON) -ne 1) {
         #send-MouseLeft -posname "tab-update"
-        St-Sleep 50 "No battle."
+        write-Log "No battle."
     } else {
         War-ActSelection
         return 0
