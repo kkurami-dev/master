@@ -3,38 +3,46 @@
 $folder = "$currentPath\data"
 $fileName = "log.txt"
 $file = "$folder\$fileName"
-Write-Host $file
 
 # 初期状態を取得
-$item = Get-Item $file
-$lastTime = $item.LastWriteTime
-$lastSize = $item.Length
-
-Write-Host "監視開始: $file (Ctrl+Cで停止) $lastSize, $lastTime"
-
+$lastTime = 0
+$lastSize = 0
+$LineNum = 0
+$sUniTime = [DateTimeOffset]::Now.ToUnixTimeMilliseconds();
 while ($true) {
-    #Start-Sleep -Seconds 2
-    Start-Sleep -Milliseconds 80
     try {
         $item = Get-Item $file
         $currentTime = $item.LastWriteTime
         $currentSize = $item.Length
-
-        if ($currentSize -lt $lastSize) {
-            Write-Host "r"
+        if ($currentTime -eq $lastTime -or $currentSize -eq $lastSize) {
+            Start-Sleep -Milliseconds 50
+            continue
         }
-
         # 変更があれば
-        if ($currentTime -ne $lastTime -or $currentSize -ne $lastSize) {
-            $lastTime = $currentTime
-            $lastSize = $currentSize
+        $lastTime = $currentTime
+        $lastSize = $currentSize
 
-            $lastLine = Get-Content $file -Tail 1
-            Write-Host ("[{0}] {1}" -f (Get-Date -Format "HH:mm:ss.fff"), $lastLine)
+        $NewLineNum = (Get-Content $file).Count
+        if ($NewLineNum -lt $LineNum) {
+            Write-Host "r"
+            $LineNum = 0
         }
+        $rl = $NewLineNum - $LineNum
+
+        $lUniTime = [DateTimeOffset]::Now.ToUnixTimeMilliseconds();
+        $ru = $lUniTime - $sUniTime
+        $timeS = Get-Date -Format "HH:mm:ss.fff"
+        Get-Content $file -Tail $rl | ForEach-Object {
+            $str = "$timeS({0, 4})" -f $ru;
+            Write-Host "$str $_"
+            $ru = 0
+        }
+        $LineNum = $NewLineNum;
+        $sUniTime = $lUniTime;
     }
     catch {
         Write-Warning "ファイルにアクセスできません: $_"
         return
     }
+    Start-Sleep -Milliseconds 75
 }

@@ -3,9 +3,14 @@
 . "$($currentPath)\KeyFunctions2.ps1"
 
 $count = 0
-while ($count -lt 200) {
+while ($count -lt 2000) {
     .\KeyClick.ps1 $count
     $count++
+
+    $json = Read-SettingJSON
+    if ($count -gt [int]$json.LoopNum) {
+        return
+    }
 }
 
 return

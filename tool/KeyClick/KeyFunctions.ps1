@@ -1,6 +1,15 @@
 #
 # キーボード、マウス操作のライブラリ
 #
+
+# 比較内容	  演算子	例
+# 等しい	  -eq	    5 -eq 5 → True
+# 等しくない	-ne	    5 -ne 3 → True
+# より大きい	-gt	   10 -gt 5 → True
+# より小さい	-lt	    3 -lt 5 → True
+# 以上	    -ge	    5 -ge 5 → True
+# 以下	    -le	    4 -le 5 → True
+
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -103,6 +112,7 @@ $logpath = "data\log.txt"
 
 Function Get-FileToPos {
     Param( [string]$fileName )
+    write-Log ("input" + $fileName)
     if ($file -cmatch "(.+?)_(\d+)x(\d+)x(\d+)x(\d+)x(\d+)") {
         $mode = $matches[6]
     } elseif ($file -cmatch "(.+?)_(\d+)x(\d+)x(\d+)x(\d+)") {
@@ -167,11 +177,11 @@ Function send-KeyCode {
 
 # 指定位置をマウスの左クリックを行う
 Function send-MouseLeft {
-    Param($posx, $posy, $posname)
+    Param($posx, $posy, $posname, $msg)
 
     if ($posname -is [string]) {
         if ($posname -eq "tab-update") {
-            St-Sleep 80 "#  TAB Update."
+            $msg += "#  TAB Update."
             $posx = 1740
             $posy = 800
         } elseif ($posname -eq "tab-1") {
@@ -190,7 +200,7 @@ Function send-MouseLeft {
     # Start-Sleep -Milliseconds 60
     # [MouseSimulator]::mouse_event([MouseSimulator]::LEFTUP, 0, 0, 0, [UIntPtr]::Zero)
     [MouseInput]::ClickAt($posx, $posy)
-    Start-Sleep -Milliseconds 10
+    St-Sleep 10 $msg
 }
 
 # 指定位置にマウスカーソルを移動させる
@@ -403,8 +413,15 @@ Function Get-TmpClip([string]$FileName) {
     return $capfile
 }
 
+$FileNameCache = @{}
 Function Get-KeyToFilename {
     Param([string]$key)
+
+    if ($FileNameCache[$key]){
+        # $msg = "chche: {0}" -f $FileNameCache[$key]
+        # write-Log $msg
+        return $FileNameCache[$key]
+    }
 
     $fileName = "0"
     Get-ChildItem -Path "$currentPath\data" -File | ForEach-Object {
@@ -414,6 +431,7 @@ Function Get-KeyToFilename {
         }
     }
 
+    $FileNameCache[$key] = $fileName
     $fileName
 }
 
@@ -472,7 +490,7 @@ function Get-OCRText {
     param([string]$key)
     $FileName = Get-KeyToFilename $key
     $ImagePath = Get-TmpClip $FileName
-    $text = (tesseract ".\data\$ImagePath" stdout)
+    $text = (tesseract ".\data\$ImagePath" stdout -l jpn+eng --psm 4)
     Remove-Item "data\$ImagePath"
 
     if ($text -eq $null) {
@@ -503,15 +521,6 @@ Function write-Log {
         return
     }
 
-    # コンソールへの出力状態判定
-    $stopLine = Get-Content $setting -Tail 1
-    if ($stopLine -is [int] -and $stopLine -eq 2){
-        if ($PSBoundParameters.ContainsKey("Lf")){
-            Write-Host $msg
-        } else {
-            Write-Host $msg -NoNewline
-        }
-    }
     $msg | Out-File -FilePath $logpath -Append
 }
 
@@ -543,3 +552,20 @@ Function Get-LogWithNumber {
 }
 
 write-Log "s" -init 1
+
+Function Read-SettingJSON {
+    $file = 'data/setting.json'
+    if(-not (Test-Path $file)){
+        $Global:JSON = @{
+            Action = 0
+            MemberNum = 3
+            LoopNum = 200
+            EnemyDistance = 12
+        }
+        return
+    }
+
+    $Global:JSON = (Get-Content $file -Raw | ConvertFrom-Json)
+
+    return $JSON
+}

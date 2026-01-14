@@ -1,10 +1,9 @@
 ﻿Param ($count)
 
 # return
+$action = [int](Get-Content "data\stop.txt" -Tail 1)
 
-$action = Get-Content "data\stop.txt" -Tail 1
-$file = "TAB1_2284x353x8x15x2.png"
-#$ret = Check-CAP $file
+$json = Read-SettingJSON
 
 if ($action -lt 0){
     # 何もしない
@@ -17,33 +16,39 @@ if ($action -lt 0){
 
 } elseif ($action -lt 10){
     # 運用
-    $ret = Start-Battle01 $action
+    $ret = Start-Battle01
+    #$ret = Start-Battle02
+    return
 
 } elseif ($action -eq 11) {
     # 全画面キャプチャ
     $rand = Get-Random -Minimum 1 -Maximum 90
-    get-ScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL-${rand}" -mode 4
+    get-ScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL-${rand}" -mode 2
     0 | Out-File -FilePath "data\stop.txt"
     Start-Sleep -Milliseconds 1000
 
 } elseif ($action -eq 12) {
     # 新規部分キャプチャ
+    $file = $json.TargetOutput1
     $ret = Get-CAP $file
     Start-Sleep -Milliseconds 3000
 
 } elseif ($action -eq 13) {
     # キャプチャ画像の比較確認
+    $file = $json.TargetOutput1
     $ret = Check-CAP $file
     Start-Sleep -Milliseconds 3000
 
 } elseif ($action -eq 14) {
-    # キャプチャ画像の比較確認
-    $ret = Get-OCRText "MOBDIS"
+    # OCRの実行
+    $file = $json.TargetOutput2
+    $ret = Get-OCRText $file
     Write-Host $ret
     St-Sleep 10000 $ret
 
 } else {
     # 何もしない
+    write-Log "2 $count wait"
     Start-Sleep -Milliseconds 5000
 }
 

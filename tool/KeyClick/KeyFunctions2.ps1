@@ -1,13 +1,16 @@
+Add-Type -AssemblyName System.Core
+
+[System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
+
 #
 # 共通関数を使った操作関連
 #
 function TAB1-ON {
-    Param([int]$max = 3)
     $count = 1
 
     $ontab = check-Clip "TAB1"
-    while($ontab -ne 1 -and $count -lt $max) {
-        St-Sleep 30
+    while($ontab -ne 1 -and $count -lt 3) {
+        St-Sleep 50
         $ontab = check-Clip "TAB1"
         $count += 1
     }
@@ -63,7 +66,7 @@ function War-StartConfirmation( $id ) {
 
     if ((check-Clip "MOB01") -ne 1) {
         # 直近が艇ではない
-        send-MouseLeft -posname "tab-update"
+        send-MouseLeft -posname "tab-update" -msg "StartConfirmation"
         if ((check-Clip "TAB1") -ne 1) {
             write-Log "-3.$id"
             return 1
@@ -108,44 +111,58 @@ function Confirm-Vitality {
             write-Log 3.1
         }
         $down++
-        send-MouseLeft -posname "tab-update"
+        send-MouseLeft -posname "tab-update" -msg "Confirm-Vitality"
         St-Sleep 200 "Confirm-Vitality ${i}"
     }
 
     1
 }
 
-function War-ActSelection([int]$mode) {
+function Attack-CloseEnemy {
+    Send-MouseRight
+    send-MouseLeft -posname "tab-1"
+    send-KeyStr -Arg1 "1"
+    send-KeyStr -Arg1 "f"
+    #send-MouseLeft -posname "tab-update" -msg "CloseEnemy"
+}
+
+function War-ActSelection {
+    $mode = $JSON.Action
     send-MouseLeft -posname "tab-1"
     if ((Confirm-HpLow) -ne 0) {
         $mode = 2
     }
 
-    if ($mode -eq 1) {
-        # メインの攻撃(範囲)
-        if ((check-Clip "MP2") -eq 1) {
-            send-KeyStr -Arg1 "1"
-            St-Sleep 100
-            send-MouseLeft -posname "tab-1"
-            write-Log ($mode * 100 + 1)
-        } else {
-            send-KeyStr -Arg1 "e"
-            write-Log ($mode * 100 + 2)
-        }
-        St-Sleep 500
-        send-MouseLeft -posname "tab-1"
-        TAB1-OFF 20 "attac before.(1)"
-
-    } elseif ($mode -eq 2) {
+    $mpOk = check-Clip "MP2"
+    if ($mode -eq 2) {
         # 堅実な攻撃(単体)
-        if ((check-Clip "MP2") -eq 1) {
+        if ($mpOk -eq 1) {
             send-KeyStr -Arg1 "2"
-            write-Log ($mode * 100 + 1)
+            write-Log 201
         } else {
             send-KeyStr -Arg1 "e"
-            write-Log ($mode * 100 + 2)
+            Attack-CloseEnemy
+            write-Log 202
         }
         TAB1-OFF 20 "attac before.(2)"
+
+    } elseif ($mode -eq 99) {
+        Attack-CloseEnemy
+
+    } elseif ($mode -lt 8) {
+        # メインの攻撃(範囲)
+        if ($mpOk -eq 1) {
+            send-KeyStr -Arg1 $mode
+            St-Sleep 50
+            send-MouseLeft -posname "tab-1"
+            write-Log "${mode}01"
+        } else {
+            send-KeyStr -Arg1 "e"
+            write-Log "${mode}02"
+        }
+        St-Sleep 300
+        send-MouseLeft -posname "tab-1"
+        TAB1-OFF 20 "attac before.(1)"
 
     } else {
         send-MouseLeft -posname "tab-1"
@@ -155,46 +172,206 @@ function War-ActSelection([int]$mode) {
 }
 
 function Get-EnemyDistance() {
-    $ret = Get-OCRText "MOBDIS"
-    if (-not ($ret -is [string])) {
-        return 0
+    $Distance = 1
+    for ($i = 0; $i -le 6; $i++) {
+        $Distance = 1
+        $ret = Get-OCRText "MOBDIS"
+        $ret = "${ret}"
+        $ret = $ret -replace 'O', '0'
+        write-Log "EnemyDistance:${ret}:"
+        if ($ret -cmatch "(\d+)m") {
+            $ret = [int]($matches[1])
+        } else {
+            $Distance = 0
+        }
+
+        if ($Distance -eq 1 -and $JSON.EnemyDistance -and $ret -le $JSON.EnemyDistance){
+            return 0
+        } else {
+            if ( $i -eq 1 -or $i -eq 3 -or $i -eq 5 ){
+                send-MouseLeft -posname "tab-update" -msg "EnemyDistance:$ret"
+            }
+        }
     }
-    if ($ret -cmatch "^(\d+)m$") {
-        return [int]$matches[1]
-    } else {
-        return 0
+
+    1
+}
+
+function Check-MP() {
+    if ((check-Clip "MP2") -ne 1 -and (check-Clip "CHARGE") -eq 1 ) {
+        $mCount = 0
+        while ((check-Clip "MP2") -ne 1) {
+            send-KeyStr -Arg1 "e"
+            St-Sleep 300 "CHARGE."
+            $mCount += 1
+            if ($mCount -gt 10) {
+                break
+            }
+        }
+        return 1
+    }
+
+    0
+}
+
+$scriptPath = "$currentPath\KeyFunctions.ps1"
+$rTable = 0..255 | ForEach-Object { [byte]($_ * 0.3) }
+$gTable = 0..255 | ForEach-Object { [byte]($_ * 0.59) }
+$bTable = 0..255 | ForEach-Object { [byte]($_ * 0.11) }
+$iss = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+$iss.InitializationScripts.Add(
+    [System.Management.Automation.Runspaces.SessionStateScriptEntry]::new(
+        [System.IO.File]::ReadAllText($scriptPath)
+    )
+)
+$iss.Commands.Add(
+    [System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new(
+        "Confirm-Vitality", ((Get-Command Confirm-Vitality).ScriptBlock.ToString())
+    )
+)
+$iss.Commands.Add(
+    [System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new(
+        "Get-EnemyDistance", ((Get-Command Get-EnemyDistance).ScriptBlock.ToString())
+    )
+)
+$iss.Commands.Add(
+    [System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new(
+        "Check-MP", ((Get-Command Check-MP).ScriptBlock.ToString())
+    )
+)
+$iss.Variables.Add(
+    [System.Management.Automation.Runspaces.SessionStateVariableEntry]::new(
+        "rTable", $rTable, "R LUT"
+    )
+)
+$iss.Variables.Add(
+    [System.Management.Automation.Runspaces.SessionStateVariableEntry]::new(
+        "gTable", $gTable, "G LUT"
+    )
+)
+$iss.Variables.Add(
+    [System.Management.Automation.Runspaces.SessionStateVariableEntry]::new(
+        "bTable", $bTable, "B LUT"
+    )
+)
+
+$pool = [RunspaceFactory]::CreateRunspacePool(1, [Environment]::ProcessorCount, $iss, $Host)
+$pool.Open()
+$psInit = [PowerShell]::Create()
+$psInit.RunspacePool = $pool
+$psInit.Dispose()
+
+function Start-BattleSub {
+    $jobs = @()
+    foreach ($i in 1..3) {
+        $ps = [PowerShell]::Create()
+        $ps.RunspacePool = $pool
+        if($i -eq 1){
+            $ps.AddScript({Confirm-Vitality}) | Out-Null
+        } elseif($i -eq 2){
+            $ps.AddScript({Get-EnemyDistance}) | Out-Null
+        } elseif($i -eq 3){
+            $ps.AddScript({Check-MP}) | Out-Null
+        }
+        $jobs += [PSCustomObject]@{
+            PS = $ps
+            Handle = $ps.BeginInvoke()
+        }
+    }
+
+    # 結果取得
+    foreach ($j in $jobs) {
+        $result = 0
+        if ($j.PS -ne $null){
+            $result = $j.PS.EndInvoke($j.Handle)
+            $j.PS.Dispose()
+        }
+        $result
     }
 }
 
 function Start-Battle01([int]$mode) {
-    $astr, $sstr, $istr = Get-LogWithNumber
+    $mode = $JSON.Action
+
+    # 画面の状態など開始できるか確認
     if ((War-StartConfirmation 1) -eq 1 ) {
         return 0
     }
 
+    # 戦闘中か確認
     if ((TAB1-ON) -ne 1) {
         #send-MouseLeft -posname "tab-update"
-        St-Sleep 100 "No battle."
+        St-Sleep 50 "No battle."
     } else {
-        War-ActSelection($mode)
-        return 0
-    }
-    if ((check-Clip "MOB01") -ne 1) {
-        write-Log 6
-        St-Sleep 1000 "No MOB01"
+        War-ActSelection
         return 0
     }
 
-    if ((check-Clip "TAB1") -eq 1) {
-        War-ActSelection($mode)
-        return
-    }
+    # 次の戦闘を開始できる状態か
     if ((Confirm-Vitality 1) -eq 1) {
         write-Log 7
         return 0
     }
-    if (12 -lt (Get-EnemyDistance)) {
+
+    # 敵の状態を確認
+    if (Get-EnemyDistance) {
         St-Sleep 500 "The enemy is far away."
+        return 0
+    }
+
+    # MP確認
+    if (Check-MP) {
+        return 0
+    }
+
+    # 戦闘開始
+    send-MouseLeft -posname "tab-1"
+    St-Sleep 50
+    War-ActSelection
+    for ($i = 0; $i -le 20; $i++) {
+        St-Sleep 30 "Battle wait(${i})."
+        if ((check-Clip "TAB1") -eq 1){
+            write-Log 1
+            return 0
+        }
+    }
+
+    0
+}
+
+function Start-Battle02 {
+    # 画面の状態など開始できるか確認
+    if ((War-StartConfirmation 1) -eq 1 ) {
+        return 0
+    }
+
+    # 戦闘中か確認
+    if ((TAB1-ON) -ne 1) {
+        #send-MouseLeft -posname "tab-update"
+        St-Sleep 50 "No battle."
+    } else {
+        War-ActSelection
+        return 0
+    }
+
+    # 各種チェックの実行
+    $result = Start-BattleSub
+    St-Sleep 100 ("sub {0}/{1}/{2}" -f $result[0], $result[1], $result[2] )
+
+    # 次の戦闘を開始できる状態か
+    if ($result[0]) {
+        write-Log 7
+        return 0
+    }
+
+    # 敵の状態を確認
+    if ($result[1]) {
+        St-Sleep 500 "The enemy is far away."
+        return 0
+    }
+
+    # MP確認
+    if ($result[2]) {
         return 0
     }
 
@@ -205,7 +382,7 @@ function Start-Battle01([int]$mode) {
         St-Sleep 30 "Battle wait."
         if ((check-Clip "TAB1") -eq 1){
             write-Log 1
-            break
+            return 0
         }
         write-Log 0
     }
@@ -215,7 +392,6 @@ function Start-Battle01([int]$mode) {
 
 
 $LOGPIXELSX = 0.66
-
 Function Check-CAP {
     Param( [string]$file, [int]$act = 0 )
     $pos = Get-FileToPos $file
@@ -239,6 +415,7 @@ Function Check-CAP {
         $msg = "no diff"
     } else {
         $msg = "write $capkey $capkey1 $ret"
+        0 | Out-File -FilePath "data\stop.txt"
     }
     St-Sleep 100 $msg
 
@@ -248,6 +425,8 @@ Function Check-CAP {
 }
 
 Function Get-CAP {
+    0 | Out-File -FilePath "data\stop.txt"
+    
     Param( [string]$file, $mous )
     $pos = Get-FileToPos $file
     $capkey = $pos.filename
@@ -257,9 +436,10 @@ Function Get-CAP {
     }
     Remove-Item "data\TMP#${capkey}-*.png"
     Remove-Item "data\${capkey}_*.png"
-    $file = get-ScreenClip -x $c_x -y $c_y -width $c_w -height $c_h -name $capkey -mode $mode
-    $m_x = [int](([int]$c_x + [int]$c_w) * $LOGPIXELSX)
-    $m_y = [int](([int]$c_y + [int]$c_h) * $LOGPIXELSX)
+    $job = get-ScreenClip -x $pos.x -y $pos.y -width $pos.w -height $pos.h -name $capkey -mode $pos.mode
+    
+    $m_x = [int](([int]$pos.x + [int]$pos.w) * $LOGPIXELSX)
+    $m_y = [int](([int]$pos.y + [int]$pos.h) * $LOGPIXELSX)
     Set-MousePos -posx $m_x -posy $m_y
     write-Log ("update {0} - pos: {1} {2} {3}" -f $job, $m_x, $m_y, $file)
 }
