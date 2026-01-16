@@ -10,7 +10,7 @@ function TAB1-ON {
 
     $ontab = check-Clip "TAB1"
     while($ontab -ne 1 -and $count -lt 3) {
-        St-Sleep 50
+        St-Sleep 30
         $ontab = check-Clip "TAB1"
         $count += 1
     }
@@ -138,7 +138,10 @@ function War-ActSelection {
         $mode = 2
     }
 
-    $mpOk = check-Clip "MP2"
+    $mpOk = 1
+    if ($JSON.MPCharge){
+        $mpOk = check-Clip "MP2"
+    }
     if ($mode -eq 2) {
         # åòé¿Ç»çUåÇ(íPëÃ)
         if ($mpOk -eq 1) {
@@ -158,14 +161,13 @@ function War-ActSelection {
         # ÉÅÉCÉìÇÃçUåÇ(îÕàÕ)
         if ($mpOk -eq 1) {
             send-KeyStr -Arg1 $mode
-            St-Sleep 50
+            send-KeyStr -Arg1 "f"
             send-MouseLeft -posname "tab-1"
-            write-Log "${mode}01"
         } else {
             send-KeyStr -Arg1 "e"
             write-Log "${mode}02"
         }
-        St-Sleep 300
+        St-Sleep 50
         send-MouseLeft -posname "tab-1"
         TAB1-OFF 20 "attac before.(1)"
 
@@ -224,10 +226,9 @@ function Check-MP() {
     0
 }
 
-# $iss = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
-# $iss.ImportPSModule(@("$currentPath\KeyFunctions.ps1"));
-# $iss.ImportPSModule(@("$currentPath\KeyFunctions2.ps1"));
-
+$iss = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+$iss.ImportPSModule(@("$currentPath\KeyFunctions.ps1"));
+$iss.ImportPSModule(@("$currentPath\KeyFunctions2.ps1"));
 $pool = [RunspaceFactory]::CreateRunspacePool(1, [Environment]::ProcessorCount, $iss, $Host)
 $pool.ApartmentState = "MTA"   # GUIÇêGÇÁÇ»Ç¢èàóùÇ»ÇÁïKê{ãâ
 $pool.ThreadOptions = "ReuseThread"

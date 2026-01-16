@@ -3,8 +3,6 @@
 # return
 $action = [int](Get-Content "data\stop.txt" -Tail 1)
 
-$json = Read-SettingJSON
-
 if ($action -lt 0){
     # 何もしない
     Start-Sleep -Milliseconds 100
@@ -29,12 +27,14 @@ if ($action -lt 0){
 
 } elseif ($action -eq 12) {
     # 新規部分キャプチャ
+    $json = Read-SettingJSON
     $file = $json.TargetOutput1
     $ret = Get-CAP $file
     Start-Sleep -Milliseconds 3000
 
 } elseif ($action -eq 13) {
     # キャプチャ画像の比較確認
+    $json = Read-SettingJSON
     $file = $json.TargetOutput1
     $ret = Check-CAP $file
     Start-Sleep -Milliseconds 3000
