@@ -1,16 +1,28 @@
 Add-Type -AssemblyName System.Core
 
-[System.String]$currentPath=Split-Path ( & { $myInvocation.ScriptName } ) -parent
+$Status = @{
+    OldMagic = 0
+    
+}
+
+# 比較内容	演算子	例
+# 等しい    -eq   5 -eq 5 → True
+# 等しくない -ne   5 -ne 3 → True
+# より大きい -gt  10 -gt 5 → True
+# より小さい -lt    3 -lt 5 → True
+# 以上      -ge    5 -ge 5 → True
+# 以下      -le    4 -le 5 → True
 
 #
 # 共通関数を使った操作関連
 #
 function TAB1-ON {
+    Param([int]$max = 3, $msg)
     $count = 1
 
     $ontab = check-Clip "TAB1"
-    while($ontab -ne 1 -and $count -lt 3) {
-        St-Sleep 30
+    while($ontab -ne 1 -and $count -lt $max) {
+        St-Sleep 30 $msg
         $ontab = check-Clip "TAB1"
         $count += 1
     }
@@ -64,31 +76,45 @@ function War-StartConfirmation( $id ) {
         }
     }
 
-    if ((TAB1-ON) -eq 1) {
-        War-ActSelection
-        return 1
-    }
-    
     if ((check-Clip "MOB01") -ne 1) {
         # 直近が艇ではない
-        send-MouseLeft -posname "tab-update" -msg "StartConfirmation"
+        send-MouseLeft -posname "tab-update" -msg "StartConfirmation (1)"
         if ((check-Clip "TAB1") -ne 1) {
             write-Log "-3.$id"
             return 1
         }
+        return 0
     }
+
+    if ((TAB1-ON) -eq 1) {
+        War-ActSelection
+        return 1
+    } else {
+        send-MouseLeft -posname "tab-update" -msg "StartConfirmation (2)"
+    }
+
+    write-Log "Confirmation OK"
     0
 }
 
 function Confirm-HpLow {
     if ((check-Clip "HPOK") -ne 1) {
+        write-Log "HpLow 1"
         return 1
     }
-    if ((check-Clip "SUB1HPok") -ne 1){
+
+    $Num = [int]$JSON.MumberNum
+    if ($Num -ge 1 -and (check-Clip "SUB1HPok") -ne 1){
+        write-Log "HpLow  2"
         return 2
     }
-    if ((check-Clip "SUB2HPok") -ne 1) {
+    if ($Num -ge 2 -and (check-Clip "SUB2HPok") -ne 1) {
+        write-Log "HpLow  3"
         return 3
+    }
+    if ($Num -ge 3 -and (check-Clip "SUB3HPok") -ne 1) {
+        write-Log "HpLow 4"
+        return 4
     }
 
     return 0
@@ -126,9 +152,22 @@ function Confirm-Vitality {
 function Attack-CloseEnemy {
     Send-MouseRight
     send-MouseLeft -posname "tab-1"
-    send-KeyStr -Arg1 "1"
     send-KeyStr -Arg1 "f"
+    send-KeyStr -Arg1 "1"
     #send-MouseLeft -posname "tab-update" -msg "CloseEnemy"
+}
+
+function War-ActSelectionMagic {
+    Param( $mode )
+
+    $ost = $Status.OldMagic
+    $nowTime = (Get-Date -UFormat %s)
+    if ($ost -eq 0 -or $ost -lt $nowTime) {
+        write-Log "Magic time: ${nowTime}, ost: ${ost}"
+        send-KeyStr -Arg1 $mode
+        $Status.OldMagic = ([int]($nowTime) + [int]($JSON.MagicWait))
+    }
+    send-KeyStr -Arg1 "f"
 }
 
 function War-ActSelection {
@@ -145,7 +184,7 @@ function War-ActSelection {
     if ($mode -eq 2) {
         # 堅実な攻撃(単体)
         if ($mpOk -eq 1) {
-            send-KeyStr -Arg1 "2"
+            War-ActSelectionMagic "2"
             write-Log 201
         } else {
             send-KeyStr -Arg1 "e"
@@ -160,15 +199,12 @@ function War-ActSelection {
     } elseif ($mode -lt 8) {
         # メインの攻撃(範囲)
         if ($mpOk -eq 1) {
-            send-KeyStr -Arg1 $mode
-            send-KeyStr -Arg1 "f"
-            send-MouseLeft -posname "tab-1"
+            War-ActSelectionMagic $mode
         } else {
             send-KeyStr -Arg1 "e"
+            Attack-CloseEnemy
             write-Log "${mode}02"
         }
-        St-Sleep 50
-        send-MouseLeft -posname "tab-1"
         TAB1-OFF 20 "attac before.(1)"
 
     } else {
@@ -226,50 +262,12 @@ function Check-MP() {
     0
 }
 
-$iss = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
-$iss.ImportPSModule(@("$currentPath\KeyFunctions.ps1"));
-$iss.ImportPSModule(@("$currentPath\KeyFunctions2.ps1"));
-$pool = [RunspaceFactory]::CreateRunspacePool(1, [Environment]::ProcessorCount, $iss, $Host)
-$pool.ApartmentState = "MTA"   # GUIを触らない処理なら必須級
-$pool.ThreadOptions = "ReuseThread"
-# $pool.Open()
-# $psInit = [PowerShell]::Create()
-# $psInit.RunspacePool = $pool
-# $psInit.Dispose()
-function Start-BattleSub {
-    $jobs = @()
-    foreach ($i in 1..3) {
-        $ps = [PowerShell]::Create()
-        $ps.RunspacePool = $pool
-        if($i -eq 1){
-            $ps.AddScript({Confirm-Vitality}) | Out-Null
-        } elseif($i -eq 2){
-            $ps.AddScript({Get-EnemyDistance}) | Out-Null
-        } elseif($i -eq 3){
-            $ps.AddScript({Check-MP}) | Out-Null
-        }
-        $jobs += [PSCustomObject]@{
-            PS = $ps
-            Handle = $ps.BeginInvoke()
-        }
-    }
-
-    # 結果取得
-    foreach ($j in $jobs) {
-        $result = 0
-        if ($j.PS -ne $null){
-            $result = $j.PS.EndInvoke($j.Handle)
-            $j.PS.Dispose()
-        }
-        $result
-    }
-}
-
 function Start-Battle01([int]$mode) {
     $mode = $JSON.Action
 
     # 画面の状態など開始できるか確認
-    if ((War-StartConfirmation 1) -eq 1 ) {
+    $ws = (War-StartConfirmation 1);
+    if ($ws -ne 0) {
         return 0
     }
 
@@ -299,7 +297,7 @@ function Start-Battle01([int]$mode) {
     St-Sleep 50
     War-ActSelection
     for ($i = 0; $i -le 20; $i++) {
-        St-Sleep 30 "Battle wait(${i})."
+        St-Sleep 30 "= Battle wait(${i})."
         if ((check-Clip "TAB1") -eq 1){
             write-Log 1
             return 0
@@ -308,58 +306,6 @@ function Start-Battle01([int]$mode) {
 
     0
 }
-
-function Start-Battle02 {
-    # 画面の状態など開始できるか確認
-    if ((War-StartConfirmation 1) -eq 1 ) {
-        return 0
-    }
-
-    # 戦闘中か確認
-    if ((TAB1-ON) -ne 1) {
-        #send-MouseLeft -posname "tab-update"
-        write-Log "No battle."
-    } else {
-        War-ActSelection
-        return 0
-    }
-
-    # 各種チェックの実行
-    $result = Start-BattleSub
-    St-Sleep 100 ("sub {0}/{1}/{2}" -f $result[0], $result[1], $result[2] )
-
-    # 次の戦闘を開始できる状態か
-    if ($result[0]) {
-        write-Log 7
-        return 0
-    }
-
-    # 敵の状態を確認
-    if ($result[1]) {
-        St-Sleep 500 "The enemy is far away."
-        return 0
-    }
-
-    # MP確認
-    if ($result[2]) {
-        return 0
-    }
-
-    # 戦闘開始
-    send-MouseLeft -posname "tab-1"
-    send-MouseLeft -posname "tab-1"
-    for ($i = 0; $i -le 20; $i++) {
-        St-Sleep 30 "Battle wait."
-        if ((check-Clip "TAB1") -eq 1){
-            write-Log 1
-            return 0
-        }
-        write-Log 0
-    }
-
-    0
-}
-
 
 $LOGPIXELSX = 0.66
 Function Check-CAP {

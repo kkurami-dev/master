@@ -451,7 +451,6 @@ Function check-Clip {
     $hash1 = Get-FileMD5 $fileName
     $Tmpfile = Get-TmpClip $fileName
     $hash2 = Get-FileMD5 $Tmpfile
-    #St-Sleep 100 "co1 $Tmpfile $hash2"
     if($cParam.tmpDel -ne 1) {
         $DelTmpfile = "data\$Tmpfile"
         if ($DelTmpfile -cmatch " (TMP.*)") {
@@ -462,11 +461,6 @@ Function check-Clip {
 
     for ($i = 1; $i -le 4; $i++) {
         if ($hash1 -eq $hash2) {
-            if ($cParam.okAct -is [int]) {
-                send-KeyCode -vk_key $cParam.okAct -wait $cParam.wait
-            } elseif ($cParam.okAct -is [string]) {
-                send-TimeKeys -key $cParam.okAct -time $cParam.time
-            }
             return 1
         }
 
@@ -475,12 +469,6 @@ Function check-Clip {
         if ($hash1 -eq 0){
             return 2
         }
-    }
-
-    if ($cParam.ngAct -is [int]) {
-        send-KeyCode -vk_key $cParam.ngAct -wait $cParam.wait
-    } elseif ($cParam.ngAct -is [string]) {
-        send-TimeKeys -key $cParam.ngAct -time $cParam.time
     }
 
     0

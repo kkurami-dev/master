@@ -21,7 +21,7 @@ if ($action -lt 0){
 } elseif ($action -eq 11) {
     # 全画面キャプチャ
     $rand = Get-Random -Minimum 1 -Maximum 90
-    get-ScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL-${rand}" -mode 2
+    get-ScreenClip -x 0 -y 0 -width 2732 -height 1824 -name "FULL-${rand}"
     0 | Out-File -FilePath "data\stop.txt"
     Start-Sleep -Milliseconds 1000
 
