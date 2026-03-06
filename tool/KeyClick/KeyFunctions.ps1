@@ -179,20 +179,21 @@ Function send-KeyCode {
 Function send-MouseLeft {
     Param($posx, $posy, $posname, $msg)
 
+    $subPos = 10
     if ($posname -is [string]) {
         if ($posname -eq "tab-update") {
             $msg += "#  TAB Update."
             $posx = 1740
-            $posy = 800
+            $posy = 800 - $subPos
         } elseif ($posname -eq "tab-1") {
             $posx = 1740
-            $posy = 240
+            $posy = 240 - $subPos
         } elseif ($posname -eq "tab-update") {
             $posx = 1740
-            $posy = 700
+            $posy = 700 - $subPos
         } elseif ($posname -eq "tab-1") {
             $posx = 1740
-            $posy = 145
+            $posy = 145 - $subPos
         }
     }
 

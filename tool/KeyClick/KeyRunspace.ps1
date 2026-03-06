@@ -37,28 +37,28 @@ function Start-BattleSub {
                     while($Data["Active"]){
                         $Data["Vitality"] = Confirm-HpLow
                     }
-                })
+                }).AddArgument($i)
         } elseif($i -eq 2){
             $ps = [PowerShell]::Create().AddScript(
                 {
                     while($Data["Active"]){
                         $Data["EnemyDistance"] = Get-EnemyDistance
                     }
-                })
+                }).AddArgument($i)
         } elseif($i -eq 3){
             $ps = [PowerShell]::Create().AddScript(
                 {
                     while($Data["Active"]){
                         $Data["MP"] = Check-MP
                     }
-                })
+                }).AddArgument($i)
         } elseif($i -eq 4){
             $ps = [PowerShell]::Create().AddScript(
                 {
                     while($Data["Active"]){
                         $Data["Confirmation"] = War-StartConfirmation
                     }
-                })
+                }).AddArgument($i)
         }
         $ps.RunspacePool = $pool
         $jobs += [PSCustomObject]@{

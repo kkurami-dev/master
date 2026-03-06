@@ -2,6 +2,7 @@
 
 # return
 $action = [int](Get-Content "data\stop.txt" -Tail 1)
+write-Log " "
 
 if ($action -lt 0){
     # 何もしない
@@ -16,7 +17,6 @@ if ($action -lt 0){
     # 運用
     $ret = Start-Battle01
     #$ret = Start-Battle02
-    return
 
 } elseif ($action -eq 11) {
     # 全画面キャプチャ
@@ -54,3 +54,5 @@ if ($action -lt 0){
 
 # 最低停止時間( これ以下は操作不能になる )
 Start-Sleep -Milliseconds 50
+
+return 0

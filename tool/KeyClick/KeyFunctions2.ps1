@@ -2,7 +2,7 @@ Add-Type -AssemblyName System.Core
 
 $Status = @{
     OldMagic = 0
-    
+    OnBattle = 0
 }
 
 # 比較内容	演算子	例
@@ -22,20 +22,22 @@ function TAB1-ON {
 
     $ontab = check-Clip "TAB1"
     while($ontab -ne 1 -and $count -lt $max) {
-        St-Sleep 30 $msg
+        St-Sleep 50 $msg
         $ontab = check-Clip "TAB1"
         $count += 1
+        $msg = ""
     }
 
     return $ontab
 }
+
 function TAB1-OFF {
     Param([int]$max = 3, $msg)
     $count = 1
 
     $ontab = check-Clip "TAB1"
     while($ontab -eq 1 -and $count -lt $max) {
-        St-Sleep 30 $msg
+        St-Sleep 50 $msg
         $ontab = check-Clip "TAB1"
         $count += 1
         $msg = ""
@@ -72,7 +74,7 @@ function War-StartConfirmation( $id ) {
         send-KeyCode -name "TAB" -wait 300
         if ((check-Clip "TAB1") -ne 1) {
             write-Log -2
-            return 1
+            return 2
         }
     }
 
@@ -81,14 +83,13 @@ function War-StartConfirmation( $id ) {
         send-MouseLeft -posname "tab-update" -msg "StartConfirmation (1)"
         if ((check-Clip "TAB1") -ne 1) {
             write-Log "-3.$id"
-            return 1
+            return 3
         }
-        return 0
+        return 3
     }
 
     if ((TAB1-ON) -eq 1) {
-        War-ActSelection
-        return 1
+        return 4
     } else {
         send-MouseLeft -posname "tab-update" -msg "StartConfirmation (2)"
     }
@@ -124,7 +125,7 @@ function Confirm-Vitality {
     $down = 0
     for ($i = 1; $i -le 20; $i++) {
         if ((TAB1-ON) -eq 1) {
-            return 2
+            return 4
         }
         if ((Confirm-HpLow) -eq 0) {
             return 0
@@ -150,21 +151,36 @@ function Confirm-Vitality {
 }
 
 function Attack-CloseEnemy {
-    Send-MouseRight
-    send-MouseLeft -posname "tab-1"
+    #Send-MouseRight
+    St-Sleep 150
     send-KeyStr -Arg1 "f"
-    send-KeyStr -Arg1 "1"
+    St-Sleep 150
+    send-KeyStr -Arg1 "f"
+    St-Sleep 150
     #send-MouseLeft -posname "tab-update" -msg "CloseEnemy"
 }
 
-function War-ActSelectionMagic {
+function TAB1-CloseEnemy {
+    $ontab = TAB1-ON
+    if ($ontab -eq 1){
+        write-Log "TAB1-CloseEnemy"
+        Attack-CloseEnemy
+        return 1
+    }
+
+    return 0
+}
+
+function War-ActMagic {
     Param( $mode )
 
+    $sleep = $JSON.MagicSleep
     $ost = $Status.OldMagic
     $nowTime = (Get-Date -UFormat %s)
     if ($ost -eq 0 -or $ost -lt $nowTime) {
         write-Log "Magic time: ${nowTime}, ost: ${ost}"
         send-KeyStr -Arg1 $mode
+        St-Sleep $sleep "Magic Sleep"
         $Status.OldMagic = ([int]($nowTime) + [int]($JSON.MagicWait))
     }
     send-KeyStr -Arg1 "f"
@@ -184,7 +200,7 @@ function War-ActSelection {
     if ($mode -eq 2) {
         # 堅実な攻撃(単体)
         if ($mpOk -eq 1) {
-            War-ActSelectionMagic "2"
+            War-ActMagic "2"
             write-Log 201
         } else {
             send-KeyStr -Arg1 "e"
@@ -199,7 +215,7 @@ function War-ActSelection {
     } elseif ($mode -lt 8) {
         # メインの攻撃(範囲)
         if ($mpOk -eq 1) {
-            War-ActSelectionMagic $mode
+            War-ActMagic $mode
         } else {
             send-KeyStr -Arg1 "e"
             Attack-CloseEnemy
@@ -208,6 +224,7 @@ function War-ActSelection {
         TAB1-OFF 20 "attac before.(1)"
 
     } else {
+        send-MouseLeft -posname "tab-1"
         send-MouseLeft -posname "tab-1"
         write-Log 2
         TAB1-OFF 10 "attac before.(3)"
@@ -218,8 +235,7 @@ function Get-EnemyDistance() {
     $Distance = 1
     for ($i = 0; $i -le 6; $i++) {
         if ((TAB1-ON) -eq 1) {
-            War-ActSelection
-            return 1
+            return 4
         }
 
         $Distance = 1
@@ -263,7 +279,7 @@ function Check-MP() {
 }
 
 function Start-Battle01([int]$mode) {
-    $mode = $JSON.Action
+    TAB1-CloseEnemy
 
     # 画面の状態など開始できるか確認
     $ws = (War-StartConfirmation 1);
@@ -282,26 +298,28 @@ function Start-Battle01([int]$mode) {
     }
 
     # 敵の状態を確認
+    TAB1-CloseEnemy
     if (Get-EnemyDistance) {
         write-Log "The enemy is far away."
         return 0
     }
 
     # MP確認
+    TAB1-CloseEnemy
     if (Check-MP) {
         return 0
     }
 
     # 戦闘開始
-    send-MouseLeft -posname "tab-1"
-    St-Sleep 50
     War-ActSelection
+    send-MouseLeft -posname "tab-1"
+    St-Sleep 50 "attac start (1)"
     for ($i = 0; $i -le 20; $i++) {
-        St-Sleep 30 "= Battle wait(${i})."
-        if ((check-Clip "TAB1") -eq 1){
+        if ((check-Clip "TAB1") -eq 1 -or (check-Clip "MOB01") -ne 1){
             write-Log 1
             return 0
         }
+        St-Sleep 55 "= Battle wait(${i})."
     }
 
     0
