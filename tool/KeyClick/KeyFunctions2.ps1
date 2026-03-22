@@ -152,23 +152,11 @@ function Confirm-Vitality {
 
 function Attack-CloseEnemy {
     #Send-MouseRight
-    St-Sleep 150
     send-KeyStr -Arg1 "f"
     St-Sleep 150
     send-KeyStr -Arg1 "f"
     St-Sleep 150
     #send-MouseLeft -posname "tab-update" -msg "CloseEnemy"
-}
-
-function TAB1-CloseEnemy {
-    $ontab = TAB1-ON
-    if ($ontab -eq 1){
-        write-Log "TAB1-CloseEnemy"
-        Attack-CloseEnemy
-        return 1
-    }
-
-    return 0
 }
 
 function War-ActMagic {
@@ -231,6 +219,18 @@ function War-ActSelection {
     }
 }
 
+function TAB1-CloseEnemy {
+    $ontab = TAB1-ON
+    if ($ontab -eq 1){
+        write-Log "TAB1-CloseEnemy"
+        Attack-CloseEnemy
+        War-ActSelection
+        return 1
+    }
+
+    return 0
+}
+
 function Get-EnemyDistance() {
     $Distance = 1
     for ($i = 0; $i -le 6; $i++) {
@@ -252,9 +252,7 @@ function Get-EnemyDistance() {
         if ($Distance -eq 1 -and $JSON.EnemyDistance -and $ret -le $JSON.EnemyDistance){
             return 0
         } else {
-            if ( $i -eq 1 -or $i -eq 3 -or $i -eq 5 ){
-                send-MouseLeft -posname "tab-update" -msg "EnemyDistance:$ret"
-            }
+            send-MouseLeft -posname "tab-update" -msg "EnemyDistance:$ret"
         }
     }
 

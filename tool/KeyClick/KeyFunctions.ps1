@@ -457,7 +457,7 @@ Function check-Clip {
         if ($DelTmpfile -cmatch " (TMP.*)") {
             $DelTmpfile = "data\" + $matches[1]
         }
-        Remove-Item $DelTmpfile
+        $del = Remove-Item $DelTmpfile
     }
 
     for ($i = 1; $i -le 4; $i++) {
@@ -481,7 +481,7 @@ function Get-OCRText {
     $FileName = Get-KeyToFilename $key
     $ImagePath = Get-TmpClip $FileName
     $text = (tesseract ".\data\$ImagePath" stdout -l jpn+eng --psm 4)
-    Remove-Item "data\$ImagePath"
+    $del = Remove-Item "data\$ImagePath"
 
     if ($text -eq $null) {
         return 0
