@@ -102,19 +102,90 @@ const clickMuteButton = (action, idx, root) => {
   }
 };
 
+const clickSkipButton = () => {
+  const skipButton = document.querySelector(SKIPTAG2) || document.querySelector(SKIPTAG1);
+  if (!skipButton) {
+    return;
+  }
+
+  const isDisabled = skipButton.disabled || skipButton.getAttribute("aria-disabled") === "true";
+  if (isDisabled) {
+    return;
+  }
+
+  skipButton.click();
+};
+
 const KEY1 = 'ymp_side_panel';
 const KEY2 = 'sponsor_mute';
+const VIDEO_ONLY_STYLE_ID = "ytp-video-only-style";
+let videoOnlyViewApplied = false;
+const PANEL_IDS = [
+  "content",
+  "nav-bar-background",
+  "nav-bar-divider",
+  "guide",
+  "mini-guide-background",
+  "side-panel",
+  "mini-guide",
+];
+
+const applyVideoOnlyView = () => {
+  if (videoOnlyViewApplied) return; // 毎秒の再注入を防止
+  videoOnlyViewApplied = true;
+
+  // 旧スタイルタグを除去
+  ["video-only-style", "caption-only-style"].forEach((id) => {
+    document.getElementById(id)?.remove();
+  });
+
+  let style = document.getElementById(VIDEO_ONLY_STYLE_ID);
+  if (!style) {
+    style = document.createElement("style");
+    style.id = VIDEO_ONLY_STYLE_ID;
+    document.head.appendChild(style);
+  }
+
+  // ヘッダーとサイドバーのみ非表示（プレイヤー周辺は一切触らない）
+  style.textContent = `
+    ytd-masthead {
+      display: none !important;
+    }
+    #secondary {
+      display: none !important;
+    }
+
+    /* 映像領域を1.25倍に拡大（transform はレイアウトに影響しない） */
+    #movie_player {
+      transform: scale(1.20) !important;
+      transform-origin: center center !important;
+    }
+  `;
+};
+
+const clearVideoOnlyView = () => {
+  videoOnlyViewApplied = false;
+  document.getElementById(VIDEO_ONLY_STYLE_ID)?.remove();
+  ["video-only-style", "caption-only-style"].forEach((id) => {
+    document.getElementById(id)?.remove();
+  });
+};
+
 const musicPlayListToggle = async () => {
   const SidePanel = (result0) => {
-    let param = ``;
     if (!result0[KEY1]) {
-      param = `display:none;`
+      applyVideoOnlyView();
+      return;
     }
-    ["content",
-      "nav-bar-background", "nav-bar-divider",
-      "guide", "mini-guide-background", "side-panel", "mini-guide"
-    ].forEach(key => {
+
+    clearVideoOnlyView();
+
+    let param = ``;
+    PANEL_IDS.forEach(key => {
       const el = document.getElementById(key);
+      if (!el) {
+        return;
+      }
       el.setAttribute("style", param);
     });
     // ["ytmusic-nav-bar"].forEach(key => {
@@ -129,6 +200,7 @@ const musicPlayListToggle = async () => {
 const playerId = returnPlayerId();
 const intervalFunc = () => {
   musicPlayListToggle();
+  clickSkipButton();
   
   const root = document.getElementById(playerId);
   MuteS.root = root;
