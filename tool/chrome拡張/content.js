@@ -103,17 +103,33 @@ const clickMuteButton = (action, idx, root) => {
 };
 
 const clickSkipButton = () => {
-  const skipButton = document.querySelector(SKIPTAG2) || document.querySelector(SKIPTAG1);
-  if (!skipButton) {
-    return;
+  // 方法1: 広告動画の再生時間を最後に飛ばす（YouTube の .click() 対策回避）
+  const video = document.querySelector('.ad-showing video')
+    || document.querySelector('.ad-interrupting video');
+  if (video && video.duration && isFinite(video.duration)) {
+    video.currentTime = video.duration;
   }
 
-  const isDisabled = skipButton.disabled || skipButton.getAttribute("aria-disabled") === "true";
-  if (isDisabled) {
+  // 方法2: 通常のスキップボタンクリック（旧形式向け）
+  const selectors = [
+    ".ytp-ad-skip-button-modern",
+    ".ytp-skip-ad-button",
+    ".ytp-skip-ad",
+    '.ytp-ad-skip-button-container button',
+    '[class*="ytp-ad-skip"]',
+  ];
+
+  for (const sel of selectors) {
+    const btn = document.querySelector(sel);
+    if (!btn) continue;
+    if (btn.disabled || btn.getAttribute("aria-disabled") === "true") continue;
+
+    btn.click();
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    btn.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    btn.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
     return;
   }
-
-  skipButton.click();
 };
 
 const KEY1 = 'ymp_side_panel';
@@ -153,6 +169,24 @@ const applyVideoOnlyView = () => {
     }
     #secondary {
       display: none !important;
+    }
+    ytmusic-two-column-browse-results-renderer,
+    .style-scope.ytmusic-two-column-browse-results-renderer,
+    #side-panel.style-scope.ytmusic-player-page,
+    ytmusic-nav-bar.style-scope.ytmusic-app,
+    #nav-bar-background.style-scope.ytmusic-app-layout,
+    #player-bar-background.style-scope.ytmusic-app-layout,
+    ytmusic-player-bar.style-scope.ytmusic-app {
+      display: none !important;
+    }
+
+    /* YouTube Music: サイドパネル非表示時にプレイヤーを全幅化 */
+    ytmusic-player-page #main-panel {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    ytmusic-player-page {
+      --ytmusic-player-page-side-panel-width: 0px !important;
     }
 
     /* 映像領域を1.25倍に拡大（transform はレイアウトに影響しない） */
