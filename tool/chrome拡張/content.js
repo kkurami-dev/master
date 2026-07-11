@@ -1,141 +1,24 @@
 /**
- * 参考のURL
+ * YouTube 広告ミュート & UI カスタマイズ Chrome 拡張 (Content Script)
+ *
+ * 機能:
+ *   1. 広告（スポンサー）検出時に自動ミュート / 広告終了時にミュート解除
+ *   2. サイドパネル非表示 & 動画領域拡大（Video Only View）
+ *
+ * 参考URL:
  *   https://qiita.com/MeowMauPaws/items/e2310de1f122ac6430b0
  *   https://www.youtube.com/watch?v=N4BxnNLwZ5Q&list=RDN4BxnNLwZ5Q&start_radio=1
- *
- * ゆうつべの広告スキップボタン部品
- * aria-label="スポンサー" があると宣伝中と判断しミュート、スキップ押下
- *
- * 富士通, ASUS, NETGEAR, Mikrotik, Starlink
- *
  */
-const SKIPTAG1 = ".ytp-skip-ad";
-const SKIPTAG2 = ".ytp-skip-ad-button";
+
+// ---------------------------------------------------------------------------
+// 定数
+// ---------------------------------------------------------------------------
 const tmpStoped = "動画が一時停止されました。続きを視聴しますか？";
 
-const MuteS = {
-  get Sponsor(){
-    return this.getSponsor();
-  },
-  get Mute(){
-    return this.getMute();
-  },
-  get MuteButton(){
-    return this.getMuteButton();
-  },
-}
-
-function setMusicFunc(){
-  MuteS.getSponsor = () =>{
-    const sponsor = document.querySelector('.badge-style-type-ad-stark');
-    if(!sponsor) return false;
-    const flg = sponsor.hasAttribute("hidden");
-    return !flg;
-  };
-  MuteS.getMuteButton = () => {
-    const muteButton3 = document.getElementById("expand-volume");
-    if (muteButton3) {
-      return muteButton3.querySelector("button");
-    }
-    return null;
-  };
-  MuteS.getMute = () => {
-    const volume1 = document.getElementById("expand-volume-slider");
-    if (volume1){
-      return volume1.ariaValueNow === "0";
-    }
-    return false;
-  };
-}
-
-function setVideoFunc(){
-  let muteButton1 = null;
-  MuteS.getSponsor = () =>{
-    const sponsor = MuteS.root.querySelector('[aria-label="スポンサー"]');
-    if(!sponsor) return false;
-
-    const sponsorHtm = sponsor.innerHTML === "スポンサー";
-    const sponsorTxt = sponsor.innerText === "スポンサー";
-    return sponsorHtm && sponsorTxt;
-  };
-  MuteS.getMuteButton = () => {
-    muteButton1 = MuteS.root.querySelector(".ytp-mute-button.ytp-button");
-    if (muteButton1) return muteButton1;
-
-    const div = MuteS.root.querySelector(".ytp-mute-button");
-    if (!div) return null;
-    muteButton1 = div.querySelector("button");
-    return muteButton1;
-  };
-  MuteS.getMute = () =>{
-    if(!muteButton1) muteButton1 = MuteS.MuteButton;
-    return muteButton1?.dataset?.tooltipTitle?.startsWith("ミュート解除")
-  };
-}
-
-const returnPlayerId = () => {
-  const hostName = location.hostname;
-  const subDomain = hostName.split(".")[0];
-  switch (subDomain) {
-  case "music":
-    setMusicFunc();
-    return "player";
-    break;
-  case "www":
-  default:
-    setVideoFunc();
-    return "ytd-player";
-    break;
-  }
-};
-
-const clickMuteButton = (action, idx, root) => {
-  const muteButton = MuteS.MuteButton;
-  if (MuteS.Mute) {
-    if (action === 0) {
-      muteButton?.click();
-    }
-  } else if (muteButton) {
-    if (action === 1) {
-      muteButton?.click();
-    }
-  }
-};
-
-const clickSkipButton = () => {
-  // 方法1: 広告動画の再生時間を最後に飛ばす（YouTube の .click() 対策回避）
-  const video = document.querySelector('.ad-showing video')
-    || document.querySelector('.ad-interrupting video');
-  if (video && video.duration && isFinite(video.duration)) {
-    video.currentTime = video.duration;
-  }
-
-  // 方法2: 通常のスキップボタンクリック（旧形式向け）
-  const selectors = [
-    ".ytp-ad-skip-button-modern",
-    ".ytp-skip-ad-button",
-    ".ytp-skip-ad",
-    '.ytp-ad-skip-button-container button',
-    '[class*="ytp-ad-skip"]',
-  ];
-
-  for (const sel of selectors) {
-    const btn = document.querySelector(sel);
-    if (!btn) continue;
-    if (btn.disabled || btn.getAttribute("aria-disabled") === "true") continue;
-
-    btn.click();
-    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    btn.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
-    btn.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
-    return;
-  }
-};
-
-const KEY1 = 'ymp_side_panel';
-const KEY2 = 'sponsor_mute';
+const KEY1 = "ymp_side_panel";
+const KEY2 = "sponsor_mute";
 const VIDEO_ONLY_STYLE_ID = "ytp-video-only-style";
-let videoOnlyViewApplied = false;
+
 const PANEL_IDS = [
   "content",
   "nav-bar-background",
@@ -146,6 +29,155 @@ const PANEL_IDS = [
   "mini-guide",
 ];
 
+// ---------------------------------------------------------------------------
+// ミュート制御オブジェクト
+// ---------------------------------------------------------------------------
+/**
+ * MuteS — スポンサー検出・ミュート状態・ミュートボタン取得を
+ * サブドメイン(music / www)ごとに差し替え可能にするアクセサオブジェクト
+ */
+const MuteS = {
+  get Sponsor() {
+    return this.getSponsor();
+  },
+  get Mute() {
+    return this.getMute();
+  },
+  get MuteButton() {
+    return this.getMuteButton();
+  },
+};
+
+// ---------------------------------------------------------------------------
+// YouTube Music 用の関数セット
+// ---------------------------------------------------------------------------
+function setMusicFunc() {
+  /** 広告バッジが表示されているか判定 */
+  MuteS.getSponsor = () => {
+    const sponsor = document.querySelector(".badge-style-type-ad-stark");
+    if (!sponsor) return false;
+    return !sponsor.hasAttribute("hidden");
+  };
+
+  /** ミュートボタン要素を取得 */
+  MuteS.getMuteButton = () => {
+    const muteButton = document.getElementById("expand-volume");
+    if (muteButton) {
+      return muteButton.querySelector("button");
+    }
+    return null;
+  };
+
+  /** 現在ミュート中か判定 */
+  MuteS.getMute = () => {
+    const volume = document.getElementById("expand-volume-slider");
+    if (volume) {
+      return volume.ariaValueNow === "0";
+    }
+    return false;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// YouTube (通常動画) 用の関数セット
+// ---------------------------------------------------------------------------
+function setVideoFunc() {
+  let muteButton1 = null;
+
+  /** aria-label="スポンサー" でスポンサー表示中か判定 */
+  MuteS.getSponsor = () => {
+    const sponsor = MuteS.root.querySelector('[aria-label="スポンサー"]');
+    if (!sponsor) return false;
+    return sponsor.innerHTML === "スポンサー" && sponsor.innerText === "スポンサー";
+  };
+
+  /** ミュートボタン要素を取得 */
+  MuteS.getMuteButton = () => {
+    muteButton1 = MuteS.root.querySelector(".ytp-mute-button.ytp-button");
+    if (muteButton1) return muteButton1;
+
+    const div = MuteS.root.querySelector(".ytp-mute-button");
+    if (!div) return null;
+    muteButton1 = div.querySelector("button");
+    return muteButton1;
+  };
+
+  /** tooltip からミュート状態を判定 */
+  MuteS.getMute = () => {
+    if (!muteButton1) muteButton1 = MuteS.MuteButton;
+    return muteButton1?.dataset?.tooltipTitle?.startsWith("ミュート解除");
+  };
+}
+
+// ---------------------------------------------------------------------------
+// サブドメイン判定 & 初期化
+// ---------------------------------------------------------------------------
+/**
+ * ホスト名からサブドメインを判定し、適切な関数セットを設定して
+ * プレイヤー要素のIDを返す
+ */
+const returnPlayerId = () => {
+  const hostName = location.hostname;
+  const subDomain = hostName.split(".")[0];
+
+  switch (subDomain) {
+    case "music":
+      setMusicFunc();
+      return "player";
+    case "www":
+    default:
+      setVideoFunc();
+      return "ytd-player";
+  }
+};
+
+// ---------------------------------------------------------------------------
+// 広告スキップ（シーク）
+// ---------------------------------------------------------------------------
+/**
+ * 広告再生中の動画を検出し、再生位置を末尾に飛ばして広告を終了させる
+ * ※ YouTube側に広告ブロッカーとして検出される可能性あり
+ */
+const skipAdBySeek = () => {
+  const video =
+    document.querySelector(".ad-showing video") ||
+    document.querySelector(".ad-interrupting video");
+  if (video && video.duration && isFinite(video.duration)) {
+    video.currentTime = video.duration;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// ミュートボタン操作
+// ---------------------------------------------------------------------------
+/**
+ * action に応じてミュートボタンをクリック
+ * @param {number} action - 0: ミュート解除, 1: ミュート実行
+ */
+const clickMuteButton = (action) => {
+  const muteButton = MuteS.MuteButton;
+
+  if (MuteS.Mute) {
+    // 現在ミュート中 → 解除要求(action===0)のときクリック
+    if (action === 0) {
+      muteButton?.click();
+    }
+  } else if (muteButton) {
+    // 現在ミュートでない → ミュート要求(action===1)のときクリック
+    if (action === 1) {
+      muteButton?.click();
+    }
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Video Only View（UI簡略化）
+// ---------------------------------------------------------------------------
+let videoOnlyViewApplied = false;
+
+/**
+ * ヘッダー・サイドバーを非表示にし、動画領域を拡大するスタイルを注入
+ */
 const applyVideoOnlyView = () => {
   if (videoOnlyViewApplied) return; // 毎秒の再注入を防止
   videoOnlyViewApplied = true;
@@ -162,14 +194,16 @@ const applyVideoOnlyView = () => {
     document.head.appendChild(style);
   }
 
-  // ヘッダーとサイドバーのみ非表示（プレイヤー周辺は一切触らない）
   style.textContent = `
+    /* YouTube: ヘッダーとサイドバーを非表示 */
     ytd-masthead {
       display: none !important;
     }
     #secondary {
       display: none !important;
     }
+
+    /* YouTube Music: ナビ・サイドパネル・プレイヤーバーを非表示 */
     ytmusic-two-column-browse-results-renderer,
     .style-scope.ytmusic-two-column-browse-results-renderer,
     #side-panel.style-scope.ytmusic-player-page,
@@ -189,7 +223,7 @@ const applyVideoOnlyView = () => {
       --ytmusic-player-page-side-panel-width: 0px !important;
     }
 
-    /* 映像領域を1.25倍に拡大（transform はレイアウトに影響しない） */
+    /* 映像領域を1.20倍に拡大（transform はレイアウトに影響しない） */
     #movie_player {
       transform: scale(1.20) !important;
       transform-origin: center center !important;
@@ -197,6 +231,9 @@ const applyVideoOnlyView = () => {
   `;
 };
 
+/**
+ * Video Only View を解除し、元のレイアウトに戻す
+ */
 const clearVideoOnlyView = () => {
   videoOnlyViewApplied = false;
   document.getElementById(VIDEO_ONLY_STYLE_ID)?.remove();
@@ -205,59 +242,74 @@ const clearVideoOnlyView = () => {
   });
 };
 
+// ---------------------------------------------------------------------------
+// サイドパネル表示切替
+// ---------------------------------------------------------------------------
+/**
+ * chrome.storage の設定値に応じて Video Only View の適用/解除を切り替える
+ */
 const musicPlayListToggle = async () => {
-  const SidePanel = (result0) => {
-    if (!result0[KEY1]) {
+  const handleSidePanel = (result) => {
+    if (!result[KEY1]) {
       applyVideoOnlyView();
       return;
     }
 
     clearVideoOnlyView();
 
-    let param = ``;
-    PANEL_IDS.forEach(key => {
+    // パネル要素のスタイルをリセット
+    PANEL_IDS.forEach((key) => {
       const el = document.getElementById(key);
-      if (!el) {
-        return;
-      }
-      el.setAttribute("style", param);
+      if (!el) return;
+      el.setAttribute("style", "");
     });
-    // ["ytmusic-nav-bar"].forEach(key => {
-    //   const sh = document.getElementsByClassName(key);
-    //   console.log(sh);
-    // });
-  }
+  };
 
-  chrome.storage.local.get([KEY1]).then(SidePanel);
-}
+  chrome.storage.local.get([KEY1]).then(handleSidePanel);
+};
 
+// ---------------------------------------------------------------------------
+// メインループ
+// ---------------------------------------------------------------------------
 const playerId = returnPlayerId();
+
+/**
+ * 1秒ごとに実行されるメイン処理
+ * - UI切替の適用
+ * - スポンサー検出 → ミュート制御
+ */
 const intervalFunc = () => {
   musicPlayListToggle();
-  clickSkipButton();
-  
+
   const root = document.getElementById(playerId);
   MuteS.root = root;
-  if (root === null) {
-    return;
-  }
+  if (!root) return;
 
   const sponsor = MuteS.Sponsor;
-  if (!sponsor) {
-    clickMuteButton(0, 1, root);
-    return;
-  }
   if (sponsor) {
-    clickMuteButton(1, 2, root);
+    // スポンサー表示中 → ミュート & シークで広告スキップ
+    clickMuteButton(1);
+    skipAdBySeek();
   } else {
-    clickMuteButton(0, 3, root);
+    // スポンサーなし → ミュート解除
+    clickMuteButton(0);
   }
 };
 
+/** 1秒間隔でメインループを実行（拡張コンテキスト無効時は自動停止） */
 const initInterval = setInterval(() => {
   try {
+    // 拡張がリロード/更新されると chrome.runtime.id が undefined になる
+    if (!chrome.runtime?.id) {
+      clearInterval(initInterval);
+      return;
+    }
     intervalFunc();
   } catch (err) {
+    if (err.message?.includes("Extension context invalidated")) {
+      clearInterval(initInterval);
+      return;
+    }
     console.error("tvc", err);
   }
 }, 1000);

@@ -8,9 +8,9 @@ function YmpSidePanel(e){
     ck.checked = e.set;
   } else {
     const {checked, id} = e.target;
-    console.log("2 Value is set", id, checked );
+    //console.log("2 Value is set", id, checked );
     chrome.storage.local.set({ [id]: checked }).then((result1) => {
-      console.log("3 Value is set", checked, result1 );
+      //console.log("3 Value is set", checked, result1 );
     });
   }
 }
