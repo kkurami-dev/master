@@ -148,6 +148,96 @@ const skipAdBySeek = () => {
 };
 
 // ---------------------------------------------------------------------------
+// 「動画が一時停止されました」ダイアログの自動応答
+// ---------------------------------------------------------------------------
+/**
+ * YouTube が長時間再生時に表示する「動画が一時停止されました。続きを視聴しますか？」
+ * ダイアログを検出し、「はい」ボタンをクリックして再生を継続する
+ */
+const dismissPauseDialog = () => {
+  // ダイアログ内の「はい」ボタンを探す
+  const buttons = document.querySelectorAll(
+    "yt-confirm-dialog-renderer button, ytd-popup-container button, tp-yt-paper-dialog button"
+  );
+
+  for (const btn of buttons) {
+    const text = btn.textContent?.trim();
+    if (text === "はい" || text === "Yes") {
+      btn.click();
+      return true;
+    }
+  }
+
+  // YouTube Music の場合
+  const paperButtons = document.querySelectorAll("tp-yt-paper-button, yt-button-renderer button");
+  for (const btn of paperButtons) {
+    const text = btn.textContent?.trim();
+    if (text === "はい" || text === "Yes") {
+      btn.click();
+      return true;
+    }
+  }
+
+  return false;
+};
+
+// ---------------------------------------------------------------------------
+// 広告ブロッカー検出時の回避（次の動画へ遷移）
+// ---------------------------------------------------------------------------
+let blockerDetected = false;
+
+/**
+ * YouTubeが広告ブロッカー警告ダイアログを表示した場合、
+ * 1秒待ってからプレイリストの次の動画に移動する
+ */
+const skipToNextIfBlocked = () => {
+  // 広告ブロッカー警告ダイアログの検出
+  const dialog =
+    document.querySelector("tp-yt-paper-dialog.ytd-enforcement-message-view-model") ||
+    document.querySelector("ytd-enforcement-message-view-model") ||
+    document.querySelector("#dialog.ytd-popup-container tp-yt-paper-dialog");
+
+  if (!dialog) {
+    blockerDetected = false;
+    return false;
+  }
+
+  // ダイアログが非表示なら無視
+  if (dialog.hidden || dialog.style.display === "none") {
+    blockerDetected = false;
+    return false;
+  }
+
+  // 既に検出済みなら重複実行しない（タイマー待機中）
+  if (blockerDetected) return true;
+  blockerDetected = true;
+
+  // 1秒待ってから次の動画へ遷移
+  setTimeout(() => {
+    // 次の動画ボタンをクリック（YouTube通常）
+    const nextButton =
+      document.querySelector(".ytp-next-button") ||
+      document.querySelector("a.ytp-next-button");
+
+    if (nextButton) {
+      nextButton.click();
+      return;
+    }
+
+    // YouTube Music の場合
+    const nextButtonMusic =
+      document.querySelector(".next-button button") ||
+      document.querySelector("tp-yt-paper-icon-button.next-button");
+
+    if (nextButtonMusic) {
+      nextButtonMusic.click();
+    }
+  }, 1000);
+
+  return true;
+};
+
+// ---------------------------------------------------------------------------
 // ミュートボタン操作
 // ---------------------------------------------------------------------------
 /**
@@ -249,6 +339,9 @@ const clearVideoOnlyView = () => {
  * chrome.storage の設定値に応じて Video Only View の適用/解除を切り替える
  */
 const musicPlayListToggle = async () => {
+  // 拡張コンテキストが無効なら何もしない
+  if (!chrome.runtime?.id) return;
+
   const handleSidePanel = (result) => {
     if (!result[KEY1]) {
       applyVideoOnlyView();
@@ -265,7 +358,12 @@ const musicPlayListToggle = async () => {
     });
   };
 
-  chrome.storage.local.get([KEY1]).then(handleSidePanel);
+  try {
+    const result = await chrome.storage.local.get([KEY1]);
+    handleSidePanel(result);
+  } catch (e) {
+    // Extension context invalidated — 無視して停止
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -279,11 +377,17 @@ const playerId = returnPlayerId();
  * - スポンサー検出 → ミュート制御
  */
 const intervalFunc = () => {
-  musicPlayListToggle();
+  musicPlayListToggle().catch(() => {});
 
   const root = document.getElementById(playerId);
   MuteS.root = root;
   if (!root) return;
+
+  // 「動画が一時停止されました」ダイアログを自動で閉じる
+  dismissPauseDialog();
+
+  // 広告ブロッカー警告が出ていたら次の動画へスキップ
+  if (skipToNextIfBlocked()) return;
 
   const sponsor = MuteS.Sponsor;
   if (sponsor) {

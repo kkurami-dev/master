@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Epoch Time Converter (JST)",
+  "version": "1.0",
+  "description": "13桁のエポック秒を日本時間に変換・復元します",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_title": "時間を変換/復元"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
