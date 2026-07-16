@@ -40,7 +40,14 @@ function toggleEpochConvert(toJST) {
           fragment.appendChild(document.createTextNode(originalText.slice(lastIndex, match.index)));
         }
         // 変換した日本時刻を「"」で囲み赤文字のspanで表示
-        const jst = new Date(Number(match[0])).toLocaleString('ja-JP');
+        const d = new Date(Number(match[0]));
+        const jst = d.getFullYear() + '/'
+          + String(d.getMonth() + 1).padStart(2, '0') + '/'
+          + String(d.getDate()).padStart(2, '0') + ' '
+          + String(d.getHours()).padStart(2, '0') + ':'
+          + String(d.getMinutes()).padStart(2, '0') + ':'
+          + String(d.getSeconds()).padStart(2, '0') + '.'
+          + String(d.getMilliseconds()).padStart(3, '0');
         const span = document.createElement('span');
         span.style.color = 'red';
         span.style.fontWeight = 'bold';
