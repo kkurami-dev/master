@@ -17,6 +17,7 @@ const tmpStoped = "動画が一時停止されました。続きを視聴しま�
 
 const KEY1 = "ymp_side_panel";
 const KEY2 = "sponsor_mute";
+const KEY3 = "ad_skip";
 const VIDEO_ONLY_STYLE_ID = "ytp-video-only-style";
 
 const PANEL_IDS = [
@@ -132,18 +133,56 @@ const returnPlayerId = () => {
 };
 
 // ---------------------------------------------------------------------------
-// 広告スキップ（シーク）
+// 広告スキップ（高速再生 + ランダム遅延）
 // ---------------------------------------------------------------------------
+let adSpeedApplied = false;
+let adSkipTimer = null;
+
 /**
- * 広告再生中の動画を検出し、再生位置を末尾に飛ばして広告を終了させる
- * ※ YouTube側に広告ブロッカーとして検出される可能性あり
+ * 広告再生中の動画を検出し、再生速度を最大にして早送りする
+ * ランダム遅延を入れてパターン検出を回避する
  */
-const skipAdBySeek = () => {
+const skipAdBySpeed = () => {
   const video =
     document.querySelector(".ad-showing video") ||
     document.querySelector(".ad-interrupting video");
+
   if (video && video.duration && isFinite(video.duration)) {
-    video.currentTime = video.duration;
+    if (!adSpeedApplied) {
+      // ランダム遅延（500ms～2000ms）後に高速再生を適用
+      const delay = Math.floor(Math.random() * 1500) + 500;
+      if (!adSkipTimer) {
+        adSkipTimer = setTimeout(() => {
+          const v =
+            document.querySelector(".ad-showing video") ||
+            document.querySelector(".ad-interrupting video");
+          if (v) {
+            v.playbackRate = 16;
+            adSpeedApplied = true;
+          }
+          adSkipTimer = null;
+        }, delay);
+      }
+    }
+
+    // スキップボタンが表示されたらクリック
+    const skipButton =
+      document.querySelector(".ytp-skip-ad-button") ||
+      document.querySelector(".ytp-ad-skip-button") ||
+      document.querySelector(".ytp-ad-skip-button-modern") ||
+      document.querySelector('button[class*="skip"]');
+    if (skipButton) {
+      skipButton.click();
+    }
+  } else {
+    // 広告が終了したら通常速度に戻す
+    if (adSpeedApplied) {
+      const mainVideo = document.querySelector("#movie_player video");
+      if (mainVideo) {
+        mainVideo.playbackRate = 1;
+      }
+      adSpeedApplied = false;
+    }
   }
 };
 
@@ -374,9 +413,9 @@ const playerId = returnPlayerId();
 /**
  * 1秒ごとに実行されるメイン処理
  * - UI切替の適用
- * - スポンサー検出 → ミュート制御
+ * - スポンサー検出 → ミュート制御（KEY2がONの場合のみ）
  */
-const intervalFunc = () => {
+const intervalFunc = async () => {
   musicPlayListToggle().catch(() => {});
 
   const root = document.getElementById(playerId);
@@ -386,17 +425,38 @@ const intervalFunc = () => {
   // 「動画が一時停止されました」ダイアログを自動で閉じる
   dismissPauseDialog();
 
+  // KEY2（sponsor_mute）/ KEY3（ad_skip）設定を確認
+  let muteEnabled = false;
+  let skipEnabled = false;
+  try {
+    const result = await chrome.storage.session.get([KEY2, KEY3]);
+    muteEnabled = !result[KEY2];
+    skipEnabled = !result[KEY3];
+  } catch (e) {
+    return;
+  }
+
+  if (!muteEnabled && !skipEnabled) {
+    // 両方OFF：高速再生が適用されたままなら通常速度に戻す
+    if (adSpeedApplied) {
+      const mainVideo = document.querySelector("#movie_player video");
+      if (mainVideo) mainVideo.playbackRate = 1;
+      adSpeedApplied = false;
+    }
+    return;
+  }
+
   // 広告ブロッカー警告が出ていたら次の動画へスキップ
-  if (skipToNextIfBlocked()) return;
+  if (skipEnabled && skipToNextIfBlocked()) return;
 
   const sponsor = MuteS.Sponsor;
   if (sponsor) {
-    // スポンサー表示中 → ミュート & シークで広告スキップ
-    clickMuteButton(1);
-    skipAdBySeek();
+    // スポンサー表示中
+    if (muteEnabled) clickMuteButton(1);
+    if (skipEnabled) skipAdBySpeed();
   } else {
-    // スポンサーなし → ミュート解除
-    clickMuteButton(0);
+    // スポンサーなし
+    if (muteEnabled) clickMuteButton(0);
   }
 };
 
