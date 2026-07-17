@@ -359,7 +359,7 @@ const musicPlayListToggle = async () => {
   };
 
   try {
-    const result = await chrome.storage.local.get([KEY1]);
+    const result = await chrome.storage.session.get([KEY1]);
     handleSidePanel(result);
   } catch (e) {
     // Extension context invalidated — 無視して停止
