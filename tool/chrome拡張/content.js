@@ -133,57 +133,73 @@ const returnPlayerId = () => {
 };
 
 // ---------------------------------------------------------------------------
-// 広告スキップ（高速再生 + ランダム遅延）
+// 広告スキップ（3方式：リロード / シーク / 高速再生）
 // ---------------------------------------------------------------------------
-let adSpeedApplied = false;
-let adSkipTimer = null;
+let adActionPending = false;
 
 /**
- * 広告再生中の動画を検出し、再生速度を最大にして早送りする
- * ランダム遅延を入れてパターン検出を回避する
+ * 広告動画要素を取得する（広告表示中でなければ null）
+ */
+const getAdVideo = () => {
+  return (
+    document.querySelector(".ad-showing video") ||
+    document.querySelector(".ad-interrupting video")
+  );
+};
+
+/**
+ * ランダム遅延を生成（300ms～1500ms）
+ */
+const randomDelay = () => Math.floor(Math.random() * 1200) + 300;
+
+/**
+ * 広告検出 → ランダム遅延後にページリロード
+ */
+const skipAdByReload = () => {
+  if (adActionPending) return;
+  const video = getAdVideo();
+  if (!video || !video.duration || !isFinite(video.duration)) return;
+
+  adActionPending = true;
+  setTimeout(() => {
+    location.reload();
+  }, randomDelay());
+};
+
+/**
+ * 広告検出 → ランダム遅延後にシーク（再生位置を末尾に飛ばす）
+ */
+const skipAdBySeek = () => {
+  if (adActionPending) return;
+  const video = getAdVideo();
+  if (!video || !video.duration || !isFinite(video.duration)) return;
+
+  adActionPending = true;
+  setTimeout(() => {
+    const v = getAdVideo();
+    if (v && v.duration && isFinite(v.duration)) {
+      v.currentTime = v.duration;
+    }
+    adActionPending = false;
+  }, randomDelay());
+};
+
+/**
+ * 広告検出 → ランダム遅延後に高速再生（16倍速）
  */
 const skipAdBySpeed = () => {
-  const video =
-    document.querySelector(".ad-showing video") ||
-    document.querySelector(".ad-interrupting video");
+  if (adActionPending) return;
+  const video = getAdVideo();
+  if (!video || !video.duration || !isFinite(video.duration)) return;
 
-  if (video && video.duration && isFinite(video.duration)) {
-    if (!adSpeedApplied) {
-      // ランダム遅延（500ms～2000ms）後に高速再生を適用
-      const delay = Math.floor(Math.random() * 1500) + 500;
-      if (!adSkipTimer) {
-        adSkipTimer = setTimeout(() => {
-          const v =
-            document.querySelector(".ad-showing video") ||
-            document.querySelector(".ad-interrupting video");
-          if (v) {
-            v.playbackRate = 16;
-            adSpeedApplied = true;
-          }
-          adSkipTimer = null;
-        }, delay);
-      }
+  adActionPending = true;
+  setTimeout(() => {
+    const v = getAdVideo();
+    if (v) {
+      v.playbackRate = 16;
     }
-
-    // スキップボタンが表示されたらクリック
-    const skipButton =
-      document.querySelector(".ytp-skip-ad-button") ||
-      document.querySelector(".ytp-ad-skip-button") ||
-      document.querySelector(".ytp-ad-skip-button-modern") ||
-      document.querySelector('button[class*="skip"]');
-    if (skipButton) {
-      skipButton.click();
-    }
-  } else {
-    // 広告が終了したら通常速度に戻す
-    if (adSpeedApplied) {
-      const mainVideo = document.querySelector("#movie_player video");
-      if (mainVideo) {
-        mainVideo.playbackRate = 1;
-      }
-      adSpeedApplied = false;
-    }
-  }
+    adActionPending = false;
+  }, randomDelay());
 };
 
 // ---------------------------------------------------------------------------
@@ -372,43 +388,36 @@ const clearVideoOnlyView = () => {
 };
 
 // ---------------------------------------------------------------------------
-// サイドパネル表示切替
-// ---------------------------------------------------------------------------
-/**
- * chrome.storage の設定値に応じて Video Only View の適用/解除を切り替える
- */
-const musicPlayListToggle = async () => {
-  // 拡張コンテキストが無効なら何もしない
-  if (!chrome.runtime?.id) return;
-
-  const handleSidePanel = (result) => {
-    if (!result[KEY1]) {
-      applyVideoOnlyView();
-      return;
-    }
-
-    clearVideoOnlyView();
-
-    // パネル要素のスタイルをリセット
-    PANEL_IDS.forEach((key) => {
-      const el = document.getElementById(key);
-      if (!el) return;
-      el.setAttribute("style", "");
-    });
-  };
-
-  try {
-    const result = await chrome.storage.session.get([KEY1]);
-    handleSidePanel(result);
-  } catch (e) {
-    // Extension context invalidated — 無視して停止
-  }
-};
-
-// ---------------------------------------------------------------------------
 // メインループ
 // ---------------------------------------------------------------------------
 const playerId = returnPlayerId();
+
+// 広告スキップ方式を順番にローテーション
+// skipAdByReload
+const skipMethods = [ skipAdBySeek, skipAdBySpeed];
+let skipMethodIndex = 0;
+
+const skipAdRotate = () => {
+  // スキップボタンが表示・可視状態になったらスキップ実行
+  const skipButton =
+    document.querySelector(".ytp-skip-ad-button") ||
+    document.querySelector(".ytp-ad-skip-button") ||
+    document.querySelector(".ytp-ad-skip-button-modern");
+  if (!skipButton) return;
+
+  // 非表示（hidden属性、display:none、visibility:hidden、サイズ0）ならスキップしない
+  if (skipButton.hidden) return;
+  const style = getComputedStyle(skipButton);
+  if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return;
+  if (skipButton.offsetWidth === 0 && skipButton.offsetHeight === 0) return;
+
+  // まずスキップボタンを直接クリック
+  skipButton.click();
+
+  // クリックで効かなかった場合に備えてローテーション方式も実行
+  skipMethods[skipMethodIndex]();
+  skipMethodIndex = (skipMethodIndex + 1) % skipMethods.length;
+};
 
 /**
  * 1秒ごとに実行されるメイン処理
@@ -416,7 +425,26 @@ const playerId = returnPlayerId();
  * - スポンサー検出 → ミュート制御（KEY2がONの場合のみ）
  */
 const intervalFunc = async () => {
-  musicPlayListToggle().catch(() => {});
+  // 設定を一括取得
+  let settings = {};
+  try {
+    settings = await chrome.storage.session.get([KEY1, KEY2, KEY3]);
+  } catch (e) {
+    // Extension context invalidated — 無視して停止
+    return;
+  }
+
+  // サイドパネル表示切替
+  if (!settings[KEY1]) {
+    applyVideoOnlyView();
+  } else {
+    clearVideoOnlyView();
+    PANEL_IDS.forEach((key) => {
+      const el = document.getElementById(key);
+      if (!el) return;
+      el.setAttribute("style", "");
+    });
+  }
 
   const root = document.getElementById(playerId);
   MuteS.root = root;
@@ -426,23 +454,11 @@ const intervalFunc = async () => {
   dismissPauseDialog();
 
   // KEY2（sponsor_mute）/ KEY3（ad_skip）設定を確認
-  let muteEnabled = false;
-  let skipEnabled = false;
-  try {
-    const result = await chrome.storage.session.get([KEY2, KEY3]);
-    muteEnabled = !result[KEY2];
-    skipEnabled = !result[KEY3];
-  } catch (e) {
-    return;
-  }
+  // チェックOFF = 動作、チェックON = 停止
+  const muteEnabled = !settings[KEY2];
+  const skipEnabled = !settings[KEY3];
 
   if (!muteEnabled && !skipEnabled) {
-    // 両方OFF：高速再生が適用されたままなら通常速度に戻す
-    if (adSpeedApplied) {
-      const mainVideo = document.querySelector("#movie_player video");
-      if (mainVideo) mainVideo.playbackRate = 1;
-      adSpeedApplied = false;
-    }
     return;
   }
 
@@ -453,7 +469,7 @@ const intervalFunc = async () => {
   if (sponsor) {
     // スポンサー表示中
     if (muteEnabled) clickMuteButton(1);
-    if (skipEnabled) skipAdBySpeed();
+    if (skipEnabled) skipAdRotate();
   } else {
     // スポンサーなし
     if (muteEnabled) clickMuteButton(0);
